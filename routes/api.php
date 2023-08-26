@@ -2,6 +2,7 @@
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\Api\AddressController;
 
 /*
 |--------------------------------------------------------------------------
@@ -14,6 +15,22 @@ use Illuminate\Support\Facades\Route;
 |
 */
 
-Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
-    return $request->user();      
+Route::controller(AddressController::class)->group(function () {
+
+    Route::get('/address/get-regions', 'getRegions')->name('get-regions');
+    Route::post('/address/get-provinces/{regCode?}', 'getProvinces')->name('get-provinces');
+    Route::post('/address/get-municipalities/{provCode?}', 'getMunicipalities')->name('get-municipalities');
+    Route::post('/address/get-barangays/{citymunCode?}', 'getBarangays')->name('get-barangays');
+
+});
+
+Route::group([
+
+    'middleware' => 'api',
+    'prefix' => 'auth:sanctum'
+
+], function ($router) { 
+    Route::post('/login', [AuthController::class, 'login']);    
+    Route::post('/logout', [AuthController::class, 'logout']);    
+
 });
