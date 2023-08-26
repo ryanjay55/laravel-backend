@@ -17,9 +17,14 @@ class User extends Authenticatable
      *
      * @var array<int, string>
      */
+    protected $primaryKey = 'user_id';
+
+    protected $table = 'users';
+ 
     protected $fillable = [
         'name',
         'email',
+        'mobile',
         'password',
     ];
 
@@ -42,4 +47,9 @@ class User extends Authenticatable
         'email_verified_at' => 'datetime',
         'password' => 'hashed',
     ];
+
+    public function userDetails()
+    {
+        return $this->hasOne(UserDetail::class, 'user_id','user_id');
+    }
 }

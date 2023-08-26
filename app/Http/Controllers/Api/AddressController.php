@@ -6,13 +6,12 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\Address\BarangayModel;
 use App\Models\Address\RegionsModel;
-use App\Models\Address\CitiesModel;
 use App\Models\Address\MunicipalityModel;
 use App\Models\Address\ProvinceModel;
 
 class AddressController extends Controller
 {
-    public function getRegions(Request $request)
+    public function getRegions()
     {
         $regionModel = new RegionsModel;
 

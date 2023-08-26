@@ -3,6 +3,8 @@
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\AddressController;
+use App\Http\Controllers\Api\RegistrationController;
+use App\Http\Controllers\Api\AuthController;
 
 /*
 |--------------------------------------------------------------------------
@@ -24,6 +26,7 @@ Route::controller(AddressController::class)->group(function () {
 
 });
 
+//authentication
 Route::group([
 
     'middleware' => 'api',
@@ -32,5 +35,22 @@ Route::group([
 ], function ($router) { 
     Route::post('/login', [AuthController::class, 'login']);    
     Route::post('/logout', [AuthController::class, 'logout']);    
+
+});
+
+
+//registration
+
+Route::group(
+
+    [
+        'prefix' => config('app.apiversion'),
+        'as' => config('app.apiversion'),
+    ],
+
+    function () {
+        
+        Route::post('/register-step1',[RegistrationController::class, 'saveStep1']);
+        Route::post('/register-step2',[RegistrationController::class, 'saveStep2']);
 
 });

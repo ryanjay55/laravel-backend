@@ -17,6 +17,8 @@ return [
     */
 
     'name' => env('APP_NAME', 'Laravel'),
+        'apiversion' => env('API_VERSION', 'auth'),
+
 
     /*
     |--------------------------------------------------------------------------

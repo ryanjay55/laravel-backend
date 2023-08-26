@@ -7,105 +7,78 @@ use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Validation\ValidationException;
 
 class AuthController extends Controller
 {
-    /**
-     * Create a new AuthController instance.
-     *
-     * @return void
-     */
-    public function __construct()
-    {
-        $this->middleware('auth:api', ['except' => ['login']]);
-    }
-
-    /**
-     * Get a JWT via given credentials.
-     *
-     * @return \Illuminate\Http\JsonResponse
-     */
-
-    public function login()
-    {
-        $input = request('email_or_phone'); 
-        $field = filter_var($input, FILTER_VALIDATE_EMAIL) ? 'email' : 'mobile';
-
-        $credentials = [
-            $field => $input,
-            'password' => request('password'),
-        ];
-
-        if (! $token = auth()->attempt($credentials)) {
-            return response()->json(['error' => 'Unauthorized'], 401);
-        }
-
-        $user = auth()->user();
-
-        if ($user && $user->email_verified_at === null) {
-            auth()->logout();
+ 
+    public function login(Request $request){
+        try {
+            // validate email or mobile number input
+    
+            $credentials = $request->validate([
+                'email_or_phone' => 'required',
+                'password' => 'required',
+            ]);
+    
+        } catch (ValidationException $e) {
             return response()->json([
                 'status' => 'error',
-                'message' => 'Your email is not yet verified',
-            ], 401);
+                'message' => 'Validation failed',
+                'errors' => $e->validator->errors(),
+            ], 402);
+        }        
+        // dd($credentials);
+    
+        $isEmail = filter_var($credentials['email_or_phone'], FILTER_VALIDATE_EMAIL);
+        $field = $isEmail ? 'email' : 'mobile';
+    
+        if (Auth::attempt([$field => $credentials['email_or_phone'], 'password' => $credentials['password']])) {
+    
+            /** @var \App\Models\User $user **/
+            $user = Auth::user();
+    
+            $token = $user->createToken('api-token')->plainTextToken;
+    
+            if ($user->is_admin == 1) {
+                return response()->json(['token' => $token, 'user' => $user, 'redirect' => 'Admin Dashboard']);
+            }else{
+                return response()->json(['token' => $token, 'user' => $user, 'redirect' => 'Donor Dashboard']);
+            }
+    
+        } else {
+            return response()->json([
+                'res'   => 'error',
+                'msg'   => 'Invalid account please check username or password',
+            ]);
         }
-
-        return $this->respondWithToken($token);
     }
-
-    /**
-     * Get the authenticated User.
-     *
-     * @return \Illuminate\Http\JsonResponse
-     */
-    public function me()
-    {
-        return response()->json(auth()->user());
-    }
-
-    /**
-     * Log the user out (Invalidate the token).
-     *
-     * @return \Illuminate\Http\JsonResponse
-     */
-    public function logout()
-    {
-        auth()->logout();
-
-        return response()->json(['message' => 'Successfully logged out']);
-    }
-
-    /**
-     * Refresh a token.
-     *
-     * @return \Illuminate\Http\JsonResponse
-     */
-    public function refresh()
-    {
-        return $this->respondWithToken(Auth::refresh());
-    }
-
-    /**
-     * Get the token array structure.
-     *
-     * @param  string $token
-     *
-     * @return \Illuminate\Http\JsonResponse
-     */
-
-
-     public function respondWithToken(string $access_token, User $user = null)
-     {
-         $expires_in = Auth::factory()->getTTL() * 1440;
+    
  
-         return new JsonResponse([
-             'user' => $user ?: Auth::user(),
-             'authorization' => [
-                 'access_token' => $access_token,
-                 'token_type' => 'bearer',
-                 'expires_in' => $expires_in,
-             ],
-         ]);
-     }
 
+    public function logout(Request $request)
+    {
+        $request->user()->currentAccessToken()->delete();
+
+        return response()->json(['message' => 'Logged out successfully']);
+        
+    }
+
+
+    public function isLoggedIn()
+    {
+    
+        if (Auth::check()) {
+
+            $user = Auth::user();
+            $user_id = $user->user_id;
+
+            return response()->json([
+                'res'   => 'success',
+                'user_id'   => $user_id,
+                'msg'   => 'User is logged in',
+            ], 200);
+
+        }        
+    }
 }
