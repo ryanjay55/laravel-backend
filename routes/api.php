@@ -3,8 +3,11 @@
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\AddressController;
+use App\Http\Controllers\Api\Admin\BloodBags\BloodBagController;
 use App\Http\Controllers\Api\RegistrationController;
 use App\Http\Controllers\Api\AuthController;
+use App\Http\Controllers\Api\Admin\UserListController;
+
 
 /*
 |--------------------------------------------------------------------------
@@ -40,17 +43,21 @@ Route::group([
 
 
 //registration
-
 Route::group(
-
     [
         'prefix' => config('app.apiversion'),
         'as' => config('app.apiversion'),
     ],
-
     function () {
-        
         Route::post('/register-step1',[RegistrationController::class, 'saveStep1']);
         Route::post('/register-step2',[RegistrationController::class, 'saveStep2']);
+});
+
+//admin api routes
+Route::group(['middleware' => ['auth:sanctum','admin']], function () {
+
+    Route::post('/add-bloodbag', [BloodBagController::class, 'store']);
+    Route::put('/update-bloodbag', [BloodBagController::class, 'update']);
+    Route::get('/get-user-details', [UserListController::class, 'getUserDetails']);
 
 });

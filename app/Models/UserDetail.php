@@ -9,6 +9,8 @@ class UserDetail extends Model
 {
     use HasFactory;
     protected $primaryKey = 'user_details_id';
+    protected $table = 'user_details';
+
     protected $fillable = [
         'first_name',
         'middle_name',
@@ -24,7 +26,6 @@ class UserDetail extends Model
         'postalcode',
     ];
 
-    protected $table = 'user_details';
 
     
     public function user()

@@ -108,7 +108,17 @@ class RegistrationController extends Controller
                 ], 404);
             }
 
-            // Update the user's information with the data from Step 2
+            $donorNo = mt_rand(10000000, 99999999); 
+
+            // Ensure the generated donor number is unique in the database
+            while (UserDetail::where('donor_no', $donorNo)->exists()) {
+                $donorNo = mt_rand(10000000, 99999999); // Regenerate if the number already exists
+            }        
+
+            $userDetails = $user->userDetails;
+            $userDetails->donor_no = $donorNo;
+            $userDetails->save();
+           
             $userDetails = $user->userDetails()->updateOrCreate(
                 ['user_id' => $user_id],
                 [
@@ -126,7 +136,7 @@ class RegistrationController extends Controller
                     'postalcode'        => $validatedData['postalcode'],
                 ]
             );
-            
+
             // $user->sendEmailVerificationNotification();
 
             return response()->json([

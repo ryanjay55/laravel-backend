@@ -13,9 +13,7 @@ class AuthController extends Controller
 {
  
     public function login(Request $request){
-        try {
-            // validate email or mobile number input
-    
+        try {    
             $credentials = $request->validate([
                 'email_or_phone' => 'required',
                 'password' => 'required',
