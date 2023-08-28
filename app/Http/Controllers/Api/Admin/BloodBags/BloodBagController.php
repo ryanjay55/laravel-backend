@@ -4,6 +4,9 @@ namespace App\Http\Controllers\Api\Admin\BloodBags;
 
 use App\Http\Controllers\Controller;
 use App\Models\BloodBag;
+use App\Models\AuditTrail;
+
+
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\ValidationException;
@@ -15,7 +18,7 @@ class BloodBagController extends Controller
     public function store(Request $request)
     {
         $user = getAuthenticatedUserId();
-       
+        $userId = $user->user_id;
 
             try {
                 
@@ -27,36 +30,118 @@ class BloodBagController extends Controller
                     'bled_by'       => 'required|string',
                 ]);               
 
+                 $ch = curl_init('http://ipwho.is/' );
+                        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+                        curl_setopt($ch, CURLOPT_HEADER, false);
+                    
+                        $ipwhois = json_decode(curl_exec($ch), true);
+                    
+                        curl_close($ch);
+
                 $lastRecord = BloodBag::where('user_id', $validatedData['user_id'])->latest('date_donated')->first();
 
                 if ($lastRecord) {
                     $lastDonationDate = Carbon::parse($lastRecord->date_donated);
                     $currentDonationDate = Carbon::parse($validatedData['date_donated']);
-
-                    if ($currentDonationDate->diffInMonths($lastDonationDate) < 3) {
+                    $minDonationInterval = clone $lastDonationDate;
+                    $minDonationInterval->addMonths(3);
+                
+                    if ($currentDonationDate <= $lastDonationDate) {
+                        AuditTrail::create([
+                            'user_id'    => $userId,
+                            'action'     => 'Add Blood Bag | serial no = ' . $validatedData['serial_no'],
+                            'status'     => 'failed',
+                            'ip_address' => $ipwhois['ip'],
+                            'region'     => $ipwhois['region'],
+                            'city'       => $ipwhois['city'],
+                            'postal'     => $ipwhois['postal'],
+                            'latitude'   => $ipwhois['latitude'],
+                            'longitude'  => $ipwhois['longitude'],
+                        ]);
+                
                         return response()->json([
-                            'status' => 'error',
+                            'status'       => 'error',
                             'last_donated' => $lastRecord->date_donated,
-                            'message' => 'The minimum donation interval is 3 months. Please wait until ' . $lastDonationDate->addMonths(3)->toDateString() . ' before donating again.',
+                            'message'      => 'Invalid donation date',
                         ], 400);
-                        
-                    } else {
+
+                    } elseif ($currentDonationDate < $minDonationInterval) {
+
+                        AuditTrail::create([
+                            'user_id'    => $userId,
+                            'action'     => 'Add Blood Bag | serial no = ' . $validatedData['serial_no'],
+                            'status'     => 'failed',
+                            'ip_address' => $ipwhois['ip'],
+                            'region'     => $ipwhois['region'],
+                            'city'       => $ipwhois['city'],
+                            'postal'     => $ipwhois['postal'],
+                            'latitude'   => $ipwhois['latitude'],
+                            'longitude'  => $ipwhois['longitude'],
+                        ]);
+
+                        return response()->json([
+                            'status'       => 'error',
+                            'last_donated' => $lastRecord->date_donated,
+                            'message'      => 'The minimum donation interval is 3 months. Please wait until ' . $minDonationInterval->toDateString() . ' before donating again.',
+                        ], 400);
+
+                    }else{
 
                         BloodBag::create([
-                            'user_id' =>$validatedData['user_id'],
-                            'serial_no' => $validatedData['serial_no'],
+                            'user_id'      => $validatedData['user_id'],
+                            'serial_no'    => $validatedData['serial_no'],
                             'date_donated' => $validatedData['date_donated'],
-                            'venue' => $validatedData['venue'],
-                            'bled_by' => $validatedData['bled_by'],
+                            'venue'        => $validatedData['venue'],
+                            'bled_by'      => $validatedData['bled_by'],
                         ]);
-        
+                    
+                        AuditTrail::create([
+                            'user_id'    => $userId,
+                            'action'     => 'Add Blood Bag | serial no = ' . $validatedData['serial_no'],
+                            'status'     => 'success',
+                            'ip_address' => $ipwhois['ip'],
+                            'region'     => $ipwhois['region'],
+                            'city'       => $ipwhois['city'],
+                            'postal'     => $ipwhois['postal'],
+                            'latitude'   => $ipwhois['latitude'],
+                            'longitude'  => $ipwhois['longitude'],
+                        ]);
+                    
                         return response()->json([
-                            'status' => 'success',
+                            'status'  => 'success',
                             'message' => 'Blood bag added successfully',
                         ], 200);
-
                     }
+                    
+
+                } else {
+
+                    BloodBag::create([
+                        'user_id'      => $validatedData['user_id'],
+                        'serial_no'    => $validatedData['serial_no'],
+                        'date_donated' => $validatedData['date_donated'],
+                        'venue'        => $validatedData['venue'],
+                        'bled_by'      => $validatedData['bled_by'],
+                    ]);
+                
+                    AuditTrail::create([
+                        'user_id'    => $userId,
+                        'action'     => 'Add Blood Bag | serial no = ' . $validatedData['serial_no'],
+                        'status'     => 'success',
+                        'ip_address' => $ipwhois['ip'],
+                        'region'     => $ipwhois['region'],
+                        'city'       => $ipwhois['city'],
+                        'postal'     => $ipwhois['postal'],
+                        'latitude'   => $ipwhois['latitude'],
+                        'longitude'  => $ipwhois['longitude'],
+                    ]);
+                
+                    return response()->json([
+                        'status'  => 'success',
+                        'message' => 'Blood bag added successfully',
+                    ], 200);
                 }
+                
 
 
             } catch (ValidationException $e) {

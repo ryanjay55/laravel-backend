@@ -13,20 +13,23 @@ return new class extends Migration
     {
         Schema::create('user_details', function (Blueprint $table) {
             $table->id('user_details_id');
-            $table->foreignId('user_id')->constrained('users', 'user_id');
+            $table->foreignId('user_id');
             $table->unsignedInteger('donor_no')->default(0);
-            $table->string('first_name');
-            $table->string('middle_name')->nullable();
-            $table->string('last_name');    
+            $table->text('first_name');
+            $table->text('middle_name')->nullable();
+            $table->text('last_name'); 
+            $table->enum('sex', ['Male', 'Female']);
             $table->date('dob');     
-            $table->string('blood_type');         
-            $table->string('occupation');  
+            $table->text('blood_type');
+            $table->text('occupation');  
             $table->longText('street');            
-            $table->string('region');
-            $table->string('province');
-            $table->string('municipality');
-            $table->string('barangay');
+            $table->text('region');
+            $table->text('province');
+            $table->text('municipality');
+            $table->text('barangay');
             $table->integer('postalcode');
+            $table->smallInteger('isDeffered')->default(0);
+            $table->smallInteger('status')->default(0);
             $table->timestamps();
         });
     }

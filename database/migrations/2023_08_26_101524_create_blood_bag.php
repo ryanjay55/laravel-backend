@@ -13,11 +13,12 @@ return new class extends Migration
     {
         Schema::create('blood_bags', function (Blueprint $table) {
             $table->id('blood_bags_id');
-            $table->foreignId('user_id')->constrained('users', 'user_id');
+            $table->foreignId('user_id');
             $table->string('serial_no');    
             $table->date('date_donated');     
             $table->string('venue');     
-            $table->string('bled_by');     
+            $table->string('bled_by');  
+            $table->smallInteger('isUsed')->default(0);     
             $table->smallInteger('status')->default(0);     
             $table->timestamps();
         });

@@ -86,7 +86,8 @@ class RegistrationController extends Controller
                 'middle_name'           => ['nullable', 'string'],
                 'last_name'             => ['required', 'string'],
                 'dob'                   => ['required', 'date'],
-                'blood_type'            => ['required', 'string'],
+                'sex'                   => ['required'],
+                'blood_type'            => ['required'],
                 'occupation'            => ['required', 'string'],
                 'street'                => ['required', 'string'],
                 'region'                => ['required'],
@@ -115,20 +116,19 @@ class RegistrationController extends Controller
                 $donorNo = mt_rand(10000000, 99999999); // Regenerate if the number already exists
             }        
 
-            $userDetails = $user->userDetails;
-            $userDetails->donor_no = $donorNo;
-            $userDetails->save();
            
-            $userDetails = $user->userDetails()->updateOrCreate(
+            $userDetails = UserDetail::updateOrCreate(
                 ['user_id' => $user_id],
                 [
+                    'donor_no'          => $donorNo,
                     'first_name'        => $validatedData['first_name'],
                     'middle_name'       => $validatedData['middle_name'],
                     'last_name'         => $validatedData['last_name'],
                     'dob'               => $validatedData['dob'],
+                    'sex'               => $validatedData['sex'],
                     'blood_type'        => $validatedData['blood_type'],
                     'occupation'        => $validatedData['occupation'],
-                    'street'           => $validatedData['street'],
+                    'street'            => $validatedData['street'],
                     'region'            => $validatedData['region'],
                     'province'          => $validatedData['province'],
                     'municipality'      => $validatedData['municipality'],
@@ -137,6 +137,10 @@ class RegistrationController extends Controller
                 ]
             );
 
+            // $userDetails = $user->userDetails;
+            // $userDetails->donor_no = $donorNo;
+            // $userDetails->save();
+            
             // $user->sendEmailVerificationNotification();
 
             return response()->json([

@@ -2,6 +2,7 @@
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
+
 use App\Http\Controllers\Api\AddressController;
 use App\Http\Controllers\Api\Admin\BloodBags\BloodBagController;
 use App\Http\Controllers\Api\RegistrationController;
@@ -11,13 +12,8 @@ use App\Http\Controllers\Api\Admin\UserListController;
 
 /*
 |--------------------------------------------------------------------------
-| API Routes
+| Address
 |--------------------------------------------------------------------------
-|
-| Here is where you can register API routes for your application. These
-| routes are loaded by the RouteServiceProvider and all of them will
-| be assigned to the "api" middleware group. Make something great!
-|
 */
 
 Route::controller(AddressController::class)->group(function () {
@@ -29,7 +25,12 @@ Route::controller(AddressController::class)->group(function () {
 
 });
 
-//authentication
+
+/*
+|--------------------------------------------------------------------------
+| Authentication
+|--------------------------------------------------------------------------
+*/
 Route::group([
 
     'middleware' => 'api',
@@ -42,7 +43,11 @@ Route::group([
 });
 
 
-//registration
+/*
+|--------------------------------------------------------------------------
+| Registration
+|--------------------------------------------------------------------------
+*/
 Route::group(
     [
         'prefix' => config('app.apiversion'),
@@ -53,7 +58,13 @@ Route::group(
         Route::post('/register-step2',[RegistrationController::class, 'saveStep2']);
 });
 
-//admin api routes
+
+
+/*
+|--------------------------------------------------------------------------
+| Admin API Routes
+|--------------------------------------------------------------------------
+*/
 Route::group(['middleware' => ['auth:sanctum','admin']], function () {
 
     Route::post('/add-bloodbag', [BloodBagController::class, 'store']);

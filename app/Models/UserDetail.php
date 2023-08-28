@@ -12,10 +12,13 @@ class UserDetail extends Model
     protected $table = 'user_details';
 
     protected $fillable = [
+        'user_id',
+        'donor_no',
         'first_name',
         'middle_name',
         'last_name',
         'dob',
+        'sex',
         'blood_type',
         'occupation',
         'street',
