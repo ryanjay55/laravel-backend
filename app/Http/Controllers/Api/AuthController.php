@@ -38,7 +38,7 @@ class AuthController extends Controller
     
             $token = $user->createToken('api-token')->plainTextToken;
     
-            if ($user->is_admin == 1) {
+            if ($user->isAdmin == 1) {
                 return response()->json(['token' => $token, 'user' => $user, 'redirect' => 'Admin Dashboard']);
             }else{
                 return response()->json(['token' => $token, 'user' => $user, 'redirect' => 'Donor Dashboard']);

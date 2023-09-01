@@ -1,6 +1,5 @@
 <?php
 
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
 use App\Http\Controllers\Api\AddressController;
@@ -8,6 +7,8 @@ use App\Http\Controllers\Api\Admin\BloodBags\BloodBagController;
 use App\Http\Controllers\Api\RegistrationController;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\Admin\UserListController;
+use App\Http\Controllers\Api\Donor\DonationHistory\DonationHistoryController;
+use App\Http\Controllers\Api\Donor\BloodJourney\BloodJourneyController;
 
 
 /*
@@ -56,6 +57,7 @@ Route::group(
     function () {
         Route::post('/register-step1',[RegistrationController::class, 'saveStep1']);
         Route::post('/register-step2',[RegistrationController::class, 'saveStep2']);
+
 });
 
 
@@ -70,5 +72,22 @@ Route::group(['middleware' => ['auth:sanctum','admin']], function () {
     Route::post('/add-bloodbag', [BloodBagController::class, 'store']);
     Route::put('/update-bloodbag', [BloodBagController::class, 'update']);
     Route::get('/get-user-details', [UserListController::class, 'getUserDetails']);
+
+});
+
+
+
+
+/*
+|--------------------------------------------------------------------------
+| Donor API Routes
+|--------------------------------------------------------------------------
+*/
+
+Route::group(['middleware' => ['auth:sanctum']], function () {
+
+    Route::get('/get-history', [DonationHistoryController::class, 'donationHistory']);
+    Route::get('/get-blood-journey', [BloodJourneyController::class, 'bloodJourney']);
+
 
 });

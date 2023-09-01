@@ -11,11 +11,12 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('galloners', function (Blueprint $table) {
-            $table->id('galloners_id');
+        Schema::create('donor_post', function (Blueprint $table) {
+            $table->id('donor_post_id');
             $table->foreignId('user_id');
-            $table->smallInteger('donate_qty')->default('0');
-            $table->enum('badge', ['none', 'bronze', 'silver', 'gold'])->default('none');
+            $table->longText('body');
+            $table->text('contact');
+            $table->smallInteger('status')->default(0);
             $table->timestamps();
         });
     }
@@ -25,6 +26,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('galloner');
+        Schema::dropIfExists('donor_post');
     }
 };

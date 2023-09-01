@@ -3,12 +3,15 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Models\Galloner;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
 use App\Models\UserDetail;
 use App\Models\User;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\ValidationException;
+use Illuminate\Support\Facades\Mail; 
+use App\Mail\RegistrationMail;
 
 class RegistrationController extends Controller
 {
@@ -137,11 +140,12 @@ class RegistrationController extends Controller
                 ]
             );
 
-            // $userDetails = $user->userDetails;
-            // $userDetails->donor_no = $donorNo;
-            // $userDetails->save();
+            Galloner::create([
+                'user_id'    => $user_id,
+            ]);
             
-            // $user->sendEmailVerificationNotification();
+            // Send email notification
+            Mail::to($user->email)->send(new RegistrationMail($user));
 
             return response()->json([
                 'status'            => 'success',
