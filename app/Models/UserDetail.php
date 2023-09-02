@@ -35,4 +35,15 @@ class UserDetail extends Model
     {
         return $this->belongsTo(User::class, 'user_id', 'id');
     }
+
+    public function donorPosts()
+    {
+        return $this->hasMany(DonorPost::class, 'user_id', 'user_id');
+    }
+
+    public function galloner()
+    {
+        return $this->hasOne(Galloner::class, 'user_id', 'user_id');
+    }
+    
 }

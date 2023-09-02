@@ -8,6 +8,7 @@ use App\Models\AuditTrail;
 use App\Models\Galloner;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 use Carbon\Carbon;
 
@@ -168,6 +169,21 @@ class BloodBagController extends Controller
             
     }
     
+
+    public function collectedBloodBag(){
+        $user = getAuthenticatedUserId();
+        $userId = $user->user_id;
+    
+        $bloodBags = DB::table('user_details')
+            ->join('blood_bags', 'user_details.user_id', '=', 'blood_bags.user_id')
+            ->select('user_details.first_name', 'user_details.last_name', 'user_details.blood_type','blood_bags.serial_no', 'blood_bags.date_donated','bled_by')
+            ->where('blood_bags.status', '=', 0) 
+            ->get();
+    
+        return response()->json([
+            'blood_bags' => $bloodBags
+        ]);
+    }
 
 }
 

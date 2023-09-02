@@ -18,5 +18,7 @@ class BloodBag extends Model
         'venue',
         'bled_by'
     ];
+
+    
 }
 

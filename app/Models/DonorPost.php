@@ -6,16 +6,19 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use App\Models\User;
 
-class Galloner extends Model
+class DonorPost extends Model
 {
     use HasFactory;
-    protected $primaryKey = 'galloners_id';
-    protected $table = 'galloners';
+
+    protected $primaryKey = 'donor_posts_id';
+    protected $table = 'donor_posts';
 
     protected $fillable = [
         'user_id',
-        'donate_qty',
-        'badge'
+        'body',
+        'contact',
+        'status',
+        'isApproved'
     ];
 
     public function user()
@@ -23,5 +26,8 @@ class Galloner extends Model
         return $this->belongsTo(User::class, 'user_id');
     }
 
-    
+    public function galloner()
+{
+    return $this->belongsTo(Galloner::class);
+}
 }

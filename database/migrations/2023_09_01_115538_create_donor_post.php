@@ -11,11 +11,12 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('donor_post', function (Blueprint $table) {
-            $table->id('donor_post_id');
+        Schema::create('donor_posts', function (Blueprint $table) {
+            $table->id('donor_posts_id');
             $table->foreignId('user_id');
             $table->longText('body');
             $table->text('contact');
+            $table->smallInteger('isApproved')->default(0);
             $table->smallInteger('status')->default(0);
             $table->timestamps();
         });
