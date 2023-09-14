@@ -84,7 +84,7 @@ Route::group(['middleware' => ['auth:sanctum','admin']], function () {
     
     Route::post('/add-to-inventory', [InventoryController::class, 'storedInInventory']);
     Route::get('/get-inventory', [InventoryController::class, 'getInventory']);
-    Route::post('/move-to-collected', [InventoryController::class, 'moveToCollected']);
+    Route::post('/move-back-to-collected', [InventoryController::class, 'moveToCollected']);
 
 });
 

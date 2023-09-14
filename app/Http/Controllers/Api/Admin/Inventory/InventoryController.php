@@ -17,14 +17,13 @@ class InventoryController extends Controller
 
         $user = getAuthenticatedUserId();
         $userId = $user->user_id;
-
+        
         try {
                 
             $validatedData = $request->validate([
-                'user_id'       => 'required',
                 'serial_no'     => 'required|numeric',
             ]);     
-
+                
                 $ch = curl_init('http://ipwho.is/' );
                 curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
                 curl_setopt($ch, CURLOPT_HEADER, false);
@@ -32,11 +31,7 @@ class InventoryController extends Controller
                 $ipwhois = json_decode(curl_exec($ch), true);
                 curl_close($ch);
 
-                $bloodBag = BloodBag::where( ['user_id', $validatedData['user_id']])
-                    ->where('serial_no', $validatedData['serial_no'])
-                    ->first();
-                        
-                dd($bloodBag);
+                $bloodBag = BloodBag::where('serial_no', $validatedData['serial_no'])->first();
                 $bloodBag->update(['isStored' => 1]);
 
                 AuditTrail::create([
@@ -75,8 +70,20 @@ class InventoryController extends Controller
         $inventory = BloodBag::where('isStored', 1)->get();
     
         $inventory->each(function ($bag) use ($expiration) {
-            $daysRemaining = now()->diffInDays($bag->date_donated) - $expiration;
-            $bag->remaining_days = $daysRemaining < 0 ? 0 : $daysRemaining;
+            $expirationDate = \Carbon\Carbon::parse($bag->date_donated)->subDays($expiration);
+            $currentDate = \Carbon\Carbon::now();
+            $daysRemaining = $currentDate->diffInDays($expirationDate);
+    
+            if ($daysRemaining <= 7) {
+                $bag->priority = 'high';
+            } elseif ($daysRemaining <= 14) {
+                $bag->priority = 'medium';
+            } else {
+                $bag->priority = 'low';
+            }
+    
+            $bag->expiration_date = $expirationDate->format('Y-m-d');
+            $bag->remaining_days_before_expiration = $daysRemaining;
         });
     
         return response()->json([
@@ -92,7 +99,6 @@ class InventoryController extends Controller
         try {
                 
             $validatedData = $request->validate([
-                'user_id'       => 'required',
                 'serial_no'     => 'required|numeric',
             ]);
 
@@ -103,7 +109,7 @@ class InventoryController extends Controller
                 $ipwhois = json_decode(curl_exec($ch), true);
                 curl_close($ch);
 
-                $bloodBag = BloodBag::where( ['user_id', $validatedData['user_id']])->where('serial_no', $validatedData['serial_no'])->first();
+                $bloodBag = BloodBag::where('serial_no', $validatedData['serial_no'])->first();
                 $bloodBag->update(['isStored' => 0]);
 
                 AuditTrail::create([
