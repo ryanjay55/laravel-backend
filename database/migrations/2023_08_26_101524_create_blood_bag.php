@@ -18,6 +18,7 @@ return new class extends Migration
             $table->date('date_donated');     
             $table->string('venue');     
             $table->string('bled_by');  
+            $table->smallInteger('isStored')->default(0);     
             $table->smallInteger('isUsed')->default(0);     
             $table->smallInteger('status')->default(0);     
             $table->timestamps();

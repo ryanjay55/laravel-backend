@@ -16,7 +16,8 @@ class BloodBag extends Model
         'serial_no',
         'date_donated',
         'venue',
-        'bled_by'
+        'bled_by',
+        'isStored'
     ];
 
     

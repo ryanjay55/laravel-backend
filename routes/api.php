@@ -13,6 +13,7 @@ use App\Http\Controllers\Api\Donor\DonationHistory\DonationHistoryController;
 use App\Http\Controllers\Api\Donor\BloodJourney\BloodJourneyController;
 use App\Http\Controllers\Api\Donor\Dashboard\DashboardController;
 use App\Http\Controllers\Api\Donor\DonorPost\DonorPostController;
+use App\Http\Controllers\Api\Admin\Inventory\InventoryController;
 
 /*
 |--------------------------------------------------------------------------
@@ -80,6 +81,10 @@ Route::group(['middleware' => ['auth:sanctum','admin']], function () {
     Route::get('/get-defferal-list', [UserListController::class, 'getDeferralList']);
     Route::post('/approve-post', [PostApprovalController::class, 'approvePost']);
     Route::get('/get-audit-trail', [AuditTrailController::class, 'getAuditTrail']);
+    
+    Route::post('/add-to-inventory', [InventoryController::class, 'storedInInventory']);
+    Route::get('/get-inventory', [InventoryController::class, 'getInventory']);
+    Route::post('/move-to-collected', [InventoryController::class, 'moveToCollected']);
 
 });
 
