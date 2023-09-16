@@ -82,4 +82,59 @@ class DonorPostController extends Controller
         ], 200);
     }
 
+    public function editPost(Request $request)
+    {
+        try {
+            $validatedData = $request->validate([
+                'donor_posts_id'        => ['required'], 
+                'body'                  => ['required', 'string'],
+            ]);
+        
+                $donorPost = DonorPost::where('donor_posts_id', $validatedData['donor_posts_id'])->first();
+                $donorPost->body = $validatedData['body'];
+                $donorPost->update();
+           
+                return response()->json([
+                    'status'    => 'success',
+                    'message'   => 'post updated',
+                ]);
+        
+        } catch (ValidationException $e) {
+
+            return response()->json([
+                'status'        => 'error',
+                'errors'        => $e->validator->errors(),
+            ], 422);
+
+
+        }
+    }
+
+    public function deletePost(Request $request)
+    {
+        try {
+            $validatedData = $request->validate([
+                'donor_posts_id'        => ['required'], 
+            ]);
+        
+                $donorPost = DonorPost::where('donor_posts_id', $validatedData['donor_posts_id'])->first();
+                $donorPost->status = 1;
+                $donorPost->update();
+           
+                return response()->json([
+                    'status'    => 'success',
+                    'message'   => 'post deleted successfully',
+                ]);
+        
+        } catch (ValidationException $e) {
+
+            return response()->json([
+                'status'        => 'error',
+                'errors'        => $e->validator->errors(),
+            ], 422);
+
+
+        }
+    }
+    
 }

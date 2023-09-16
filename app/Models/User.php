@@ -58,4 +58,5 @@ class User extends Authenticatable
         return $this->hasOne(BloodBag::class, 'user_id','user_id');
     }
     
+    
 }

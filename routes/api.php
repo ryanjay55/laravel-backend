@@ -14,6 +14,7 @@ use App\Http\Controllers\Api\Donor\BloodJourney\BloodJourneyController;
 use App\Http\Controllers\Api\Donor\Dashboard\DashboardController;
 use App\Http\Controllers\Api\Donor\DonorPost\DonorPostController;
 use App\Http\Controllers\Api\Admin\Inventory\InventoryController;
+use App\Http\Controllers\Api\Donor\Profile\ProfileController;
 
 /*
 |--------------------------------------------------------------------------
@@ -76,15 +77,16 @@ Route::group(['middleware' => ['auth:sanctum','admin']], function () {
     Route::post('/add-bloodbag', [BloodBagController::class, 'store']);
     Route::put('/update-bloodbag', [BloodBagController::class, 'update']);
     Route::get('/get-collected-bloodbags', [BloodBagController::class, 'collectedBloodBag']);
-    Route::get('/get-user-details', [UserListController::class, 'getUserDetails']);
     Route::post('/move-to-defferal', [UserListController::class, 'moveToDeferral']);
     Route::get('/get-defferal-list', [UserListController::class, 'getDeferralList']);
     Route::post('/approve-post', [PostApprovalController::class, 'approvePost']);
+    Route::post('/cancel-approve-post', [PostApprovalController::class, 'cancelApprovedPost']);
     Route::get('/get-audit-trail', [AuditTrailController::class, 'getAuditTrail']);
-    
     Route::post('/add-to-inventory', [InventoryController::class, 'storedInInventory']);
     Route::get('/get-inventory', [InventoryController::class, 'getInventory']);
     Route::post('/move-back-to-collected', [InventoryController::class, 'moveToCollected']);
+    Route::get('/get-expired-blood', [InventoryController::class, 'expiredBlood']);
+    Route::post('/dispose-blood', [InventoryController::class, 'disposeBlood']);
 
 });
 
@@ -104,6 +106,9 @@ Route::group(['middleware' => ['auth:sanctum']], function () {
     Route::get('/get-badge', [DashboardController::class, 'getBadge']);
     Route::post('/create-post', [DonorPostController::class, 'createPost']);
     Route::get('/get-donor-post', [DonorPostController::class, 'getDonorPost']);
-
+    Route::put('/edit-post', [DonorPostController::class, 'editPost']);
+    Route::delete('/delete-post', [DonorPostController::class, 'deletePost']);
+    Route::get('/get-user-details', [UserListController::class, 'getUserDetails']);
+    Route::put('/edit-profile', [ProfileController::class, 'updateProfile']);
 
 });

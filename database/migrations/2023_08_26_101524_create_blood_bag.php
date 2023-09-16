@@ -15,11 +15,14 @@ return new class extends Migration
             $table->id('blood_bags_id');
             $table->foreignId('user_id');
             $table->string('serial_no');    
-            $table->date('date_donated');     
+            $table->date('date_donated');   
+            $table->date('expiration_date');  
             $table->string('venue');     
             $table->string('bled_by');  
             $table->smallInteger('isStored')->default(0);     
             $table->smallInteger('isUsed')->default(0);     
+            $table->smallInteger('isExpired')->default(0);  
+            $table->smallInteger('isDisposed')->default(0);  
             $table->smallInteger('status')->default(0);     
             $table->timestamps();
         });
