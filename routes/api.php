@@ -100,10 +100,10 @@ Route::group(['middleware' => ['auth:sanctum','admin']], function () {
 */
 
 Route::group(['middleware' => ['auth:sanctum']], function () {
-
+    Route::get('/get-available-blood', [DashboardController::class, 'donorAvailableBlood']);
+    Route::get('/get-badge', [DashboardController::class, 'getBadge']);
     Route::get('/get-history', [DonationHistoryController::class, 'donationHistory']);
     Route::get('/get-blood-journey', [BloodJourneyController::class, 'bloodJourney']);
-    Route::get('/get-badge', [DashboardController::class, 'getBadge']);
     Route::post('/create-post', [DonorPostController::class, 'createPost']);
     Route::get('/get-donor-post', [DonorPostController::class, 'getDonorPost']);
     Route::put('/edit-post', [DonorPostController::class, 'editPost']);

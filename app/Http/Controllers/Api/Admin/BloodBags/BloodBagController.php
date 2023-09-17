@@ -187,8 +187,6 @@ class BloodBagController extends Controller
     
 
     public function collectedBloodBag(){
-        $user = getAuthenticatedUserId();
-        $userId = $user->user_id;
     
         $bloodBags = DB::table('user_details')
             ->join('blood_bags', 'user_details.user_id', '=', 'blood_bags.user_id')
