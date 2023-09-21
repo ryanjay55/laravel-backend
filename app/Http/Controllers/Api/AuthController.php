@@ -18,46 +18,46 @@ class AuthController extends Controller
                 'email_or_phone' => 'required',
                 'password' => 'required',
             ]);
-    
+            
+            $isEmail = filter_var($credentials['email_or_phone'], FILTER_VALIDATE_EMAIL);
+            $field = $isEmail ? 'email' : 'mobile';
+        
+            if (Auth::attempt([$field => $credentials['email_or_phone'], 'password' => $credentials['password']])) {
+        
+                /** @var \App\Models\User $user **/
+                $user = Auth::user();
+        
+                $token = $user->createToken('api-token')->plainTextToken;
+        
+                if ($user->isAdmin == 1) {
+                    return response()->json(['token' => $token, 'user' => $user, 'redirect' => 'Admin Dashboard']);
+                }else{
+                    return response()->json(['token' => $token, 'user' => $user, 'redirect' => 'Donor Dashboard']);
+                }
+        
+            } else {
+                return response()->json([
+                    'res'   => 'error',
+                    'msg'   => 'Invalid account please check username or password',
+                ],400);
+            }
+
         } catch (ValidationException $e) {
             return response()->json([
                 'status' => 'error',
                 'message' => 'Validation failed',
                 'errors' => $e->validator->errors(),
-            ], 402);
+            ], 400);
         }        
-        // dd($credentials);
     
-        $isEmail = filter_var($credentials['email_or_phone'], FILTER_VALIDATE_EMAIL);
-        $field = $isEmail ? 'email' : 'mobile';
-    
-        if (Auth::attempt([$field => $credentials['email_or_phone'], 'password' => $credentials['password']])) {
-    
-            /** @var \App\Models\User $user **/
-            $user = Auth::user();
-    
-            $token = $user->createToken('api-token')->plainTextToken;
-    
-            if ($user->isAdmin == 1) {
-                return response()->json(['token' => $token, 'user' => $user, 'redirect' => 'Admin Dashboard']);
-            }else{
-                return response()->json(['token' => $token, 'user' => $user, 'redirect' => 'Donor Dashboard']);
-            }
-    
-        } else {
-            return response()->json([
-                'res'   => 'error',
-                'msg'   => 'Invalid account please check username or password',
-            ]);
-        }
     }
     
  
 
     public function logout(Request $request)
     {
+   
         $request->user()->currentAccessToken()->delete();
-
         return response()->json(['message' => 'Logged out successfully']);
         
     }

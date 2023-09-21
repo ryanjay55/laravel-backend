@@ -11,25 +11,26 @@ use Illuminate\Validation\ValidationException;
 class UserListController extends Controller
 {
     public function getUserDetails()
-{
-    $userDetails = UserDetail::join('users', 'user_details.user_id', '=', 'users.user_id')
-        ->where('user_details.isDeffered', 0)
-        ->where('user_details.status', 0)
-        ->select('users.mobile', 'users.email','user_details.*')
-        ->get();
+    {
+        $userDetails = UserDetail::join('users', 'user_details.user_id', '=', 'users.user_id')
+            ->where('user_details.isDeffered', 0)
+            ->where('user_details.status', 0)
+            ->select('users.mobile', 'users.email','user_details.*')
+            ->paginate('7');
+            
 
-    if ($userDetails->isEmpty()) {
-        return response()->json([
-            'status' => 'success',
-            'message' => 'No donor found.'
-        ], 200);
-    } else {
-        return response()->json([
-            'status' => 'success',
-            'data' => $userDetails
-        ], 200);
+        if ($userDetails->isEmpty()) {
+            return response()->json([
+                'status' => 'success',
+                'message' => 'No donor found.'
+            ], 200);
+        } else {
+            return response()->json([
+                'status' => 'success',
+                'data' => $userDetails
+            ], 200);
+        }
     }
-}
     
     public function moveToDeferral(Request $request)
     {

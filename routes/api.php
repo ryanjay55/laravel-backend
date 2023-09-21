@@ -44,7 +44,6 @@ Route::group([
 
 ], function ($router) { 
     Route::post('/login', [AuthController::class, 'login']);    
-    Route::post('/logout', [AuthController::class, 'logout']);    
 
 });
 
@@ -110,5 +109,6 @@ Route::group(['middleware' => ['auth:sanctum']], function () {
     Route::delete('/delete-post', [DonorPostController::class, 'deletePost']);
     Route::get('/get-user-details', [UserListController::class, 'getUserDetails']);
     Route::put('/edit-profile', [ProfileController::class, 'updateProfile']);
+    Route::post('/logout', [AuthController::class, 'logout']);    
 
 });
