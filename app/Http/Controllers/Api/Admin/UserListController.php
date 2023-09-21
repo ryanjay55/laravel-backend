@@ -7,6 +7,7 @@ use App\Models\AuditTrail;
 use App\Models\UserDetail;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
+use Dompdf\Dompdf;
 
 class UserListController extends Controller
 {
@@ -29,6 +30,79 @@ class UserListController extends Controller
                 'status' => 'success',
                 'data' => $userDetails
             ], 200);
+        }
+    }
+
+    public function exportUserDetailsAsPdf(){
+        $userDetails = UserDetail::join('users', 'user_details.user_id', '=', 'users.user_id')
+            ->where('user_details.isDeffered', 0)
+            ->where('user_details.status', 0)
+            ->select('users.mobile', 'users.email','user_details.*')
+            ->paginate('7');
+        
+            if ($userDetails->isEmpty()) {
+                return response()->json([
+                    'status' => 'success',
+                    'message' => 'No donor found.'
+                ], 200);
+            } else {
+                // Generate the PDF
+                $pdf = new Dompdf();
+                $html = view('user-details', ['userDetails' => $userDetails])->render();
+                $pdf->loadHtml($html);
+                $pdf->render();
+        
+                // Return the PDF as a response
+                return response($pdf->output(), 200)
+                    ->header('Content-Type', 'application/pdf')
+                    ->header('Content-Disposition', 'attachment; filename="user-details.pdf"');
+            }
+    }
+
+    public function searchUsers(Request $request)
+    {
+        try {
+            $validatedData = $request->validate([
+                'searchInput' => 'required',
+            ]);
+
+            $searchInput = str_replace(' ', '', $request->input('searchInput')); 
+            
+            $userDetails = UserDetail::join('users', 'user_details.user_id', '=', 'users.user_id')
+                ->where('user_details.isDeffered', 0)
+                ->where('user_details.status', 0)
+                ->where(function ($query) use ($searchInput) {
+                    $query->where('users.mobile', 'LIKE', '%' . $searchInput . '%')
+                        ->orWhere('users.email', 'LIKE', '%' . $searchInput . '%')
+                        ->orWhere('user_details.donor_no', 'LIKE', '%' . $searchInput . '%')
+                        ->orWhere('user_details.first_name', 'LIKE', '%' . $searchInput . '%')
+                        ->orWhere('user_details.last_name', 'LIKE', '%' . $searchInput . '%')
+                        ->orWhere('user_details.blood_type', 'LIKE', '%' . $searchInput . '%')
+                        ->orWhere('user_details.dob', 'LIKE', '%' . $searchInput . '%');
+                })
+                ->select('users.mobile', 'users.email', 'user_details.*')
+                ->paginate(7);
+
+
+            if($userDetails->isEmpty()) {
+                return response()->json([
+                    'status' => 'success',
+                    'message' => 'No donor found.'
+                ], 200);
+            }else{
+                return response()->json([
+                    'status' => 'success',
+                    'data' => $userDetails
+                ], 200);
+
+            }
+           
+        } catch (ValidationException $e) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Validation failed',
+                'errors' => $e->validator->errors(),
+            ], 400);
         }
     }
     

@@ -108,6 +108,8 @@ Route::group(['middleware' => ['auth:sanctum']], function () {
     Route::put('/edit-post', [DonorPostController::class, 'editPost']);
     Route::delete('/delete-post', [DonorPostController::class, 'deletePost']);
     Route::get('/get-user-details', [UserListController::class, 'getUserDetails']);
+    Route::post('/search-user', [UserListController::class, 'searchUsers']);
+    Route::get('/export-pdf-user-details', [UserListController::class, 'exportUserDetailsAsPdf']);
     Route::put('/edit-profile', [ProfileController::class, 'updateProfile']);
     Route::post('/logout', [AuthController::class, 'logout']);    
 
