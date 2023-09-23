@@ -12,6 +12,8 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\ValidationException;
 use Illuminate\Support\Facades\Mail; 
 use App\Mail\RegistrationMail;
+use App\Rules\ValidateUniqueEmail;
+use App\Rules\ValidateUniqueMobile;
 
 class RegistrationController extends Controller
 {
@@ -21,9 +23,9 @@ class RegistrationController extends Controller
         try {
 
             $validatedData = $request->validate([
-                'email'     => ['required', 'string', 'email', 'max:255','unique:users'],
-                'mobile'    => ['required', 'numeric', 'digits:11','unique:users'],
-                'password'  => ['required','confirmed', 'min:6']
+                'email'     => ['required', 'string', 'email', 'max:255',new ValidateUniqueEmail],
+                'mobile'    => ['required', 'numeric', 'digits:11', new ValidateUniqueMobile],
+                'password'  => ['required','confirmed', 'min:8']
             ],[
                 'mobile.digits' => 'Invalid mobile number',
             ]);

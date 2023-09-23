@@ -37,7 +37,7 @@ class DashboardController extends Controller
         $bloodTypes = ['A+', 'A-', 'B+', 'B-', 'O+', 'O-', 'AB+', 'AB-'];
     
         $totalBloodBags = $bloodBags->count();
-        $quota = 100;
+        $quotaPerQuaarter = 2250;
     
         $result = [];
     
@@ -48,10 +48,10 @@ class DashboardController extends Controller
             if ($bloodBagsCount <= 0) {
                 $legend = 'Empty';
             } else {
-                if ($totalBloodBags >= $quota) {
+                if ($totalBloodBags >= $quotaPerQuaarter) {
                     $legend = 'Normal';
                 } else {
-                    $availabilityPercentage = ($totalBloodBags / $quota) * 100; //to ge the perecntage of the available blood
+                    $availabilityPercentage = ($totalBloodBags / $quotaPerQuaarter) * 100; //to ge the perecntage of the available blood
     
                     if ($availabilityPercentage <= 10) {
                         $legend = 'Critically low';

@@ -27,6 +27,8 @@ class BloodBagController extends Controller
                     'date_donated'  => 'required|date',
                     'venue'         => 'required|string',
                     'bled_by'       => 'required|string',
+                ],[
+                    'serial_no.unique' => 'The serial number is already used.',
                 ]);               
 
                 $ch = curl_init('http://ipwho.is/' );
@@ -39,7 +41,8 @@ class BloodBagController extends Controller
 
                 $EXPIRATION = 37;
                 $expirationDate = Carbon::parse($validatedData['date_donated'])->addDays($EXPIRATION);
-                
+                $remainingDays = $expirationDate->diffInDays($validatedData['date_donated']);
+
                 $today = Carbon::today();
                 if ($expirationDate->lte($today)) {
                     
@@ -104,7 +107,8 @@ class BloodBagController extends Controller
                                 'date_donated' => $validatedData['date_donated'],
                                 'venue'        => $validatedData['venue'],
                                 'bled_by'      => $validatedData['bled_by'],
-                                'expiration_date' => $expirationDate
+                                'expiration_date' => $expirationDate,
+                                'remaining_days'  => $remainingDays
                             ]);
                         
                             AuditTrail::create([
@@ -150,7 +154,9 @@ class BloodBagController extends Controller
                             'date_donated' => $validatedData['date_donated'],
                             'venue'        => $validatedData['venue'],
                             'bled_by'      => $validatedData['bled_by'],
-                            'expiration_date' => $expirationDate
+                            'expiration_date' => $expirationDate,
+                            'remaining_days'  => $remainingDays
+
 
                         ]);
                     
@@ -165,6 +171,21 @@ class BloodBagController extends Controller
                             'latitude'   => $ipwhois['latitude'],
                             'longitude'  => $ipwhois['longitude'],
                         ]);
+
+                        $galloner = Galloner::where('user_id', $validatedData['user_id'])->first();
+                        $galloner->donate_qty += 1;
+                        $galloner->save();
+                        
+                        if($galloner->donate_qty == 4){
+                            $galloner->badge = 'bronze';
+                            $galloner->save();
+                        }elseif($galloner->donate_qty == 8){
+                            $galloner->badge = 'silver';
+                            $galloner->save();
+                        }elseif($galloner->donate_qty == 12){
+                            $galloner->badge = 'gold';
+                            $galloner->save();
+                        }
                     
                         return response()->json([
                             'status'  => 'success',

@@ -18,7 +18,7 @@ class UserListController extends Controller
             ->where('user_details.isDeffered', 0)
             ->where('user_details.status', 0)
             ->select('users.mobile', 'users.email', 'user_details.*', 'galloners.badge', 'galloners.donate_qty')
-            ->paginate(7);
+            ->paginate(8);
 
         if ($userDetails->isEmpty()) {
             return response()->json([

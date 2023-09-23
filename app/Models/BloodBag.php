@@ -21,6 +21,7 @@ class BloodBag extends Model
         'expiration_date',
         'isExpired',
         'isDisposed',
+        'remaining_days'
     ];
 
     
