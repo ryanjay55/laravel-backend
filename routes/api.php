@@ -65,7 +65,6 @@ Route::group(
 });
 
 
-
 /*
 |--------------------------------------------------------------------------
 | Admin API Routes
@@ -112,5 +111,6 @@ Route::group(['middleware' => ['auth:sanctum']], function () {
     Route::get('/export-pdf-user-details', [UserListController::class, 'exportUserDetailsAsPdf']);
     Route::put('/edit-profile', [ProfileController::class, 'updateProfile']);
     Route::post('/logout', [AuthController::class, 'logout']);    
+    Route::get('/check-role',[AuthController::class, 'checkIfAdmin']);
 
 });

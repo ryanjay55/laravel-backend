@@ -21,9 +21,11 @@ class RegistrationController extends Controller
         try {
 
             $validatedData = $request->validate([
-                'email'     => ['required', 'string', 'email', 'max:255'],
-                'mobile'    => ['required', 'numeric', 'digits:11'],
+                'email'     => ['required', 'string', 'email', 'max:255','unique:users'],
+                'mobile'    => ['required', 'numeric', 'digits:11','unique:users'],
                 'password'  => ['required','confirmed', 'min:6']
+            ],[
+                'mobile.digits' => 'Invalid mobile number',
             ]);
             
             $user_info = User::where('email', $validatedData['email'])->orWhere('mobile', $validatedData['mobile'])->first();
@@ -88,7 +90,7 @@ class RegistrationController extends Controller
                 'first_name'            => ['required', 'string'],
                 'middle_name'           => ['nullable', 'string'],
                 'last_name'             => ['required', 'string'],
-                'dob'                   => ['required', 'date'],
+                'dob'                   => ['required', 'date', 'before_or_equal:' . now()->subYears(16)->format('Y-m-d')],                
                 'sex'                   => ['required'],
                 'blood_type'            => ['required'],
                 'occupation'            => ['required', 'string'],
@@ -101,6 +103,7 @@ class RegistrationController extends Controller
             ],[
                 'user_id.required'  => 'Invalid. Proceed to step 1',
                 'user_id.exists'    => 'Invalid. Proceed to step 1',
+                'before_or_equal'   => 'You must at least 17 years old to register',
             ]);
         
             $user_id = $validatedData['user_id'];

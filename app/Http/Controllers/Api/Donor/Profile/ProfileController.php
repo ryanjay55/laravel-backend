@@ -19,8 +19,10 @@ class ProfileController extends Controller
                 'first_name'            => ['required', 'string'],
                 'middle_name'           => ['nullable', 'string'],
                 'last_name'             => ['required', 'string'],
+                'email'                 => ['required', 'string', 'unique:users,email'],
                 'mobile'                => ['required', 'string'],
                 'sex'                   => ['required'],
+                'dob'                   => ['required'],
                 'blood_type'            => ['required'],//
                 'occupation'            => ['required', 'string'],
                 'street'                => ['required', 'string'],
@@ -36,6 +38,7 @@ class ProfileController extends Controller
                 $userDetails->middle_name = $validatedData['middle_name'];
                 $userDetails->last_name = $validatedData['last_name'];
                 $userDetails->sex = $validatedData['sex'];
+                $userDetails->dob = $validatedData['dob'];
                 $userDetails->blood_type = $validatedData['blood_type'];
                 $userDetails->occupation = $validatedData['occupation'];
                 $userDetails->street = $validatedData['street'];
@@ -48,6 +51,7 @@ class ProfileController extends Controller
 
                 $userAuthDetails = User::where('user_id', $validatedData['user_id'])->first();
                 $userAuthDetails->mobile = $validatedData['mobile'];
+                $userAuthDetails->email = $validatedData['email'];
                 $userAuthDetails->update();
            
                 return response()->json([

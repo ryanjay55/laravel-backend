@@ -79,4 +79,17 @@ class AuthController extends Controller
 
         }        
     }
+
+    public function checkIfAdmin(){
+        if (Auth::check()) {
+            $user = Auth::user();
+            $user_id = $user->user_id;
+            $user_details = User::where('user_id', $user_id)->first();
+            $user_role = $user_details->isAdmin;
+            return response()->json([
+                'status' => 'success',
+                'isAdmin' => $user_role,
+            ], 200);
+        }
+    }
 }

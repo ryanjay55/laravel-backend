@@ -4,8 +4,10 @@ namespace App\Http\Controllers\Api\Donor\DonorPost;
 
 use App\Http\Controllers\Controller;
 use App\Models\DonorPost;
+use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\ValidationException;
 
 class DonorPostController extends Controller

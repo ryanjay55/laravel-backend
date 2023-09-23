@@ -14,11 +14,11 @@ class UserListController extends Controller
     public function getUserDetails()
     {
         $userDetails = UserDetail::join('users', 'user_details.user_id', '=', 'users.user_id')
+            ->join('galloners', 'user_details.user_id', '=', 'galloners.user_id')
             ->where('user_details.isDeffered', 0)
             ->where('user_details.status', 0)
-            ->select('users.mobile', 'users.email','user_details.*')
-            ->paginate('7');
-            
+            ->select('users.mobile', 'users.email', 'user_details.*', 'galloners.badge', 'galloners.donate_qty')
+            ->paginate(7);
 
         if ($userDetails->isEmpty()) {
             return response()->json([
