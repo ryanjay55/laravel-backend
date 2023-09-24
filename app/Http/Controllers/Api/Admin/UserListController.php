@@ -34,29 +34,50 @@ class UserListController extends Controller
     }
 
     public function exportUserDetailsAsPdf(){
+        $user = getAuthenticatedUserId();
+        $userId = $user->user_id;
+
         $userDetails = UserDetail::join('users', 'user_details.user_id', '=', 'users.user_id')
+            ->join('galloners', 'user_details.user_id', '=', 'galloners.user_id')
             ->where('user_details.isDeffered', 0)
             ->where('user_details.status', 0)
-            ->select('users.mobile', 'users.email','user_details.*')
-            ->paginate('7');
+            ->select('users.mobile', 'users.email', 'user_details.*', 'galloners.badge', 'galloners.donate_qty')
+            ->get();
+
+            $ch = curl_init('http://ipwho.is/' );
+            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+            curl_setopt($ch, CURLOPT_HEADER, false);
         
-            if ($userDetails->isEmpty()) {
-                return response()->json([
-                    'status' => 'success',
-                    'message' => 'No donor found.'
-                ], 200);
-            } else {
-                // Generate the PDF
-                $pdf = new Dompdf();
-                $html = view('user-details', ['userDetails' => $userDetails])->render();
-                $pdf->loadHtml($html);
-                $pdf->render();
+            $ipwhois = json_decode(curl_exec($ch), true);
         
-                // Return the PDF as a response
-                return response($pdf->output(), 200)
-                    ->header('Content-Type', 'application/pdf')
-                    ->header('Content-Disposition', 'attachment; filename="user-details.pdf"');
-            }
+            curl_close($ch);
+
+            AuditTrail::create([
+                'user_id'    => $userId,
+                'action'     => 'Export Users List as PDF',
+                'status'     => 'success',
+                'ip_address' => $ipwhois['ip'],
+                'region'     => $ipwhois['region'],
+                'city'       => $ipwhois['city'],
+                'postal'     => $ipwhois['postal'],
+                'latitude'   => $ipwhois['latitude'],
+                'longitude'  => $ipwhois['longitude'],
+            ]);
+
+            $totalUserDetails = $userDetails->count();
+            $dateNow = new \DateTime();
+            $formattedDate = $dateNow->format('F j, Y g:i A');
+
+            $pdf = new Dompdf();
+            $html = view('user-details', ['userDetails' => $userDetails, 'totalUsers' => $totalUserDetails, 'dateNow' => $formattedDate])->render();
+            $pdf->loadHtml($html);
+            $pdf->render();
+    
+            // Return the PDF as a response
+            return response($pdf->output(), 200)
+                ->header('Content-Type', 'application/pdf')
+                ->header('Content-Disposition', 'attachment; filename="user-details.pdf"');
+                
     }
 
     public function searchUsers(Request $request)
@@ -81,13 +102,13 @@ class UserListController extends Controller
                         ->orWhere('user_details.dob', 'LIKE', '%' . $searchInput . '%');
                 })
                 ->select('users.mobile', 'users.email', 'user_details.*')
-                ->paginate(7);
+                ->paginate(8);
 
 
             if($userDetails->isEmpty()) {
                 return response()->json([
                     'status' => 'success',
-                    'message' => 'No donor found.'
+                    'message' => 'No user found.'
                 ], 200);
             }else{
                 return response()->json([

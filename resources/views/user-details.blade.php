@@ -3,81 +3,92 @@
 <head>
     <title>User Details</title>
     <style>
-        body {
+        /* Apply styles to the container */
+        .container {
             font-family: Arial, sans-serif;
-            background-color: #f5f5f5;
-            margin: 0;
-            padding: 20px;
-        }
-
-        h1 {
-            color: #d52b1e;
             text-align: center;
-            margin-bottom: 20px;
+            
         }
 
+        /* Style the logo */
+        .red-cross-logo {
+            width: 100px; /* Adjust the width as needed */
+        }
+
+        /* Style the heading */
+        .red-cross-text {
+            color: #FF0000; /* Red color for the heading */
+        }
+
+        /* Style the summary section */
+        .summary {
+            margin: 20px 0;
+        }
+
+        /* Style the table */
         table {
             width: 100%;
             border-collapse: collapse;
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-            background-color: #fff;
+            margin-top: 20px;
         }
 
-        th, td {
-            padding: 15px;
-            text-align: center;
-            border-bottom: 1px solid #ddd;
-        }
 
+        /* Style table header */
         th {
-            background-color: #d52b1e;
-            color: #fff;
+            background-color: #FF0000; /* Red background for header cells */
+            color: white; /* White text for header cells */
+            padding: 10px;
+        }
+
+        /* Style table data rows */
+        td {
+            padding: 10px;
+            border: 1px solid #ccc;
+        }
+
+        /* Style alternate rows with a background color */
+        tr:nth-child(even) {
+            background-color: #f2f2f2; /* Light gray background for even rows */
+        }
+
+        /* Style the "Total Donors" and "As of Date" text */
+        .total-users, .as-of-date {
             font-weight: bold;
-        }
-
-        tr:hover {
-            background-color: #f9f9f9;
-        }
-
-        .red-cross-logo {
-            display: block;
-            width: 100px;
-            margin: 0 auto;
-            padding-bottom: 10px;
-        }
-
-        .red-cross-text {
-            font-weight: bold;
-            color: #d52b1e;
         }
     </style>
 </head>
 <body>
-    <img src="{{ asset('logo/LifeLink-logo.png') }}" alt="LifeLink Logo" class="red-cross-logo">
-    <h1 class="red-cross-text">Registerd Users</h1>
-    <table>
-        <thead>
-            <tr>
-                <th>Donor Number</th>
-                <th>Name</th>
-                <th>Blood Type</th>
-                <th>Email</th>
-                <th>Mobile</th>
-                <th>Birth Date</th>
-            </tr>
-        </thead>
-        <tbody>
-            @foreach($userDetails as $user)
+    <div class="container">
+        <img src="{{ asset('logo/Lifelink-logo.png') }}" alt="LifeLink Logo" class="red-cross-logo">
+        <h1 class="red-cross-text">Registered Users</h1> 
+        <div class="summary">
+            <div class="total-users">Total Users: {{ $totalUsers }}</div>
+            <div class="as-of-date">As of {{ $dateNow }}</div>
+        </div>       
+        <table>
+            <thead>
                 <tr>
-                    <td>{{ $user->donor_no }}</td>
-                    <td>{{ $user->first_name }} {{ $user->last_name }}</td>
-                    <td>{{ $user->blood_type }}</td>
-                    <td>{{ $user->email }}</td>
-                    <td>{{ $user->mobile }}</td>
-                    <td>{{ $user->dob }}</td>
+                    <th>Donor Number</th>
+                    <th>Name</th>
+                    <th>Blood Type</th>
+                    <th>Email</th>
+                    <th>Mobile</th>
+                    <th>Birth Date</th>
                 </tr>
-            @endforeach
-        </tbody>
-    </table>
+            </thead>
+            <tbody>
+                @foreach($userDetails as $user)
+                    <tr>
+                        <td>{{ $user->donor_no }}</td>
+                        <td>{{ $user->first_name }} {{ $user->last_name }}</td>
+                        <td>{{ $user->blood_type }}</td>
+                        <td>{{ $user->email }}</td>
+                        <td>{{ $user->mobile }}</td>
+                        <td>{{ $user->dob }}</td>
+                    </tr>
+                @endforeach
+            </tbody>
+        </table>
+    </div>
 </body>
 </html>

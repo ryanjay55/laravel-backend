@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
+use App\Models\UserDetail;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -91,5 +92,18 @@ class AuthController extends Controller
                 'isAdmin' => $user_role,
             ], 200);
         }
+    }
+
+    public function me(){
+        $user = getAuthenticatedUserId();
+        $userId = $user->user_id;
+
+        $userDetail = UserDetail::where('user_id', $userId)->first();
+
+        return response()->json([
+            'status' => 'success',
+            'data' => $userDetail
+        ], 200);
+        
     }
 }
