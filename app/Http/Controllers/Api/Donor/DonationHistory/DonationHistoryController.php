@@ -80,7 +80,7 @@ class DonationHistoryController extends Controller
                 'days_since_last_donation' => 'You haven\'t donated yet'
             ]);
         }
-
+  
         $mostRecentDonationDate = $donationHistory->first()->date_donated;
 
         $currentDate = Carbon::now(); // Get the current date and time
