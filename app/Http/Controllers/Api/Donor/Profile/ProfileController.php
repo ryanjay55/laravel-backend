@@ -23,7 +23,7 @@ class ProfileController extends Controller
                 'mobile'                => ['required', 'string'],
                 'sex'                   => ['required'],
                 'dob'                   => ['required'],
-                'blood_type'            => ['required'],//
+                'blood_type'            => ['required'],
                 'occupation'            => ['required', 'string'],
                 'street'                => ['required', 'string'],
                 'region'                => ['required'],

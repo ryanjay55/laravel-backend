@@ -66,6 +66,7 @@ class BloodBagController extends Controller
                         if ($currentDonationDate <= $lastDonationDate) {
                             AuditTrail::create([
                                 'user_id'    => $userId,
+                                'module'     => 'User List',
                                 'action'     => 'Add Blood Bag | serial no: ' . $validatedData['serial_no'],
                                 'status'     => 'failed',
                                 'ip_address' => $ipwhois['ip'],
@@ -86,6 +87,7 @@ class BloodBagController extends Controller
 
                             AuditTrail::create([
                                 'user_id'    => $userId,
+                                'module'     => 'User List',
                                 'action'     => 'Add Blood Bag | serial no: ' . $validatedData['serial_no'],
                                 'status'     => 'failed',
                                 'ip_address' => $ipwhois['ip'],
@@ -117,6 +119,7 @@ class BloodBagController extends Controller
                         
                             AuditTrail::create([
                                 'user_id'    => $userId,
+                                'module'     => 'User List',
                                 'action'     => 'Add Blood Bag | serial no: ' . $validatedData['serial_no'],
                                 'status'     => 'success',
                                 'ip_address' => $ipwhois['ip'],
@@ -165,6 +168,7 @@ class BloodBagController extends Controller
                     
                         AuditTrail::create([
                             'user_id'    => $userId,
+                            'module'     => 'User List',
                             'action'     => 'Add Blood Bag | serial no: ' . $validatedData['serial_no'],
                             'status'     => 'success',
                             'ip_address' => $ipwhois['ip'],
@@ -210,18 +214,46 @@ class BloodBagController extends Controller
     }
     
 
-    public function collectedBloodBag(){
+    public function collectedBloodBag() {
+        try {
+            // Retrieve collected blood bags with specified columns
+            $bloodBags = UserDetail::join('blood_bags', 'user_details.user_id', '=', 'blood_bags.user_id')
+                ->select('user_details.donor_no', 'user_details.first_name', 'user_details.last_name', 'user_details.blood_type', 'blood_bags.serial_no', 'blood_bags.date_donated', 'blood_bags.expiration_date', 'blood_bags.created_at', 'bled_by', 'venue')
+                ->where('blood_bags.status', '=', 0)
+                ->where('blood_bags.isStored', '=', 0)
+                ->orderBy('blood_bags.date_donated', 'asc') 
+                ->paginate(8);
     
-        $bloodBags = UserDetail::join('blood_bags', 'user_details.user_id', '=', 'blood_bags.user_id')
-            ->select('user_details.donor_no','user_details.first_name', 'user_details.last_name', 'user_details.blood_type','blood_bags.serial_no', 'blood_bags.date_donated', 'blood_bags.expiration_date' ,'bled_by','venue')
-            ->where('blood_bags.status', '=', 0) 
-            ->paginate(8);
+            // Calculate the countdown for each blood bag
+            $currentTime = now(); // Current timestamp
+            foreach ($bloodBags as $bloodBag) {
+                $createdAt = $bloodBag->created_at;
+                $timeDifference = $createdAt->diffInDays($currentTime); // Calculate the difference in days
+                $bloodBag->countdown = max(0, 3 - $timeDifference); // Calculate the countdown (minimum 0)
     
-        return response()->json([
-            'status' => 'success',
-            'data' => $bloodBags
-        ]);
+                // Check if the countdown is 0 and add a message
+                if ($bloodBag->countdown === 0) {
+                    $bloodBag->countdown_message = 'The removal period has ended';
+                } else {
+                    $bloodBag->countdown_message = 'Blood bag can be removed within ' . $bloodBag->countdown . ' day/s';
+                }
+            }
+    
+            // Return the paginated results
+            return response()->json([
+                'status' => 'success',
+                'data' => $bloodBags
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'An error occurred while fetching blood bags.',
+                'error' => $e->getMessage(),
+            ], 500);
+        }
     }
+    
+    
 
     public function searchCollectedBloodBag(Request $request)
     {
@@ -316,6 +348,133 @@ class BloodBagController extends Controller
             return response($pdf->output(), 200)
                 ->header('Content-Type', 'application/pdf')
                 ->header('Content-Disposition', 'attachment; filename="donor-list.pdf"');
+    }
+
+
+    function removeBlood(Request $request){
+
+        $user = getAuthenticatedUserId();
+        $userId = $user->user_id;
+
+        try {
+            
+            $request->validate([
+                'serial_no'     => 'required',
+            ]);               
+
+            $ch = curl_init('http://ipwho.is/' );
+            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+            curl_setopt($ch, CURLOPT_HEADER, false);
+            $ipwhois = json_decode(curl_exec($ch), true);
+            curl_close($ch);
+
+            $serialNumber = $request->input('serial_no');
+
+            $bloodBag = BloodBag::where('serial_no', $serialNumber)->first();
+
+            if (!$bloodBag) {
+                return response()->json([
+                    'status' => 'error',
+                    'message' => 'Blood bag not found',
+                ], 404);
+            }else{
+
+                $user_id = $bloodBag->user_id;  
+                $createdAt = $bloodBag->created_at;
+                $currentTimestamp = now(); 
+
+                $hoursDifference = $createdAt->diffInHours($currentTimestamp);
+
+                if ($hoursDifference > 72) { // 72 hours = 3 days
+                    
+                    AuditTrail::create([
+                        'user_id'    => $userId,
+                        'module'     => 'Collected Blood Bag',
+                        'action'     => 'Remove Blood Bag from Collected | serial no: ' . $serialNumber,
+                        'status'     => 'Failed',
+                        'ip_address' => $ipwhois['ip'],
+                        'region'     => $ipwhois['region'],
+                        'city'       => $ipwhois['city'],
+                        'postal'     => $ipwhois['postal'],
+                        'latitude'   => $ipwhois['latitude'],
+                        'longitude'  => $ipwhois['longitude'],
+                    ]);
+                    
+                    return response()->json([
+                        'status' => 'error',
+                        'message' => 'Blood bag can no longer be removed. The removal period has ended.',
+                    ], 400);
+                }else{
+
+                    $galloners = Galloner::where('user_id', $user_id)->first();
+                    $galloners->donate_qty -= 1;
+                    $galloners->save();
+                    $bloodBag->delete();
+
+                    AuditTrail::create([
+                        'user_id'    => $userId,
+                        'module'     => 'Collected Blood Bag',
+                        'action'     => 'Remove Blood Bag from Collected | serial no: ' . $serialNumber,
+                        'status'     => 'Success',
+                        'ip_address' => $ipwhois['ip'],
+                        'region'     => $ipwhois['region'],
+                        'city'       => $ipwhois['city'],
+                        'postal'     => $ipwhois['postal'],
+                        'latitude'   => $ipwhois['latitude'],
+                        'longitude'  => $ipwhois['longitude'],
+                    ]);
+
+                    return response()->json([
+                        'status' => 'success',
+                        'message' => 'Blood bag removed successfully',
+                    ]);
+
+                }
+
+
+
+                // $user_id = $bloodBag->user_id;  
+                // $bloodBagDateSave = $bloodBag->created_at;
+                
+                // $galloners = Galloner::where('user_id', $user_id)->first();
+                // $galloners->donate_qty -= 1;
+                // $galloners->save();
+                // $bloodBag->delete();
+
+                // AuditTrail::create([
+                //     'user_id'    => $userId,
+                //     'module'     => 'Collected Blood Bag',
+                //     'action'     => 'Remove Blood Bag from Collected | serial no: ' . $serialNumber,
+                //     'status'     => 'success',
+                //     'ip_address' => $ipwhois['ip'],
+                //     'region'     => $ipwhois['region'],
+                //     'city'       => $ipwhois['city'],
+                //     'postal'     => $ipwhois['postal'],
+                //     'latitude'   => $ipwhois['latitude'],
+                //     'longitude'  => $ipwhois['longitude'],
+                // ]);
+
+                // return response()->json([
+                //     'status' => 'success',
+                //     'message' => 'Blood bag removed successfully',
+                // ]);
+
+            }
+           
+            
+        } catch (ValidationException $e) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Validation failed',
+                'errors' => $e->validator->errors(),
+            ], 400);
+        }
+
+    }
+
+
+    function editBloodBag(Request $request){
+
     }
 }
 
