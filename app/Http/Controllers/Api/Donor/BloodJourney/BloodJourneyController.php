@@ -22,7 +22,8 @@ class BloodJourneyController extends Controller
         foreach ($blood_bags as $blood_bag) {
 
             $data[] = [
-                'date' => $blood_bag->created_at,
+                'blood_bag_id' => $blood_bag->blood_bags_id,
+                'date' => $blood_bag->date_donated,
                 'serial_number' => $blood_bag->serial_no,
                 'collected' => $blood_bag->isCollected,
                 'tested' => $blood_bag->isTested,
@@ -30,7 +31,11 @@ class BloodJourneyController extends Controller
             ];
         }
 
-        return response()->json($data);
+        return response()->json([
+            'status' => 'success',
+            'bloodJourney' => $data
+
+        ]);
 
     }
 }
