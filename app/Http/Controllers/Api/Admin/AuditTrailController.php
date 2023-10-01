@@ -10,7 +10,7 @@ class AuditTrailController extends Controller
 {
     public function getAuditTrail()
     {
-        $logs = AuditTrail::select('action', 'status', 'ip_address', 'created_at')
+        $logs = AuditTrail::select('audit_trails_id','user_id','module','action', 'status', 'ip_address', 'created_at')
             ->orderBy('audit_trails_id', 'desc')
             ->get();
 

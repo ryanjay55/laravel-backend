@@ -65,6 +65,7 @@ class DonorController extends Controller
                         ->orWhere('user_details.dob', 'LIKE', '%' . $searchInput . '%')
                         ->orWhere('galloners.badge', 'LIKE', '%' . $searchInput . '%')
                         ->orWhere('galloners.donate_qty', 'LIKE', '%' . $searchInput . '%');
+                        
                 })
                 ->select('users.mobile', 'users.email', 'user_details.*', 'galloners.badge', 'galloners.donate_qty')
                 ->paginate(8);
@@ -123,6 +124,7 @@ class DonorController extends Controller
 
             AuditTrail::create([
                 'user_id'    => $userId,
+                'module'     => 'Donor List',
                 'action'     => 'Export Donor List as PDF',
                 'status'     => 'success',
                 'ip_address' => $ipwhois['ip'],

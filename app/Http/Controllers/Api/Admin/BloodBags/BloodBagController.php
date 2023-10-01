@@ -66,7 +66,7 @@ class BloodBagController extends Controller
                         if ($currentDonationDate <= $lastDonationDate) {
                             AuditTrail::create([
                                 'user_id'    => $userId,
-                                'module'     => 'User List',
+                                'module'     => 'Collected Blood Bags',
                                 'action'     => 'Add Blood Bag | serial no: ' . $validatedData['serial_no'],
                                 'status'     => 'failed',
                                 'ip_address' => $ipwhois['ip'],
@@ -87,7 +87,7 @@ class BloodBagController extends Controller
 
                             AuditTrail::create([
                                 'user_id'    => $userId,
-                                'module'     => 'User List',
+                                'module'     => 'Collected Blood Bags',
                                 'action'     => 'Add Blood Bag | serial no: ' . $validatedData['serial_no'],
                                 'status'     => 'failed',
                                 'ip_address' => $ipwhois['ip'],
@@ -119,7 +119,7 @@ class BloodBagController extends Controller
                         
                             AuditTrail::create([
                                 'user_id'    => $userId,
-                                'module'     => 'User List',
+                                'module'     => 'Collected Blood Bags',
                                 'action'     => 'Add Blood Bag | serial no: ' . $validatedData['serial_no'],
                                 'status'     => 'success',
                                 'ip_address' => $ipwhois['ip'],
@@ -168,7 +168,7 @@ class BloodBagController extends Controller
                     
                         AuditTrail::create([
                             'user_id'    => $userId,
-                            'module'     => 'User List',
+                            'module'     => 'Collected Blood Bags',
                             'action'     => 'Add Blood Bag | serial no: ' . $validatedData['serial_no'],
                             'status'     => 'success',
                             'ip_address' => $ipwhois['ip'],
@@ -266,8 +266,8 @@ class BloodBagController extends Controller
             
             $bloodBags = DB::table('user_details')
                 ->join('blood_bags', 'user_details.user_id', '=', 'blood_bags.user_id')
-                ->select('user_details.donor_no','user_details.first_name', 'user_details.last_name', 'user_details.blood_type','blood_bags.serial_no', 'blood_bags.date_donated', 'blood_bags.expiration_date' ,'bled_by','venue')
                 ->where('blood_bags.status', '=', 0) 
+                ->where('blood_bags.isStored', '=', 0)
                 ->where(function ($query) use ($searchInput) {
                     $query->where('user_details.donor_no', 'LIKE', '%' . $searchInput . '%')
                         ->orWhere('user_details.first_name', 'LIKE', '%' . $searchInput . '%')
@@ -325,6 +325,7 @@ class BloodBagController extends Controller
 
             AuditTrail::create([
                 'user_id'    => $userId,
+                'module'     => 'Collected Blood Bags',
                 'action'     => 'Export Donor List as PDF',
                 'status'     => 'success',
                 'ip_address' => $ipwhois['ip'],
@@ -389,7 +390,7 @@ class BloodBagController extends Controller
                     
                     AuditTrail::create([
                         'user_id'    => $userId,
-                        'module'     => 'Collected Blood Bag',
+                        'module'     => 'Collected Blood Bags',
                         'action'     => 'Remove Blood Bag from Collected | serial no: ' . $serialNumber,
                         'status'     => 'Failed',
                         'ip_address' => $ipwhois['ip'],
@@ -413,7 +414,7 @@ class BloodBagController extends Controller
 
                     AuditTrail::create([
                         'user_id'    => $userId,
-                        'module'     => 'Collected Blood Bag',
+                        'module'     => 'Collected Blood Bags',
                         'action'     => 'Remove Blood Bag from Collected | serial no: ' . $serialNumber,
                         'status'     => 'Success',
                         'ip_address' => $ipwhois['ip'],

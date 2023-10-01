@@ -39,6 +39,7 @@ class DonationHistoryController extends Controller
                 'date' => $blood_bag->date_donated,
                 'serial_number' => $blood_bag->serial_no,
                 'bled_by'   => $blood_bag->bled_by,
+                'venue'     => $blood_bag->venue,
                 'status' => $status,
             ];
         });

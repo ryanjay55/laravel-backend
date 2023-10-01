@@ -5,6 +5,8 @@ namespace App\Http\Controllers\Api\Donor\Profile;
 use App\Http\Controllers\Controller;
 use App\Models\User;
 use App\Models\UserDetail;
+use App\Rules\EmailUpdateProfile;
+use App\Rules\MobileUpdateProfile;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
@@ -19,8 +21,8 @@ class ProfileController extends Controller
                 'first_name'            => ['required', 'string'],
                 'middle_name'           => ['nullable', 'string'],
                 'last_name'             => ['required', 'string'],
-                'email'                 => ['required', 'string', 'unique:users,email'],
-                'mobile'                => ['required', 'string'],
+                'email'                 => ['required', 'string', new EmailUpdateProfile],
+                'mobile'                => ['required', 'string', new MobileUpdateProfile],
                 'sex'                   => ['required'],
                 'dob'                   => ['required'],
                 'blood_type'            => ['required'],

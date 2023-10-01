@@ -47,9 +47,12 @@ class InventoryController extends Controller
                 } else {
                     
                     $bloodBag->update(['isStored' => 1]);
+                    $bloodBag->update(['isTested' => 1]);
+
 
                     AuditTrail::create([
                         'user_id'    => $userId,
+                        'module'     => 'Collected Blood Bags',
                         'action'     => 'Move to inventory | serial no: ' . $validatedData['serial_no'],
                         'status'     => 'success',
                         'ip_address' => $ipwhois['ip'],
@@ -152,6 +155,7 @@ class InventoryController extends Controller
 
                 AuditTrail::create([
                     'user_id'    => $userId,
+                    'module'     => 'Inventory',
                     'action'     => 'Move to collected blood bags | serial no: ' . $validatedData['serial_no'],
                     'status'     => 'success',
                     'ip_address' => $ipwhois['ip'],
@@ -232,6 +236,7 @@ class InventoryController extends Controller
 
                     AuditTrail::create([
                         'user_id'    => $userId,
+                        'module'     => 'Inventory',
                         'action'     => 'Disposed blood bag | serial no: ' . $validatedData['serial_no'],
                         'status'     => 'success',
                         'ip_address' => $ipwhois['ip'],
