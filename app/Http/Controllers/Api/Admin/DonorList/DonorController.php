@@ -17,7 +17,7 @@ class DonorController extends Controller
     public function donorList() {
         $donorList = UserDetail::join('users', 'user_details.user_id', '=', 'users.user_id')
             ->join('galloners', 'user_details.user_id', '=', 'galloners.user_id')
-            ->where('user_details.isDeffered', 0)
+            ->where('user_details.remarks', 0)
             ->where('user_details.status', 0)
             ->where('galloners.donate_qty', '>', 0) 
             ->select('users.mobile', 'users.email', 'user_details.*', 'galloners.badge', 'galloners.donate_qty')
@@ -53,7 +53,7 @@ class DonorController extends Controller
             $userDetails = UserDetail::join('users', 'user_details.user_id', '=', 'users.user_id')
                 ->join('galloners', 'user_details.user_id', '=', 'galloners.user_id')
                 ->where('galloners.donate_qty', '>', 0) 
-                ->where('user_details.isDeffered', 0)
+                ->where('user_details.remarks', 0)
                 ->where('user_details.status', 0)
                 ->where(function ($query) use ($searchInput) {
                     $query->where('users.mobile', 'LIKE', '%' . $searchInput . '%')
@@ -108,7 +108,7 @@ class DonorController extends Controller
 
         $donorList = UserDetail::join('users', 'user_details.user_id', '=', 'users.user_id')
             ->join('galloners', 'user_details.user_id', '=', 'galloners.user_id')
-            ->where('user_details.isDeffered', 0)
+            ->where('user_details.remarks', 0)
             ->where('user_details.status', 0)
             ->where('galloners.donate_qty', '>', 0) 
             ->select('users.mobile', 'users.email', 'user_details.*', 'galloners.badge', 'galloners.donate_qty')

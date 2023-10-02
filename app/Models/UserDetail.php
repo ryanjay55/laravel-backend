@@ -27,6 +27,8 @@ class UserDetail extends Model
         'municipality',
         'barangay',
         'postalcode',
+        'remarks',
+    
     ];
 
 

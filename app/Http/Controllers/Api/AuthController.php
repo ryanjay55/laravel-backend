@@ -98,7 +98,10 @@ class AuthController extends Controller
         $user = getAuthenticatedUserId();
         $userId = $user->user_id;
 
-        $userDetail = UserDetail::where('user_id', $userId)->first();
+        $userDetail = UserDetail::join('users', 'user_details.user_id', '=', 'users.user_id')
+        ->where('user_details.user_id', $userId)
+        ->select('user_details.*', 'users.*')
+        ->first();
 
         return response()->json([
             'status' => 'success',

@@ -74,13 +74,15 @@ Route::group(
 Route::group(['middleware' => ['auth:sanctum','admin']], function () {
 
     Route::post('/add-bloodbag', [BloodBagController::class, 'store']);
-    Route::put('/update-bloodbag', [BloodBagController::class, 'update']);
     Route::get('/get-collected-bloodbags', [BloodBagController::class, 'collectedBloodBag']);
     Route::post('/search-collected-bloodbag', [BloodBagController::class, 'searchCollectedBloodBag']);
-    Route::get('/export-pdf-collected-bloodbags', [BloodBagController::class, 'exportDonorListAsPdf']);
+    Route::get('/export-pdf-collected-bloodbags', [BloodBagController::class, 'exportBloodBagAsPdf']);
+    Route::put('/edit-bloodbag', [BloodBagController::class, 'editBloodBag']);
     Route::delete('/remove-bloodbag', [BloodBagController::class, 'removeBlood']);
     Route::post('/move-to-defferal', [UserListController::class, 'moveToDeferral']);
-    Route::get('/get-defferal-list', [UserListController::class, 'getDeferralList']);
+    Route::get('/get-temporary-defferal', [UserListController::class, 'getTemporaryDeferral']);
+    Route::get('/get-permanent-defferal', [UserListController::class, 'getPermanentDeferral']);
+    Route::put('/edit-user-details', [UserListController::class, 'editUserDetails']);
     Route::post('/approve-post', [PostApprovalController::class, 'approvePost']);
     Route::post('/cancel-approve-post', [PostApprovalController::class, 'cancelApprovedPost']);
     Route::get('/get-audit-trail', [AuditTrailController::class, 'getAuditTrail']);

@@ -53,7 +53,7 @@ class InventoryController extends Controller
                     AuditTrail::create([
                         'user_id'    => $userId,
                         'module'     => 'Collected Blood Bags',
-                        'action'     => 'Move to inventory | serial no: ' . $validatedData['serial_no'],
+                        'action'     => 'Move to stocks | serial no: ' . $validatedData['serial_no'],
                         'status'     => 'success',
                         'ip_address' => $ipwhois['ip'],
                         'region'     => $ipwhois['region'],
