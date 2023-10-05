@@ -21,12 +21,11 @@ class UserListController extends Controller
     {
         $userDetails = UserDetail::join('users', 'user_details.user_id', '=', 'users.user_id')
             ->join('galloners', 'user_details.user_id', '=', 'galloners.user_id')
-            ->where('user_details.remarks', 0)
             ->where('user_details.status', 0)
             ->select('users.mobile', 'users.email', 'user_details.*', 'galloners.badge', 'galloners.donate_qty')
             ->paginate(8);
 
-        if ($userDetails->isEmpty()) {
+        if ($userDetails->isEmpty()) { 
             return response()->json([
                 'status' => 'success',
                 'message' => 'No donor found.'

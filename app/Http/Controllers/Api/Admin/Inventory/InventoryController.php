@@ -83,13 +83,15 @@ class InventoryController extends Controller
     }
     
 
-    public function getInventory()
+    public function getStocks()
     {
         $inventory = BloodBag::join('user_details', 'blood_bags.user_id', '=', 'user_details.user_id')
             ->where('blood_bags.isStored', 1)
             ->where('blood_bags.isExpired', 0)
-            ->select('blood_bags.blood_bags_id','blood_bags.serial_no','user_details.first_name', 'user_details.last_name','blood_bags.date_donated', 'blood_bags.expiration_date')
-            ->get();
+            ->where('user_details.remarks', 0)
+            ->select('blood_bags.blood_bags_id','blood_bags.serial_no','user_details.first_name', 'user_details.last_name','user_details.blood_type','user_details.donor_no','blood_bags.date_donated', 'blood_bags.expiration_date')
+            ->orderBy('blood_bags.expiration_date','desc') 
+            ->paginate(8);
 
         if($inventory->isEmpty()){
             return response()->json([
@@ -99,27 +101,28 @@ class InventoryController extends Controller
         }else{
             
             $inventory->each(function ($bloodBag) {
+                $today = Carbon::today();
                 $dateDonated = Carbon::parse($bloodBag->date_donated);
                 $expirationDate = Carbon::parse($bloodBag->expiration_date);
-                $remainingDays = $expirationDate->diffInDays($dateDonated);
-    
+                $remainingDays = $expirationDate->diffInDays($today); 
                 $bloodBag->remaining_days = $remainingDays;
-                $today = Carbon::today();
-
+                $bloodBag->save();
+               
+            
                 if ($remainingDays <= 7) {
-                    $bloodBag->priority = 'high';
+                    $bloodBag->priority = 'High Priority';
                 } elseif ($remainingDays <= 14) {
-                    $bloodBag->priority = 'medium';
+                    $bloodBag->priority = 'Medium Priority';
                 } else {
-                    $bloodBag->priority = 'low';
+                    $bloodBag->priority = 'Low Priority';
                 }
-    
-                if ($expirationDate->lte($today) || $bloodBag->remaining_days == 0) {
+            
+                if ($expirationDate->lte($today) || $remainingDays == 0) { // Use $remainingDays instead of $bloodBag->remaining_days
                     $bloodBag->isExpired = 1;
                 } else {
                     $bloodBag->isExpired = 0;
                 }
-    
+            
                 $bloodBag->save();
                 return $bloodBag;
             });
@@ -127,7 +130,7 @@ class InventoryController extends Controller
             
             return response()->json([
                 'status' => 'success',
-                'inventory' => $inventory
+                'data' => $inventory
             ]);
         }
 
@@ -187,8 +190,9 @@ class InventoryController extends Controller
         $expiredBlood = BloodBag::join('user_details', 'blood_bags.user_id', '=', 'user_details.user_id')
             ->where('blood_bags.isExpired', 1)
             ->where('blood_bags.isDisposed', 0)
-            ->select('blood_bags.blood_bags_id','blood_bags.serial_no','user_details.first_name', 'user_details.last_name','blood_bags.date_donated', 'blood_bags.expiration_date')
-            ->get();
+            ->where('user_details.remarks', 0)
+            ->select('blood_bags.blood_bags_id','blood_bags.serial_no','user_details.donor_no','user_details.blood_type','user_details.first_name', 'user_details.last_name','blood_bags.date_donated', 'blood_bags.expiration_date')
+            ->paginate(8);
 
             if($expiredBlood->isEmpty()){
                 return response()->json([
@@ -198,7 +202,51 @@ class InventoryController extends Controller
             }else{
                 return response()->json([
                     'status' => 'success',
-                    'expiredBlood' => $expiredBlood
+                    'data' => $expiredBlood
+                ]);
+            }
+            
+    }
+
+    public function getTempDeferralBloodBag(){
+        $tempExpiredBlood = BloodBag::join('user_details', 'blood_bags.user_id', '=', 'user_details.user_id')
+            ->where('blood_bags.isExpired', 0)
+            ->where('blood_bags.isDisposed', 0)
+            ->where('user_details.remarks', 1)
+            ->select('blood_bags.blood_bags_id','blood_bags.serial_no','user_details.donor_no','user_details.blood_type','user_details.first_name', 'user_details.last_name','blood_bags.date_donated', 'blood_bags.expiration_date')
+            ->paginate(8);
+
+            if($tempExpiredBlood->isEmpty()){
+                return response()->json([
+                    'status' => 'success',
+                    'message' => 'deferral blood bag',
+                ]);
+            }else{
+                return response()->json([
+                    'status' => 'success',
+                    'data' => $tempExpiredBlood
+                ]);
+            }
+            
+    }
+
+    public function getPermaDeferralBloodBag(){
+        $tempExpiredBlood = BloodBag::join('user_details', 'blood_bags.user_id', '=', 'user_details.user_id')
+            ->where('blood_bags.isExpired', 0)
+            ->where('blood_bags.isDisposed', 0)
+            ->where('user_details.remarks', 2)
+            ->select('blood_bags.blood_bags_id','blood_bags.serial_no','user_details.donor_no','user_details.blood_type','user_details.first_name', 'user_details.last_name','blood_bags.date_donated', 'blood_bags.expiration_date')
+            ->paginate(8);
+
+            if($tempExpiredBlood->isEmpty()){
+                return response()->json([
+                    'status' => 'success',
+                    'message' => 'deferral blood bag',
+                ]);
+            }else{
+                return response()->json([
+                    'status' => 'success',
+                    'data' => $tempExpiredBlood
                 ]);
             }
             
@@ -265,4 +313,6 @@ class InventoryController extends Controller
         }
         
     }
+
+
 }
