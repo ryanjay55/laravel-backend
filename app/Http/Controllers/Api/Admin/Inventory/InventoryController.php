@@ -89,6 +89,7 @@ class InventoryController extends Controller
             ->where('blood_bags.isStored', 1)
             ->where('blood_bags.isExpired', 0)
             ->where('user_details.remarks', 0)
+            ->where('blood_bags.isDisposed', 0)
             ->select('blood_bags.blood_bags_id', 'blood_bags.serial_no', 'user_details.first_name', 'user_details.last_name', 'user_details.blood_type', 'user_details.donor_no', 'blood_bags.date_donated', 'blood_bags.expiration_date')
             ->orderBy('blood_bags.expiration_date')
             ->paginate(8);
@@ -153,6 +154,7 @@ class InventoryController extends Controller
                 ->where('blood_bags.isStored', 1)
                 ->where('blood_bags.isExpired', 0)
                 ->where('user_details.remarks', 0)
+                ->where('blood_bags.isDisposed', 0)
                 ->where(function ($query) use ($searchInput) {
                     $query->where('blood_bags.serial_no', 'LIKE', '%' . $searchInput . '%')
                         ->orWhere('user_details.first_name', 'LIKE', '%' . $searchInput . '%')
@@ -198,6 +200,7 @@ class InventoryController extends Controller
                 ->where('blood_bags.isStored', 1)
                 ->where('blood_bags.isExpired', 0)
                 ->where('user_details.remarks', 0)
+                ->where('blood_bags.isDisposed', 0)
                 ->select('blood_bags.blood_bags_id', 'blood_bags.serial_no','blood_bags.priority' ,'blood_bags.remaining_days', 'user_details.first_name', 'user_details.last_name', 'user_details.blood_type', 'user_details.donor_no', 'blood_bags.date_donated', 'blood_bags.expiration_date');
     
             if ($bloodType == 'All') {
@@ -240,6 +243,7 @@ class InventoryController extends Controller
                 ->where('blood_bags.isStored', 1)
                 ->where('blood_bags.isExpired', 1)
                 ->where('user_details.remarks', 0)
+                ->where('blood_bags.isDisposed', 0)
                 ->select('blood_bags.blood_bags_id', 'blood_bags.serial_no','blood_bags.priority' ,'blood_bags.remaining_days', 'user_details.first_name', 'user_details.last_name', 'user_details.blood_type', 'user_details.donor_no', 'blood_bags.date_donated', 'blood_bags.expiration_date');
     
             if ($bloodType == 'All') {
@@ -357,7 +361,7 @@ class InventoryController extends Controller
             ->where('blood_bags.isExpired', 0)
             ->where('blood_bags.isDisposed', 0)
             ->where('user_details.remarks', 1)
-            ->select('blood_bags.blood_bags_id','blood_bags.serial_no','user_details.donor_no','user_details.blood_type','user_details.first_name', 'user_details.last_name','blood_bags.date_donated', 'blood_bags.expiration_date','blood_bags.')
+            ->select('blood_bags.blood_bags_id','blood_bags.serial_no','user_details.donor_no','user_details.blood_type','user_details.first_name', 'user_details.last_name','blood_bags.date_donated', 'blood_bags.expiration_date')
             ->paginate(8);
 
             if($tempExpiredBlood->isEmpty()){
@@ -366,12 +370,64 @@ class InventoryController extends Controller
                     'message' => 'deferral blood bag',
                 ]);
             }else{
+
+                $totalCount = BloodBag::join('user_details', 'blood_bags.user_id', '=', 'user_details.user_id')
+                ->where('blood_bags.isExpired', 0)
+                ->where('blood_bags.isDisposed', 0)
+                ->where('user_details.remarks', 1)
+                ->select('blood_bags.blood_bags_id','blood_bags.serial_no','user_details.donor_no','user_details.blood_type','user_details.first_name', 'user_details.last_name','blood_bags.date_donated', 'blood_bags.expiration_date','blood_bags.')
+                ->count();
+
                 return response()->json([
                     'status' => 'success',
-                    'data' => $tempExpiredBlood
+                    'data' => $tempExpiredBlood,
+                    'total_count' => $totalCount
                 ]);
             }
             
+    }
+
+    public function filterBloodTypeTempDeferral(Request $request)
+    {
+        try {
+            $bloodType = $request->input('blood_type');
+            $startDate = $request->input('startDate');
+            $endDate = $request->input('endDate');
+    
+            $inventory = BloodBag::join('user_details', 'blood_bags.user_id', '=', 'user_details.user_id')
+                ->where('blood_bags.isExpired', 0)
+                ->where('blood_bags.isDisposed', 0)
+                ->where('user_details.remarks', 1)
+                ->select('blood_bags.blood_bags_id', 'blood_bags.serial_no','blood_bags.priority' ,'blood_bags.remaining_days', 'user_details.first_name', 'user_details.last_name', 'user_details.blood_type', 'user_details.donor_no', 'blood_bags.date_donated', 'blood_bags.expiration_date');
+    
+            if ($bloodType == 'All') {
+                if ($startDate && $endDate) {
+                    $inventory->whereBetween('blood_bags.expiration_date', [$startDate, $endDate]);
+                }
+                $totalCount = $inventory->count();
+                $inventory = $inventory->orderBy('blood_bags.expiration_date')->paginate(8);
+            } else {
+                $inventory->where('user_details.blood_type', $bloodType);
+                if ($startDate && $endDate) {
+                    $inventory->whereBetween('blood_bags.expiration_date', [$startDate, $endDate]);
+                }
+                $totalCount = $inventory->count();
+                $inventory = $inventory->orderBy('blood_bags.expiration_date')->paginate(8);
+            }
+    
+            return response()->json([
+                'status' => 'success',
+                'data' => $inventory,
+                'total_count' => $totalCount
+            ]);
+
+        } catch (ValidationException $e) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Validation failed',
+                'errors' => $e->validator->errors(),
+            ], 400);
+        }
     }
 
     public function getPermaDeferralBloodBag(){
@@ -394,6 +450,49 @@ class InventoryController extends Controller
                 ]);
             }
             
+    }
+
+    public function filterBloodTypePermaDeferral(Request $request)
+    {
+        try {
+            $bloodType = $request->input('blood_type');
+            $startDate = $request->input('startDate');
+            $endDate = $request->input('endDate');
+    
+            $inventory = BloodBag::join('user_details', 'blood_bags.user_id', '=', 'user_details.user_id')
+                ->where('blood_bags.isExpired', 0)
+                ->where('blood_bags.isDisposed', 0)
+                ->where('user_details.remarks', 2)
+                ->select('blood_bags.blood_bags_id', 'blood_bags.serial_no','blood_bags.priority' ,'blood_bags.remaining_days', 'user_details.first_name', 'user_details.last_name', 'user_details.blood_type', 'user_details.donor_no', 'blood_bags.date_donated', 'blood_bags.expiration_date');
+    
+            if ($bloodType == 'All') {
+                if ($startDate && $endDate) {
+                    $inventory->whereBetween('blood_bags.expiration_date', [$startDate, $endDate]);
+                }
+                $totalCount = $inventory->count();
+                $inventory = $inventory->orderBy('blood_bags.expiration_date')->paginate(8);
+            } else {
+                $inventory->where('user_details.blood_type', $bloodType);
+                if ($startDate && $endDate) {
+                    $inventory->whereBetween('blood_bags.expiration_date', [$startDate, $endDate]);
+                }
+                $totalCount = $inventory->count();
+                $inventory = $inventory->orderBy('blood_bags.expiration_date')->paginate(8);
+            }
+    
+            return response()->json([
+                'status' => 'success',
+                'data' => $inventory,
+                'total_count' => $totalCount
+            ]);
+
+        } catch (ValidationException $e) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Validation failed',
+                'errors' => $e->validator->errors(),
+            ], 400);
+        }
     }
 
     public function disposeBlood(Request $request){

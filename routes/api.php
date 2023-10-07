@@ -91,7 +91,9 @@ Route::group(['middleware' => ['auth:sanctum','admin']], function () {
     Route::post('/filter-stocks', [InventoryController::class, 'filterBloodTypeStocks']);
     Route::post('/search-stocks', [InventoryController::class, 'searchStocks']);
     Route::get('/get-deferral-bloodbags', [InventoryController::class, 'getTempDeferralBloodBag']);
+    Route::post('/filter-deferral-bloodbags', [InventoryController::class, 'filterBloodTypeTempDeferral']);
     Route::get('/get-permanent-bloodbags', [InventoryController::class, 'getPermaDeferralBloodBag']);
+    Route::post('/filter-permanent-bloodbags', [InventoryController::class, 'filterBloodTypePermaDeferral']);
     Route::post('/move-back-to-collected', [InventoryController::class, 'moveToCollected']);
     Route::get('/get-expired-blood', [InventoryController::class, 'expiredBlood']);
     Route::post('/filter-expired', [InventoryController::class, 'filterBloodTypeExp']);
