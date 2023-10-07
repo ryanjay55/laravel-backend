@@ -88,13 +88,13 @@ Route::group(['middleware' => ['auth:sanctum','admin']], function () {
     Route::get('/get-audit-trail', [AuditTrailController::class, 'getAuditTrail']);
     Route::post('/add-to-inventory', [InventoryController::class, 'storedInInventory']);
     Route::get('/get-stocks', [InventoryController::class, 'getStocks']);
-    Route::post('/filter-blood-type-stocks', [InventoryController::class, 'filterBloodTypeStocks']);
-    Route::post('/filter-exp-date-stocks', [InventoryController::class, 'filterBloodStocksByExpirationDateRange']);
+    Route::post('/filter-stocks', [InventoryController::class, 'filterBloodTypeStocks']);
+    Route::post('/search-stocks', [InventoryController::class, 'searchStocks']);
     Route::get('/get-deferral-bloodbags', [InventoryController::class, 'getTempDeferralBloodBag']);
     Route::get('/get-permanent-bloodbags', [InventoryController::class, 'getPermaDeferralBloodBag']);
-
     Route::post('/move-back-to-collected', [InventoryController::class, 'moveToCollected']);
     Route::get('/get-expired-blood', [InventoryController::class, 'expiredBlood']);
+    Route::post('/filter-expired', [InventoryController::class, 'filterBloodTypeExp']);
     Route::post('/dispose-blood', [InventoryController::class, 'disposeBlood']);
     Route::get('/export-pdf-user-details', [UserListController::class, 'exportUserDetailsAsPdf']);
     Route::get('/get-donor-list', [DonorController::class, 'donorList']);
