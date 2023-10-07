@@ -89,27 +89,25 @@ class InventoryController extends Controller
             ->where('blood_bags.isStored', 1)
             ->where('blood_bags.isExpired', 0)
             ->where('user_details.remarks', 0)
-            ->select('blood_bags.blood_bags_id','blood_bags.serial_no','user_details.first_name', 'user_details.last_name','user_details.blood_type','user_details.donor_no','blood_bags.date_donated', 'blood_bags.expiration_date')
-            ->orderBy('blood_bags.expiration_date') 
+            ->select('blood_bags.blood_bags_id', 'blood_bags.serial_no', 'user_details.first_name', 'user_details.last_name', 'user_details.blood_type', 'user_details.donor_no', 'blood_bags.date_donated', 'blood_bags.expiration_date')
+            ->orderBy('blood_bags.expiration_date')
             ->paginate(8);
 
-        if($inventory->isEmpty()){
+        if ($inventory->isEmpty()) {
             return response()->json([
                 'status' => 'error',
                 'message' => 'No blood bag in inventory',
+                'total_count' => 0
             ]);
-        }else{
-            
+        } else {
             $inventory->each(function ($bloodBag) {
                 $today = Carbon::today();
                 $dateDonated = Carbon::parse($bloodBag->date_donated);
                 $expirationDate = Carbon::parse($bloodBag->expiration_date);
-                $remainingDays = $expirationDate->diffInDays($today); 
+                $remainingDays = $expirationDate->diffInDays($today);
                 $bloodBag->remaining_days = $remainingDays;
                 $bloodBag->save();
-                
-               
-            
+
                 if ($remainingDays <= 7) {
                     $bloodBag->priority = 'High Priority';
                 } elseif ($remainingDays <= 14) {
@@ -117,72 +115,72 @@ class InventoryController extends Controller
                 } else {
                     $bloodBag->priority = 'Low Priority';
                 }
-            
-                if ($expirationDate->lte($today) || $remainingDays == 0) { // Use $remainingDays instead of $bloodBag->remaining_days
+
+                if ($expirationDate->lte($today) || $remainingDays == 0) {
                     $bloodBag->isExpired = 1;
                 } else {
                     $bloodBag->isExpired = 0;
                 }
-            
+
                 $bloodBag->save();
                 return $bloodBag;
             });
-    
-            
-            return response()->json([
-                'status' => 'success',
-                'data' => $inventory
-            ]);
-        }
 
-    }
-
-    
-    public function filterBloodTypeStocks(Request $request)
-    {
-        try {
-            $request->validate([
-                'blood_type' => 'required',
-            ]);
-
-            $bloodType = $request->input('blood_type');
-
-            $inventory = BloodBag::join('user_details', 'blood_bags.user_id', '=', 'user_details.user_id')
+            $totalCount = BloodBag::join('user_details', 'blood_bags.user_id', '=', 'user_details.user_id')
                 ->where('blood_bags.isStored', 1)
                 ->where('blood_bags.isExpired', 0)
                 ->where('user_details.remarks', 0)
-                ->where('user_details.blood_type', $bloodType)
-                ->select('blood_bags.blood_bags_id', 'blood_bags.serial_no','blood_bags.priority' ,'blood_bags.remaining_days', 'user_details.first_name', 'user_details.last_name', 'user_details.blood_type', 'user_details.donor_no', 'blood_bags.date_donated', 'blood_bags.expiration_date')
-                ->orderBy('blood_bags.expiration_date')
-                ->paginate(8);
-
-                    if ($bloodType == 'All') {
-                        $inventory = BloodBag::join('user_details', 'blood_bags.user_id', '=', 'user_details.user_id')
-                        ->where('blood_bags.isStored', 1)
-                        ->where('blood_bags.isExpired', 0)
-                        ->where('user_details.remarks', 0)
-                        ->select('blood_bags.blood_bags_id', 'blood_bags.serial_no','blood_bags.priority' ,'blood_bags.remaining_days', 'user_details.first_name', 'user_details.last_name', 'user_details.blood_type', 'user_details.donor_no', 'blood_bags.date_donated', 'blood_bags.expiration_date')
-                        ->orderBy('blood_bags.expiration_date')
-                        ->paginate(8);
-
-                        return response()->json([
-                            'status' => 'success',
-                            'data' => $inventory
-                        ]);
-                    }
+                ->count();
 
             return response()->json([
                 'status' => 'success',
-                'data' => $inventory
+                'data' => $inventory,
+                'total_count' => $totalCount
             ]);
-        } catch (ValidationException $e) {
-            return response()->json([
-                'status' => 'error',
-                'message' => 'Validation failed',
-                'errors' => $e->validator->errors(),
-            ], 400);
         }
     }
+    
+  public function filterBloodTypeStocks(Request $request)
+  {
+      try {
+          $bloodType = $request->input('blood_type');
+          $startDate = $request->input('startDate');
+          $endDate = $request->input('endDate');
+  
+          $inventory = BloodBag::join('user_details', 'blood_bags.user_id', '=', 'user_details.user_id')
+              ->where('blood_bags.isStored', 1)
+              ->where('blood_bags.isExpired', 0)
+              ->where('user_details.remarks', 0)
+              ->select('blood_bags.blood_bags_id', 'blood_bags.serial_no','blood_bags.priority' ,'blood_bags.remaining_days', 'user_details.first_name', 'user_details.last_name', 'user_details.blood_type', 'user_details.donor_no', 'blood_bags.date_donated', 'blood_bags.expiration_date');
+  
+          if ($bloodType == 'All') {
+              if ($startDate && $endDate) {
+                  $inventory->whereBetween('blood_bags.expiration_date', [$startDate, $endDate]);
+              }
+              $totalCount = $inventory->count();
+              $inventory = $inventory->orderBy('blood_bags.expiration_date')->paginate(8);
+          } else {
+              $inventory->where('user_details.blood_type', $bloodType);
+              if ($startDate && $endDate) {
+                  $inventory->whereBetween('blood_bags.expiration_date', [$startDate, $endDate]);
+              }
+              $totalCount = $inventory->count();
+              $inventory = $inventory->orderBy('blood_bags.expiration_date')->paginate(8);
+          }
+  
+          return response()->json([
+              'status' => 'success',
+              'data' => $inventory,
+              'total_count' => $totalCount
+          ]);
+      } catch (ValidationException $e) {
+          return response()->json([
+              'status' => 'error',
+              'message' => 'Validation failed',
+              'errors' => $e->validator->errors(),
+          ], 400);
+      }
+  }
 
     public function filterBloodStocksByExpirationDateRange(Request $request)
     {
@@ -195,7 +193,7 @@ class InventoryController extends Controller
             
             $startDate = $request->input('startDate');
             $endDate = $request->input('endDate');
-            
+
             $inventory = BloodBag::join('user_details', 'blood_bags.user_id', '=', 'user_details.user_id')
                 ->where('blood_bags.isStored', 1)
                 ->where('blood_bags.isExpired', 0)
