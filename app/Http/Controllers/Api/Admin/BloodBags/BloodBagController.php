@@ -68,18 +68,18 @@ class BloodBagController extends Controller
                         $minDonationInterval->addMonths(3);
                     
                         if ($currentDonationDate <= $lastDonationDate) {
-                            AuditTrail::create([
-                                'user_id'    => $userId,
-                                'module'     => 'User List',
-                                'action'     => 'Add Blood Bag | serial no: ' . $validatedData['serial_no'],
-                                'status'     => 'failed',
-                                'ip_address' => $ipwhois['ip'],
-                                'region'     => $ipwhois['region'],
-                                'city'       => $ipwhois['city'],
-                                'postal'     => $ipwhois['postal'],
-                                'latitude'   => $ipwhois['latitude'],
-                                'longitude'  => $ipwhois['longitude'],
-                            ]);
+                            // AuditTrail::create([
+                            //     'user_id'    => $userId,
+                            //     'module'     => 'User List',
+                            //     'action'     => 'Add Blood Bag | serial no: ' . $validatedData['serial_no'],
+                            //     'status'     => 'failed',
+                            //     'ip_address' => $ipwhois['ip'],
+                            //     'region'     => $ipwhois['region'],
+                            //     'city'       => $ipwhois['city'],
+                            //     'postal'     => $ipwhois['postal'],
+                            //     'latitude'   => $ipwhois['latitude'],
+                            //     'longitude'  => $ipwhois['longitude'],
+                            // ]);
                     
                             return response()->json([
                                 'status'       => 'error',
@@ -89,18 +89,18 @@ class BloodBagController extends Controller
 
                         } elseif ($currentDonationDate < $minDonationInterval) {
 
-                            AuditTrail::create([
-                                'user_id'    => $userId,
-                                'module'     => 'User List',
-                                'action'     => 'Add Blood Bag | serial no: ' . $validatedData['serial_no'],
-                                'status'     => 'failed',
-                                'ip_address' => $ipwhois['ip'],
-                                'region'     => $ipwhois['region'],
-                                'city'       => $ipwhois['city'],
-                                'postal'     => $ipwhois['postal'],
-                                'latitude'   => $ipwhois['latitude'],
-                                'longitude'  => $ipwhois['longitude'],
-                            ]);
+                            // AuditTrail::create([
+                            //     'user_id'    => $userId,
+                            //     'module'     => 'User List',
+                            //     'action'     => 'Add Blood Bag | serial no: ' . $validatedData['serial_no'],
+                            //     'status'     => 'failed',
+                            //     'ip_address' => $ipwhois['ip'],
+                            //     'region'     => $ipwhois['region'],
+                            //     'city'       => $ipwhois['city'],
+                            //     'postal'     => $ipwhois['postal'],
+                            //     'latitude'   => $ipwhois['latitude'],
+                            //     'longitude'  => $ipwhois['longitude'],
+                            // ]);
 
                             return response()->json([
                                 'status'       => 'error',
@@ -121,18 +121,18 @@ class BloodBagController extends Controller
                                 'isCollected'   => 1
                             ]);
                         
-                            AuditTrail::create([
-                                'user_id'    => $userId,
-                                'module'     => 'User List',
-                                'action'     => 'Add Blood Bag | serial no: ' . $validatedData['serial_no'],
-                                'status'     => 'success',
-                                'ip_address' => $ipwhois['ip'],
-                                'region'     => $ipwhois['region'],
-                                'city'       => $ipwhois['city'],
-                                'postal'     => $ipwhois['postal'],
-                                'latitude'   => $ipwhois['latitude'],
-                                'longitude'  => $ipwhois['longitude'],
-                            ]);
+                            // AuditTrail::create([
+                            //     'user_id'    => $userId,
+                            //     'module'     => 'User List',
+                            //     'action'     => 'Add Blood Bag | serial no: ' . $validatedData['serial_no'],
+                            //     'status'     => 'success',
+                            //     'ip_address' => $ipwhois['ip'],
+                            //     'region'     => $ipwhois['region'],
+                            //     'city'       => $ipwhois['city'],
+                            //     'postal'     => $ipwhois['postal'],
+                            //     'latitude'   => $ipwhois['latitude'],
+                            //     'longitude'  => $ipwhois['longitude'],
+                            // ]);
 
                             $donor = User::where('user_id', $validatedData['user_id'])->first();
                             $donorEmail = $donor->email;
@@ -175,18 +175,18 @@ class BloodBagController extends Controller
                             'isCollected'   => 1
                         ]);
                     
-                        AuditTrail::create([
-                            'user_id'    => $userId,
-                            'module'     => 'User List',
-                            'action'     => 'Add Blood Bag | serial no: ' . $validatedData['serial_no'],
-                            'status'     => 'success',
-                            'ip_address' => $ipwhois['ip'],
-                            'region'     => $ipwhois['region'],
-                            'city'       => $ipwhois['city'],
-                            'postal'     => $ipwhois['postal'],
-                            'latitude'   => $ipwhois['latitude'],
-                            'longitude'  => $ipwhois['longitude'],
-                        ]);
+                        // AuditTrail::create([
+                        //     'user_id'    => $userId,
+                        //     'module'     => 'User List',
+                        //     'action'     => 'Add Blood Bag | serial no: ' . $validatedData['serial_no'],
+                        //     'status'     => 'success',
+                        //     'ip_address' => $ipwhois['ip'],
+                        //     'region'     => $ipwhois['region'],
+                        //     'city'       => $ipwhois['city'],
+                        //     'postal'     => $ipwhois['postal'],
+                        //     'latitude'   => $ipwhois['latitude'],
+                        //     'longitude'  => $ipwhois['longitude'],
+                        // ]);
 
                         $donor = User::where('user_id', $validatedData['user_id'])->first();
                         $donorEmail = $donor->email;
@@ -232,16 +232,30 @@ class BloodBagController extends Controller
         try {
             // Retrieve collected blood bags with specified columns
             $bloodBags = UserDetail::join('blood_bags', 'user_details.user_id', '=', 'blood_bags.user_id')
-                ->select('user_details.donor_no', 'user_details.first_name', 'user_details.last_name', 'user_details.blood_type', 'blood_bags.blood_bags_id','blood_bags.serial_no', 'blood_bags.date_donated', 'blood_bags.expiration_date', 'blood_bags.created_at', 'bled_by', 'venue')
+                ->select('user_details.donor_no', 'user_details.first_name', 'user_details.last_name', 'user_details.blood_type', 'blood_bags.isExpired','blood_bags.blood_bags_id','blood_bags.serial_no', 'blood_bags.date_donated', 'blood_bags.expiration_date', 'blood_bags.created_at', 'bled_by', 'venue')
                 ->where('user_details.remarks', '=', 0)
                 ->where('blood_bags.status', '=', 0)
                 ->where('blood_bags.isStored', '=', 0)
+                ->where('blood_bags.isExpired', '=', 0)
                 ->orderBy('blood_bags.date_donated', 'asc') 
                 ->paginate(8);
-    
+            
+            //dd($bloodBags[0]->date_donated);
+
+                $EXPIRATION = 37;
+                $today = Carbon::today();
+
             // Calculate the countdown for each blood bag
             $currentTime = now(); // Current timestamp
             foreach ($bloodBags as $bloodBag) {
+                $expirationDate = Carbon::parse($bloodBag->date_donated)->addDays($EXPIRATION);
+                $remainingDays = $expirationDate->diffInDays($bloodBag->date_donated);
+            
+                if ($expirationDate->lte($today)) {
+                    BloodBag::where('blood_bags_id', $bloodBag->blood_bags_id)
+                    ->update(['isExpired' => 1]);
+                }
+
                 $createdAt = $bloodBag->created_at;
                 $timeDifference = $createdAt->diffInDays($currentTime); // Calculate the difference in days
                 $bloodBag->countdown = max(0, 3 - $timeDifference); // Calculate the countdown (minimum 0)
@@ -337,18 +351,18 @@ class BloodBagController extends Controller
         
             curl_close($ch);
 
-            AuditTrail::create([
-                'user_id'    => $userId,
-                'module'     => 'Collected Blood Bags',
-                'action'     => 'Export Blood Bags as PDF',
-                'status'     => 'success',
-                'ip_address' => $ipwhois['ip'],
-                'region'     => $ipwhois['region'],
-                'city'       => $ipwhois['city'],
-                'postal'     => $ipwhois['postal'],
-                'latitude'   => $ipwhois['latitude'],
-                'longitude'  => $ipwhois['longitude'],
-            ]);
+            // AuditTrail::create([
+            //     'user_id'    => $userId,
+            //     'module'     => 'Collected Blood Bags',
+            //     'action'     => 'Export Blood Bags as PDF',
+            //     'status'     => 'success',
+            //     'ip_address' => $ipwhois['ip'],
+            //     'region'     => $ipwhois['region'],
+            //     'city'       => $ipwhois['city'],
+            //     'postal'     => $ipwhois['postal'],
+            //     'latitude'   => $ipwhois['latitude'],
+            //     'longitude'  => $ipwhois['longitude'],
+            // ]);
 
             $totalBloodBags = $bloodBags->count();
             $dateNow = new \DateTime();
@@ -402,18 +416,18 @@ class BloodBagController extends Controller
 
                 if ($hoursDifference > 72) { // 72 hours = 3 days
                     
-                    AuditTrail::create([
-                        'user_id'    => $userId,
-                        'module'     => 'Collected Blood Bags',
-                        'action'     => 'Remove Blood Bag from Collected | serial no: ' . $serialNumber,
-                        'status'     => 'Failed',
-                        'ip_address' => $ipwhois['ip'],
-                        'region'     => $ipwhois['region'],
-                        'city'       => $ipwhois['city'],
-                        'postal'     => $ipwhois['postal'],
-                        'latitude'   => $ipwhois['latitude'],
-                        'longitude'  => $ipwhois['longitude'],
-                    ]);
+                    // AuditTrail::create([
+                    //     'user_id'    => $userId,
+                    //     'module'     => 'Collected Blood Bags',
+                    //     'action'     => 'Remove Blood Bag from Collected | serial no: ' . $serialNumber,
+                    //     'status'     => 'Failed',
+                    //     'ip_address' => $ipwhois['ip'],
+                    //     'region'     => $ipwhois['region'],
+                    //     'city'       => $ipwhois['city'],
+                    //     'postal'     => $ipwhois['postal'],
+                    //     'latitude'   => $ipwhois['latitude'],
+                    //     'longitude'  => $ipwhois['longitude'],
+                    // ]);
                     
                     return response()->json([
                         'status' => 'error',
@@ -426,18 +440,18 @@ class BloodBagController extends Controller
                     $galloners->save();
                     $bloodBag->delete();
 
-                    AuditTrail::create([
-                        'user_id'    => $userId,
-                        'module'     => 'Collected Blood Bags',
-                        'action'     => 'Remove Blood Bag from Collected | serial no: ' . $serialNumber,
-                        'status'     => 'Success',
-                        'ip_address' => $ipwhois['ip'],
-                        'region'     => $ipwhois['region'],
-                        'city'       => $ipwhois['city'],
-                        'postal'     => $ipwhois['postal'],
-                        'latitude'   => $ipwhois['latitude'],
-                        'longitude'  => $ipwhois['longitude'],
-                    ]);
+                    // AuditTrail::create([
+                    //     'user_id'    => $userId,
+                    //     'module'     => 'Collected Blood Bags',
+                    //     'action'     => 'Remove Blood Bag from Collected | serial no: ' . $serialNumber,
+                    //     'status'     => 'Success',
+                    //     'ip_address' => $ipwhois['ip'],
+                    //     'region'     => $ipwhois['region'],
+                    //     'city'       => $ipwhois['city'],
+                    //     'postal'     => $ipwhois['postal'],
+                    //     'latitude'   => $ipwhois['latitude'],
+                    //     'longitude'  => $ipwhois['longitude'],
+                    // ]);
 
                     return response()->json([
                         'status' => 'success',
@@ -516,18 +530,18 @@ class BloodBagController extends Controller
             $ipwhois = json_decode(curl_exec($ch), true);
             curl_close($ch);
 
-            AuditTrail::create([
-                'user_id'    => $userId,
-                'module'     => 'Collected Blood Bags',
-                'action'     => 'Edit Blood Bag | blood_bags_id: ' . $request->input('blood_bags_id'),
-                'status'     => 'Success',
-                'ip_address' => $ipwhois['ip'],
-                'region'     => $ipwhois['region'],
-                'city'       => $ipwhois['city'],
-                'postal'     => $ipwhois['postal'],
-                'latitude'   => $ipwhois['latitude'],
-                'longitude'  => $ipwhois['longitude'],
-            ]);
+            // AuditTrail::create([
+            //     'user_id'    => $userId,
+            //     'module'     => 'Collected Blood Bags',
+            //     'action'     => 'Edit Blood Bag | blood_bags_id: ' . $request->input('blood_bags_id'),
+            //     'status'     => 'Success',
+            //     'ip_address' => $ipwhois['ip'],
+            //     'region'     => $ipwhois['region'],
+            //     'city'       => $ipwhois['city'],
+            //     'postal'     => $ipwhois['postal'],
+            //     'latitude'   => $ipwhois['latitude'],
+            //     'longitude'  => $ipwhois['longitude'],
+            // ]);
 
             return response()->json([
                 'status' => 'success',

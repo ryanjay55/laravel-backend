@@ -122,18 +122,18 @@ class DonorController extends Controller
         
             curl_close($ch);
 
-            AuditTrail::create([
-                'user_id'    => $userId,
-                'module'     => 'Donor List',
-                'action'     => 'Export Donor List as PDF',
-                'status'     => 'success',
-                'ip_address' => $ipwhois['ip'],
-                'region'     => $ipwhois['region'],
-                'city'       => $ipwhois['city'],
-                'postal'     => $ipwhois['postal'],
-                'latitude'   => $ipwhois['latitude'],
-                'longitude'  => $ipwhois['longitude'],
-            ]);
+            // AuditTrail::create([
+            //     'user_id'    => $userId,
+            //     'module'     => 'Donor List',
+            //     'action'     => 'Export Donor List as PDF',
+            //     'status'     => 'success',
+            //     'ip_address' => $ipwhois['ip'],
+            //     'region'     => $ipwhois['region'],
+            //     'city'       => $ipwhois['city'],
+            //     'postal'     => $ipwhois['postal'],
+            //     'latitude'   => $ipwhois['latitude'],
+            //     'longitude'  => $ipwhois['longitude'],
+            // ]);
 
             $totalDonorDetails = $donorList->count();
             $dateNow = new \DateTime();

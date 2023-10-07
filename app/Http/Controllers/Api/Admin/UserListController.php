@@ -56,18 +56,18 @@ class UserListController extends Controller
         
             curl_close($ch);
 
-            AuditTrail::create([
-                'user_id'    => $userId,
-                'module'     => 'User List',
-                'action'     => 'Export Users List as PDF',
-                'status'     => 'success',
-                'ip_address' => $ipwhois['ip'],
-                'region'     => $ipwhois['region'],
-                'city'       => $ipwhois['city'],
-                'postal'     => $ipwhois['postal'],
-                'latitude'   => $ipwhois['latitude'],
-                'longitude'  => $ipwhois['longitude'],
-            ]);
+            // AuditTrail::create([
+            //     'user_id'    => $userId,
+            //     'module'     => 'User List',
+            //     'action'     => 'Export Users List as PDF',
+            //     'status'     => 'success',
+            //     'ip_address' => $ipwhois['ip'],
+            //     'region'     => $ipwhois['region'],
+            //     'city'       => $ipwhois['city'],
+            //     'postal'     => $ipwhois['postal'],
+            //     'latitude'   => $ipwhois['latitude'],
+            //     'longitude'  => $ipwhois['longitude'],
+            // ]);
 
             $totalUserDetails = $userDetails->count();
             $dateNow = new \DateTime();
@@ -184,18 +184,18 @@ class UserListController extends Controller
                         'end_date'          => $endDateOfDeferral
                     ]);
 
-                    AuditTrail::create([
-                        'user_id'    => $userId,
-                        'module'     => 'Donor List',
-                        'action'     => 'Move to Temporary Deferral | donor no: ' . $user_detail->donor_no,
-                        'status'     => 'success',
-                        'ip_address' => $ipwhois['ip'],
-                        'region'     => $ipwhois['region'],
-                        'city'       => $ipwhois['city'],
-                        'postal'     => $ipwhois['postal'],
-                        'latitude'   => $ipwhois['latitude'],
-                        'longitude'  => $ipwhois['longitude'],
-                    ]);
+                    // AuditTrail::create([
+                    //     'user_id'    => $userId,
+                    //     'module'     => 'Donor List',
+                    //     'action'     => 'Move to Temporary Deferral | donor no: ' . $user_detail->donor_no,
+                    //     'status'     => 'success',
+                    //     'ip_address' => $ipwhois['ip'],
+                    //     'region'     => $ipwhois['region'],
+                    //     'city'       => $ipwhois['city'],
+                    //     'postal'     => $ipwhois['postal'],
+                    //     'latitude'   => $ipwhois['latitude'],
+                    //     'longitude'  => $ipwhois['longitude'],
+                    // ]);
                 }else{
                     $user_detail->remarks = 2;
                     $user_detail->save();
@@ -207,18 +207,18 @@ class UserListController extends Controller
                         'remarks_id'         => $validatedData['remarks'],
                     ]);
 
-                    AuditTrail::create([
-                        'user_id'    => $userId,
-                        'module'     => 'Donor List',
-                        'action'     => 'Move to Permanent Deferral | donor no: ' . $user_detail->donor_no,
-                        'status'     => 'success',
-                        'ip_address' => $ipwhois['ip'],
-                        'region'     => $ipwhois['region'],
-                        'city'       => $ipwhois['city'],
-                        'postal'     => $ipwhois['postal'],
-                        'latitude'   => $ipwhois['latitude'],
-                        'longitude'  => $ipwhois['longitude'],
-                    ]);
+                    // AuditTrail::create([
+                    //     'user_id'    => $userId,
+                    //     'module'     => 'Donor List',
+                    //     'action'     => 'Move to Permanent Deferral | donor no: ' . $user_detail->donor_no,
+                    //     'status'     => 'success',
+                    //     'ip_address' => $ipwhois['ip'],
+                    //     'region'     => $ipwhois['region'],
+                    //     'city'       => $ipwhois['city'],
+                    //     'postal'     => $ipwhois['postal'],
+                    //     'latitude'   => $ipwhois['latitude'],
+                    //     'longitude'  => $ipwhois['longitude'],
+                    // ]);
                 }
             }
 
@@ -244,9 +244,10 @@ class UserListController extends Controller
      
         $userDetails = UserDetail::join('users', 'user_details.user_id', '=', 'users.user_id')
             ->join('deferrals', 'user_details.user_id', '=', 'deferrals.user_id')
+            ->join('categories', 'categories.categories_id', '=', 'deferrals.categories_id')
             ->where('user_details.remarks', 1)
             ->where('user_details.status', 0)
-            ->select('users.mobile', 'users.email', 'user_details.*', 'deferrals.*')
+            ->select('users.mobile', 'users.email', 'user_details.*', 'deferrals.*','categories.*')
             ->paginate(8);
         
 
@@ -269,9 +270,10 @@ class UserListController extends Controller
      
         $userDetails = UserDetail::join('users', 'user_details.user_id', '=', 'users.user_id')
             ->join('deferrals', 'user_details.user_id', '=', 'deferrals.user_id')
+            ->join('categories', 'categories.categories_id', '=', 'deferrals.categories_id')
             ->where('user_details.remarks', 2)
             ->where('user_details.status', 0)
-            ->select('users.mobile', 'users.email', 'user_details.*', 'deferrals.*')
+            ->select('users.mobile', 'users.email', 'user_details.*', 'deferrals.*','categories.*')
             ->paginate(8);
         
 
@@ -341,18 +343,18 @@ class UserListController extends Controller
                 $userAuthDetails->email = $validatedData['email'];
                 $userAuthDetails->update();
            
-                AuditTrail::create([
-                    'user_id'    => $userId,
-                    'module'     => 'User List',
-                    'action'     => 'Edit User Details | donor no: ' . $userDetails->donor_no,
-                    'status'     => 'success',
-                    'ip_address' => $ipwhois['ip'],
-                    'region'     => $ipwhois['region'],
-                    'city'       => $ipwhois['city'],
-                    'postal'     => $ipwhois['postal'],
-                    'latitude'   => $ipwhois['latitude'],
-                    'longitude'  => $ipwhois['longitude'],
-                ]);
+                // AuditTrail::create([
+                //     'user_id'    => $userId,
+                //     'module'     => 'User List',
+                //     'action'     => 'Edit User Details | donor no: ' . $userDetails->donor_no,
+                //     'status'     => 'success',
+                //     'ip_address' => $ipwhois['ip'],
+                //     'region'     => $ipwhois['region'],
+                //     'city'       => $ipwhois['city'],
+                //     'postal'     => $ipwhois['postal'],
+                //     'latitude'   => $ipwhois['latitude'],
+                //     'longitude'  => $ipwhois['longitude'],
+                // ]);
 
                 return response()->json([
                     'status'    => 'success',
