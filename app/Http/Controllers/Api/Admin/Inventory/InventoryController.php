@@ -240,7 +240,6 @@ class InventoryController extends Controller
             $endDate = $request->input('endDate');
     
             $inventory = BloodBag::join('user_details', 'blood_bags.user_id', '=', 'user_details.user_id')
-                ->where('blood_bags.isStored', 1)
                 ->where('blood_bags.isExpired', 1)
                 ->where('user_details.remarks', 0)
                 ->where('blood_bags.isDisposed', 0)
@@ -342,7 +341,7 @@ class InventoryController extends Controller
             }else{
 
                 $totalCount = BloodBag::join('user_details', 'blood_bags.user_id', '=', 'user_details.user_id')
-                ->where('blood_bags.isStored', 1)
+                ->where('blood_bags.isDisposed', 0)
                 ->where('blood_bags.isExpired', 1)
                 ->where('user_details.remarks', 0)
                 ->count();
@@ -495,67 +494,79 @@ class InventoryController extends Controller
         }
     }
 
-    public function disposeBlood(Request $request){
-
-        $user = getAuthenticatedUserId();
-        $userId = $user->user_id;
-
-        try {
-                
-            $validatedData = $request->validate([
-                'serial_no'     => 'required',
-            ]);
-
-                $ch = curl_init('http://ipwho.is/' );
-                curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-                curl_setopt($ch, CURLOPT_HEADER, false);
-            
-                $ipwhois = json_decode(curl_exec($ch), true);
-                curl_close($ch);
-
-                $bloodBag = BloodBag::where('serial_no', $validatedData['serial_no'])->first();
-
-                if(empty($bloodBag)) {
-                    return response()->json([
-                        'status' => 'error',
-                        'message' => 'Blood bag not found',
-                    ], 400);
-                    
-                }else{
-
-                    $bloodBag->update(['isDisposed' => 1]);
-
-                    // AuditTrail::create([
-                    //     'user_id'    => $userId,
-                    //     'module'     => 'Inventory',
-                    //     'action'     => 'Disposed blood bag | serial no: ' . $validatedData['serial_no'],
-                    //     'status'     => 'success',
-                    //     'ip_address' => $ipwhois['ip'],
-                    //     'region'     => $ipwhois['region'],
-                    //     'city'       => $ipwhois['city'],
-                    //     'postal'     => $ipwhois['postal'],
-                    //     'latitude'   => $ipwhois['latitude'],
-                    //     'longitude'  => $ipwhois['longitude'],
-                    // ]);
-
-                    return response()->json([
-                        'status'    => 'success',
-                        'message'   => 'Blood bag successfully disposed',
-                        'blood_bag' => $bloodBag
-                    ]);
-
-                }
-                
-
-        } catch (ValidationException $e) {
-            return response()->json([
-                'status' => 'error',
-                'message' => 'Validation failed',
-                'errors' => $e->validator->errors(),
-            ], 400);
-        }
-        
-    }
+   public function disposeBlood(Request $request)
+   {
+       $user = getAuthenticatedUserId();
+       $userId = $user->user_id;
+   
+       try {
+           $validatedData = $request->validate([
+               'blood_bags_id' => 'required|array',
+           ]);
+   
+           $ch = curl_init('http://ipwho.is/');
+           curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+           curl_setopt($ch, CURLOPT_HEADER, false);
+   
+           $ipwhois = json_decode(curl_exec($ch), true);
+           curl_close($ch);
+   
+           foreach ($validatedData['blood_bags_id'] as $bloodBagId) {
+               $bloodBag = BloodBag::where('blood_bags_id', $bloodBagId)->first();
+   
+               if (empty($bloodBag)) {
+                   return response()->json([
+                       'status'  => 'error',
+                       'message' => 'Blood bag not found',
+                   ], 400);
+               } else {
+                   $bloodBag->update(['isDisposed' => 1]);
+   
+                   // AuditTrail::create([
+                   //     'user_id'    => $userId,
+                   //     'module'     => 'Inventory',
+                   //     'action'     => 'Disposed blood bag | blood bag ID: ' . $bloodBagId,
+                   //     'status'     => 'success',
+                   //     'ip_address' => $ipwhois['ip'],
+                   //     'region'     => $ipwhois['region'],
+                   //     'city'       => $ipwhois['city'],
+                   //     'postal'     => $ipwhois['postal'],
+                   //     'latitude'   => $ipwhois['latitude'],
+                   //     'longitude'  => $ipwhois['longitude'],
+                   // ]);
+   
+                   // You can perform any additional operations for each blood bag disposal
+   
+                   // Add the blood bag to a response array or collection
+               }
+           }
+   
+           return response()->json([
+               'status'    => 'success',
+               'message'   => 'Blood bags successfully disposed',
+           ]);
+       } catch (ValidationException $e) {
+           return response()->json([
+               'status'  => 'error',
+               'message' => 'Validation failed',
+               'errors'  => $e->validator->errors(),
+           ], 400);
+       }
+   }
 
 
 }
+
+// foreach ($request->announcementIds as $announcementId) {
+//     $announcement = Announcement::where('announcement_id', $announcementId)->first();
+//     if ($announcement) {
+//         if ($announcement->user_id == $user_id && $user->isAdmin == 1) {
+//             $announcement->status = 1;
+//             $announcement->save();
+//         }
+//     }
+// }
+// return response()->json([
+//     'status' => 'success',
+//     'message' => 'Announcements deleted successfully.',
+// ], 200);

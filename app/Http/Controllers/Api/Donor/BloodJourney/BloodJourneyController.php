@@ -14,7 +14,7 @@ class BloodJourneyController extends Controller
         $userId = $user->user_id;
 
         $blood_bags = BloodBag::where('user_id', $userId)
-            ->orderBy('blood_bags_id', 'desc')
+            ->orderBy('created_at', 'desc')
             ->get();
 
         $data = [];

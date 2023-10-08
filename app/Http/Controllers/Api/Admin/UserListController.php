@@ -22,6 +22,7 @@ class UserListController extends Controller
         $userDetails = UserDetail::join('users', 'user_details.user_id', '=', 'users.user_id')
             ->join('galloners', 'user_details.user_id', '=', 'galloners.user_id')
             ->where('user_details.status', 0)
+            ->where('users.isAdmin', 0)
             ->select('users.mobile', 'users.email', 'user_details.*', 'galloners.badge', 'galloners.donate_qty')
             ->paginate(8);
 
@@ -38,7 +39,7 @@ class UserListController extends Controller
         }
     }
 
-    public function exportUserDetailsAsPdf(){
+    public function exportUserDetailsAsPdf(Request $request){
         $user = getAuthenticatedUserId();
         $userId = $user->user_id;
 
@@ -55,19 +56,18 @@ class UserListController extends Controller
             $ipwhois = json_decode(curl_exec($ch), true);
         
             curl_close($ch);
-
-            // AuditTrail::create([
-            //     'user_id'    => $userId,
-            //     'module'     => 'User List',
-            //     'action'     => 'Export Users List as PDF',
-            //     'status'     => 'success',
-            //     'ip_address' => $ipwhois['ip'],
-            //     'region'     => $ipwhois['region'],
-            //     'city'       => $ipwhois['city'],
-            //     'postal'     => $ipwhois['postal'],
-            //     'latitude'   => $ipwhois['latitude'],
-            //     'longitude'  => $ipwhois['longitude'],
-            // ]);
+            AuditTrail::create([
+                'user_id'    => $userId,
+                'module'     => 'User List',
+                'action'     => 'Export Users List as PDF',
+                'status'     => 'success',
+                'ip_address' => $ipwhois['ip'],
+                'region'     => $ipwhois['region'],
+                'city'       => $ipwhois['city'],
+                'postal'     => $ipwhois['postal'],
+                'latitude'   => $ipwhois['latitude'],
+                'longitude'  => $ipwhois['longitude'],
+            ]);
 
             $totalUserDetails = $userDetails->count();
             $dateNow = new \DateTime();

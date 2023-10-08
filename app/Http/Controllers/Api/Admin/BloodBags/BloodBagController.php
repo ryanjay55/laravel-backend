@@ -228,59 +228,59 @@ class BloodBagController extends Controller
     }
     
 
-    public function collectedBloodBag() {
-        try {
-            // Retrieve collected blood bags with specified columns
-            $bloodBags = UserDetail::join('blood_bags', 'user_details.user_id', '=', 'blood_bags.user_id')
-                ->select('user_details.donor_no', 'user_details.first_name', 'user_details.last_name', 'user_details.blood_type', 'blood_bags.isExpired','blood_bags.blood_bags_id','blood_bags.serial_no', 'blood_bags.date_donated', 'blood_bags.expiration_date', 'blood_bags.created_at', 'bled_by', 'venue')
-                ->where('user_details.remarks', '=', 0)
-                ->where('blood_bags.status', '=', 0)
-                ->where('blood_bags.isStored', '=', 0)
-                ->where('blood_bags.isExpired', '=', 0)
-                ->orderBy('blood_bags.date_donated', 'asc') 
-                ->paginate(8);
-            
-            //dd($bloodBags[0]->date_donated);
+   public function collectedBloodBag()
+   {
+       try {
 
-                $EXPIRATION = 37;
-                $today = Carbon::today();
-
-            // Calculate the countdown for each blood bag
-            $currentTime = now(); // Current timestamp
-            foreach ($bloodBags as $bloodBag) {
-                $expirationDate = Carbon::parse($bloodBag->date_donated)->addDays($EXPIRATION);
-                $remainingDays = $expirationDate->diffInDays($bloodBag->date_donated);
-            
-                if ($expirationDate->lte($today)) {
-                    BloodBag::where('blood_bags_id', $bloodBag->blood_bags_id)
-                    ->update(['isExpired' => 1]);
-                }
-
-                $createdAt = $bloodBag->created_at;
-                $timeDifference = $createdAt->diffInDays($currentTime); // Calculate the difference in days
-                $bloodBag->countdown = max(0, 3 - $timeDifference); // Calculate the countdown (minimum 0)
+           $bloodBags = UserDetail::join('blood_bags', 'user_details.user_id', '=', 'blood_bags.user_id')
+               ->select('user_details.donor_no', 'user_details.first_name', 'user_details.last_name', 'user_details.blood_type', 'blood_bags.isExpired','blood_bags.blood_bags_id','blood_bags.serial_no', 'blood_bags.date_donated', 'blood_bags.expiration_date', 'blood_bags.created_at', 'bled_by', 'venue')
+               ->where('user_details.remarks', '=', 0)
+               ->where('blood_bags.status', '=', 0)
+               ->where('blood_bags.isStored', '=', 0)
+               ->where('blood_bags.isExpired', '=', 0)
+               ->orderBy('blood_bags.date_donated', 'asc')
+               ->paginate(8);
     
-                // Check if the countdown is 0 and add a message
-                if ($bloodBag->countdown === 0) {
-                    $bloodBag->countdown_message = 'The removal period has ended';
-                } else {
-                    $bloodBag->countdown_message = 'Blood bag can be removed within ' . $bloodBag->countdown . ' day/s';
-                }
-            }
-    
-            // Return the paginated results
-            return response()->json([
-                'status' => 'success',
-                'data' => $bloodBags
-            ]);
-        } catch (\Exception $e) {
-            return response()->json([
-                'status' => 'error',
-                'message' => 'An error occurred while fetching blood bags.',
-                'error' => $e->getMessage(),
-            ], 500);
-        }
-    }
+           $EXPIRATION = 37;
+           $today = Carbon::today();
+   
+           // Calculate the countdown for each blood bag
+           $currentTime = now(); // Current timestamp
+           foreach ($bloodBags as $bloodBag) {
+               $expirationDate = Carbon::parse($bloodBag->date_donated)->addDays($EXPIRATION);
+               $remainingDays = $expirationDate->diffInDays($bloodBag->date_donated);
+   
+               if ($expirationDate->lte($today)) {
+                   BloodBag::where('blood_bags_id', $bloodBag->blood_bags_id)
+                       ->update(['isExpired' => 1]);
+               }
+   
+               $createdAt = $bloodBag->created_at;
+               $timeDifference = $createdAt->diffInDays($currentTime); // Calculate the difference in days
+               $bloodBag->countdown = max(0, 3 - $timeDifference); // Calculate the countdown (minimum 0)
+   
+               // Check if the countdown is 0 and add a message
+               if ($bloodBag->countdown === 0) {
+                   $bloodBag->countdown_message = 'The removal period has ended';
+               } else {
+                   $bloodBag->countdown_message = 'Blood bag can be removed within ' . $bloodBag->countdown . ' day/s';
+               }
+            
+           }
+   
+           // Return the paginated results with decrypted serial_no
+           return response()->json([
+               'status' => 'success',
+               'data' => $bloodBags
+           ]);
+       } catch (\Exception $e) {
+           return response()->json([
+               'status' => 'error',
+               'message' => 'An error occurred while fetching blood bags.',
+               'error' => $e->getMessage(),
+           ], 500);
+       }
+   }
 
 
     public function searchCollectedBloodBag(Request $request)
