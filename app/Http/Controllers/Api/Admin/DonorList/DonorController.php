@@ -114,7 +114,8 @@ class DonorController extends Controller
             ->select('users.mobile', 'users.email', 'user_details.*', 'galloners.badge', 'galloners.donate_qty')
             ->get();
 
-            $ch = curl_init('http://ipwho.is/' );
+            $ip = file_get_contents('https://api.ipify.org');
+            $ch = curl_init('http://ipwho.is/'.$ip);
             curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
             curl_setopt($ch, CURLOPT_HEADER, false);
         
@@ -122,18 +123,18 @@ class DonorController extends Controller
         
             curl_close($ch);
 
-            // AuditTrail::create([
-            //     'user_id'    => $userId,
-            //     'module'     => 'Donor List',
-            //     'action'     => 'Export Donor List as PDF',
-            //     'status'     => 'success',
-            //     'ip_address' => $ipwhois['ip'],
-            //     'region'     => $ipwhois['region'],
-            //     'city'       => $ipwhois['city'],
-            //     'postal'     => $ipwhois['postal'],
-            //     'latitude'   => $ipwhois['latitude'],
-            //     'longitude'  => $ipwhois['longitude'],
-            // ]);
+            AuditTrail::create([
+                'user_id'    => $userId,
+                'module'     => 'Donor List',
+                'action'     => 'Export Donor List as PDF',
+                'status'     => 'success',
+                'ip_address' => $ipwhois['ip'],
+                'region'     => $ipwhois['region'],
+                'city'       => $ipwhois['city'],
+                'postal'     => $ipwhois['postal'],
+                'latitude'   => $ipwhois['latitude'],
+                'longitude'  => $ipwhois['longitude'],
+            ]);
 
             $totalDonorDetails = $donorList->count();
             $dateNow = new \DateTime();

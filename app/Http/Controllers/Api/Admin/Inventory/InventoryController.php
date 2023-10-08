@@ -25,7 +25,8 @@ class InventoryController extends Controller
                 'serial_no'     => 'required',
             ]);     
                 
-                $ch = curl_init('http://ipwho.is/' );
+                $ip = file_get_contents('https://api.ipify.org');
+                $ch = curl_init('http://ipwho.is/'.$ip);
                 curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
                 curl_setopt($ch, CURLOPT_HEADER, false);
             
@@ -50,18 +51,18 @@ class InventoryController extends Controller
                     $bloodBag->update(['isTested' => 1]);
 
 
-                    // AuditTrail::create([
-                    //     'user_id'    => $userId,
-                    //     'module'     => 'Collected Blood Bags',
-                    //     'action'     => 'Move to stocks | serial no: ' . $validatedData['serial_no'],
-                    //     'status'     => 'success',
-                    //     'ip_address' => $ipwhois['ip'],
-                    //     'region'     => $ipwhois['region'],
-                    //     'city'       => $ipwhois['city'],
-                    //     'postal'     => $ipwhois['postal'],
-                    //     'latitude'   => $ipwhois['latitude'],
-                    //     'longitude'  => $ipwhois['longitude'],
-                    // ]);
+                    AuditTrail::create([
+                        'user_id'    => $userId,
+                        'module'     => 'Collected Blood Bags',
+                        'action'     => 'Move to stocks | serial no: ' . $validatedData['serial_no'],
+                        'status'     => 'success',
+                        'ip_address' => $ipwhois['ip'],
+                        'region'     => $ipwhois['region'],
+                        'city'       => $ipwhois['city'],
+                        'postal'     => $ipwhois['postal'],
+                        'latitude'   => $ipwhois['latitude'],
+                        'longitude'  => $ipwhois['longitude'],
+                    ]);
 
                     return response()->json([
                         'status'    => 'success',
@@ -285,7 +286,8 @@ class InventoryController extends Controller
                 'serial_no'     => 'required',
             ]);
 
-                $ch = curl_init('http://ipwho.is/' );
+                $ip = file_get_contents('https://api.ipify.org');
+                $ch = curl_init('http://ipwho.is/'.$ip);
                 curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
                 curl_setopt($ch, CURLOPT_HEADER, false);
             
@@ -295,18 +297,18 @@ class InventoryController extends Controller
                 $bloodBag = BloodBag::where('serial_no', $validatedData['serial_no'])->first();
                 $bloodBag->update(['isStored' => 0]);
 
-                // AuditTrail::create([
-                //     'user_id'    => $userId,
-                //     'module'     => 'Inventory',
-                //     'action'     => 'Move to collected blood bags | serial no: ' . $validatedData['serial_no'],
-                //     'status'     => 'success',
-                //     'ip_address' => $ipwhois['ip'],
-                //     'region'     => $ipwhois['region'],
-                //     'city'       => $ipwhois['city'],
-                //     'postal'     => $ipwhois['postal'],
-                //     'latitude'   => $ipwhois['latitude'],
-                //     'longitude'  => $ipwhois['longitude'],
-                // ]);
+                AuditTrail::create([
+                    'user_id'    => $userId,
+                    'module'     => 'Inventory',
+                    'action'     => 'Move to collected blood bags | serial no: ' . $validatedData['serial_no'],
+                    'status'     => 'success',
+                    'ip_address' => $ipwhois['ip'],
+                    'region'     => $ipwhois['region'],
+                    'city'       => $ipwhois['city'],
+                    'postal'     => $ipwhois['postal'],
+                    'latitude'   => $ipwhois['latitude'],
+                    'longitude'  => $ipwhois['longitude'],
+                ]);
 
                 return response()->json([
                     'status'    => 'success',
@@ -504,7 +506,8 @@ class InventoryController extends Controller
                'blood_bags_id' => 'required|array',
            ]);
    
-           $ch = curl_init('http://ipwho.is/');
+           $ip = file_get_contents('https://api.ipify.org');
+           $ch = curl_init('http://ipwho.is/'.$ip);
            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
            curl_setopt($ch, CURLOPT_HEADER, false);
    
@@ -522,22 +525,18 @@ class InventoryController extends Controller
                } else {
                    $bloodBag->update(['isDisposed' => 1]);
    
-                   // AuditTrail::create([
-                   //     'user_id'    => $userId,
-                   //     'module'     => 'Inventory',
-                   //     'action'     => 'Disposed blood bag | blood bag ID: ' . $bloodBagId,
-                   //     'status'     => 'success',
-                   //     'ip_address' => $ipwhois['ip'],
-                   //     'region'     => $ipwhois['region'],
-                   //     'city'       => $ipwhois['city'],
-                   //     'postal'     => $ipwhois['postal'],
-                   //     'latitude'   => $ipwhois['latitude'],
-                   //     'longitude'  => $ipwhois['longitude'],
-                   // ]);
-   
-                   // You can perform any additional operations for each blood bag disposal
-   
-                   // Add the blood bag to a response array or collection
+                   AuditTrail::create([
+                       'user_id'    => $userId,
+                       'module'     => 'Inventory',
+                       'action'     => 'Disposed blood bag | blood bag ID: ' . $bloodBagId,
+                       'status'     => 'success',
+                       'ip_address' => $ipwhois['ip'],
+                       'region'     => $ipwhois['region'],
+                       'city'       => $ipwhois['city'],
+                       'postal'     => $ipwhois['postal'],
+                       'latitude'   => $ipwhois['latitude'],
+                       'longitude'  => $ipwhois['longitude'],
+                   ]);
                }
            }
    
@@ -557,16 +556,3 @@ class InventoryController extends Controller
 
 }
 
-// foreach ($request->announcementIds as $announcementId) {
-//     $announcement = Announcement::where('announcement_id', $announcementId)->first();
-//     if ($announcement) {
-//         if ($announcement->user_id == $user_id && $user->isAdmin == 1) {
-//             $announcement->status = 1;
-//             $announcement->save();
-//         }
-//     }
-// }
-// return response()->json([
-//     'status' => 'success',
-//     'message' => 'Announcements deleted successfully.',
-// ], 200);

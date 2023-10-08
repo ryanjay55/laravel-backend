@@ -49,7 +49,8 @@ class UserListController extends Controller
             ->select('users.mobile', 'users.email', 'user_details.*', 'galloners.badge', 'galloners.donate_qty')
             ->get();
 
-            $ch = curl_init('http://ipwho.is/' );
+            $ip = file_get_contents('https://api.ipify.org');
+            $ch = curl_init('http://ipwho.is/'.$ip);
             curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
             curl_setopt($ch, CURLOPT_HEADER, false);
         
@@ -148,7 +149,8 @@ class UserListController extends Controller
                 'duration.min' => 'Minimum duration is 1 day.',
             ]);
             
-            $ch = curl_init('http://ipwho.is/');
+            $ip = file_get_contents('https://api.ipify.org');
+            $ch = curl_init('http://ipwho.is/'.$ip);
             curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
             curl_setopt($ch, CURLOPT_HEADER, false);
             $ipwhois = json_decode(curl_exec($ch), true);
@@ -184,18 +186,18 @@ class UserListController extends Controller
                         'end_date'          => $endDateOfDeferral
                     ]);
 
-                    // AuditTrail::create([
-                    //     'user_id'    => $userId,
-                    //     'module'     => 'Donor List',
-                    //     'action'     => 'Move to Temporary Deferral | donor no: ' . $user_detail->donor_no,
-                    //     'status'     => 'success',
-                    //     'ip_address' => $ipwhois['ip'],
-                    //     'region'     => $ipwhois['region'],
-                    //     'city'       => $ipwhois['city'],
-                    //     'postal'     => $ipwhois['postal'],
-                    //     'latitude'   => $ipwhois['latitude'],
-                    //     'longitude'  => $ipwhois['longitude'],
-                    // ]);
+                    AuditTrail::create([
+                        'user_id'    => $userId,
+                        'module'     => 'Donor List',
+                        'action'     => 'Move to Temporary Deferral | donor no: ' . $user_detail->donor_no,
+                        'status'     => 'success',
+                        'ip_address' => $ipwhois['ip'],
+                        'region'     => $ipwhois['region'],
+                        'city'       => $ipwhois['city'],
+                        'postal'     => $ipwhois['postal'],
+                        'latitude'   => $ipwhois['latitude'],
+                        'longitude'  => $ipwhois['longitude'],
+                    ]);
                 }else{
                     $user_detail->remarks = 2;
                     $user_detail->save();
@@ -207,18 +209,18 @@ class UserListController extends Controller
                         'remarks_id'         => $validatedData['remarks'],
                     ]);
 
-                    // AuditTrail::create([
-                    //     'user_id'    => $userId,
-                    //     'module'     => 'Donor List',
-                    //     'action'     => 'Move to Permanent Deferral | donor no: ' . $user_detail->donor_no,
-                    //     'status'     => 'success',
-                    //     'ip_address' => $ipwhois['ip'],
-                    //     'region'     => $ipwhois['region'],
-                    //     'city'       => $ipwhois['city'],
-                    //     'postal'     => $ipwhois['postal'],
-                    //     'latitude'   => $ipwhois['latitude'],
-                    //     'longitude'  => $ipwhois['longitude'],
-                    // ]);
+                    AuditTrail::create([
+                        'user_id'    => $userId,
+                        'module'     => 'Donor List',
+                        'action'     => 'Move to Permanent Deferral | donor no: ' . $user_detail->donor_no,
+                        'status'     => 'success',
+                        'ip_address' => $ipwhois['ip'],
+                        'region'     => $ipwhois['region'],
+                        'city'       => $ipwhois['city'],
+                        'postal'     => $ipwhois['postal'],
+                        'latitude'   => $ipwhois['latitude'],
+                        'longitude'  => $ipwhois['longitude'],
+                    ]);
                 }
             }
 
@@ -314,7 +316,9 @@ class UserListController extends Controller
                 'barangay'              => ['required' ],
                 'postalcode'            => ['required', 'integer'],
             ]);
-                $ch = curl_init('http://ipwho.is/');
+
+                $ip = file_get_contents('https://api.ipify.org');
+                $ch = curl_init('http://ipwho.is/'.$ip);
                 curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
                 curl_setopt($ch, CURLOPT_HEADER, false);
 
@@ -343,18 +347,18 @@ class UserListController extends Controller
                 $userAuthDetails->email = $validatedData['email'];
                 $userAuthDetails->update();
            
-                // AuditTrail::create([
-                //     'user_id'    => $userId,
-                //     'module'     => 'User List',
-                //     'action'     => 'Edit User Details | donor no: ' . $userDetails->donor_no,
-                //     'status'     => 'success',
-                //     'ip_address' => $ipwhois['ip'],
-                //     'region'     => $ipwhois['region'],
-                //     'city'       => $ipwhois['city'],
-                //     'postal'     => $ipwhois['postal'],
-                //     'latitude'   => $ipwhois['latitude'],
-                //     'longitude'  => $ipwhois['longitude'],
-                // ]);
+                AuditTrail::create([
+                    'user_id'    => $userId,
+                    'module'     => 'User List',
+                    'action'     => 'Edit User Details | donor no: ' . $userDetails->donor_no,
+                    'status'     => 'success',
+                    'ip_address' => $ipwhois['ip'],
+                    'region'     => $ipwhois['region'],
+                    'city'       => $ipwhois['city'],
+                    'postal'     => $ipwhois['postal'],
+                    'latitude'   => $ipwhois['latitude'],
+                    'longitude'  => $ipwhois['longitude'],
+                ]);
 
                 return response()->json([
                     'status'    => 'success',
