@@ -283,6 +283,53 @@ class BloodBagController extends Controller
        }
    }
 
+   public function filterBloodTypeCollectedBloodBag(Request $request)
+   {
+       try {
+           $bloodType = $request->input('blood_type');
+           $startDate = $request->input('startDate');
+           $endDate = $request->input('endDate');
+           $bledBy = $request->input('bledBy');
+           $venue = $request->input('venue');
+   
+           $bloodBags = UserDetail::join('blood_bags', 'user_details.user_id', '=', 'blood_bags.user_id')
+               ->select('user_details.donor_no', 'user_details.first_name', 'user_details.last_name', 'user_details.blood_type', 'blood_bags.isExpired','blood_bags.blood_bags_id','blood_bags.serial_no', 'blood_bags.date_donated', 'blood_bags.expiration_date', 'blood_bags.created_at', 'bled_by', 'venue')
+               ->where('user_details.remarks', '=', 0)
+               ->where('blood_bags.status', '=', 0)
+               ->where('blood_bags.isStored', '=', 0)
+               ->where('blood_bags.isExpired', '=', 0);
+   
+           if ($bloodType != 'All') {
+               $bloodBags->where('user_details.blood_type', $bloodType);
+           }
+           if ($startDate && $endDate) {
+               $bloodBags->whereBetween('blood_bags.date_donated', [$startDate, $endDate]);
+           }
+           if ($bledBy != 'All') {
+               $bloodBags->where('blood_bags.bled_by', $bledBy);
+           }
+           if ($venue != 'All') {
+               $bloodBags->where('blood_bags.venue', $venue);
+           }
+           
+           $totalCount = $bloodBags->count();
+           $bloodBags = $bloodBags->orderBy('blood_bags.date_donated','asc')->paginate(8);
+   
+           return response()->json([
+               'status' => 'success',
+               'data' => $bloodBags,
+               'total_count' => $totalCount
+           ]);
+   
+       } catch (ValidationException $e) {
+           return response()->json([
+               'status' => 'error',
+               'message' => 'Validation failed',
+               'errors' => $e->validator->errors(),
+           ], 400);
+       }
+   }
+
 
     public function searchCollectedBloodBag(Request $request)
     {
