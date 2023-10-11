@@ -5,6 +5,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\AddressController;
 use App\Http\Controllers\Api\Admin\AuditTrailController;
 use App\Http\Controllers\Api\Admin\BloodBags\BloodBagController;
+use App\Http\Controllers\Api\Admin\Dashboard\DashboardController as DashboardDashboardController;
 use App\Http\Controllers\Api\Admin\DonorList\DonorController;
 use App\Http\Controllers\Api\Admin\PostApproval\PostApprovalController;
 use App\Http\Controllers\Api\RegistrationController;
@@ -16,6 +17,7 @@ use App\Http\Controllers\Api\Donor\Dashboard\DashboardController;
 use App\Http\Controllers\Api\Donor\DonorPost\DonorPostController;
 use App\Http\Controllers\Api\Admin\Inventory\InventoryController;
 use App\Http\Controllers\Api\Donor\Profile\ProfileController;
+use App\Http\Controllers\Api\Admin\Settings\SettingsController;
 
 /*
 |--------------------------------------------------------------------------
@@ -103,6 +105,13 @@ Route::group(['middleware' => ['auth:sanctum','admin']], function () {
     Route::get('/get-donor-list', [DonorController::class, 'donorList']);
     Route::post('/search-donor', [DonorController::class, 'searchDonor']);
     Route::get('/export-pdf-donor-list', [DonorController::class, 'exportDonorListAsPdf']);
+    Route::post('/create-security-pin', [SettingsController::class, 'createSecurityPin']);
+    Route::post('/check-security-pin', [SettingsController::class, 'checkSecurityPin']);
+
+    Route::get('/get-quota',[DashboardDashboardController::class, 'getQuota']);
+    Route::get('/count-bloodbag-per-month',[DashboardDashboardController::class, 'countBloodBagPerMonth']);
+    Route::get('/count-donor-per-barangay',[DashboardDashboardController::class, 'countDonorPerBarangay']);
+    Route::get('/mbd-quick-view',[DashboardDashboardController::class, 'mbdQuickView']);
 
 });
 
