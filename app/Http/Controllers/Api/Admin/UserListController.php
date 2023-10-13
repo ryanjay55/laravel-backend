@@ -15,10 +15,10 @@ use Illuminate\Support\Carbon;
 use Illuminate\Validation\ValidationException;
 use Dompdf\Dompdf;
 
+
 class UserListController extends Controller
 {
-    public function getUserDetails()
-    {
+    public function getUserDetails(){
         $userDetails = UserDetail::join('users', 'user_details.user_id', '=', 'users.user_id')
             ->join('galloners', 'user_details.user_id', '=', 'galloners.user_id')
             ->where('user_details.status', 0)
@@ -86,8 +86,7 @@ class UserListController extends Controller
                 
     }
 
-    public function searchUsers(Request $request)
-    {
+    public function searchUsers(Request $request){
         try {
             $validatedData = $request->validate([
                 'searchInput' => 'required',
@@ -133,10 +132,10 @@ class UserListController extends Controller
         }
     }
     
-    public function moveToDeferral(Request $request)
-    {
+    public function moveToDeferral(Request $request){
         $user = getAuthenticatedUserId();
         $userId = $user->user_id;
+ 
 
         try {
             $validatedData = $request->validate([
@@ -224,10 +223,6 @@ class UserListController extends Controller
                 }
             }
 
-            
-
-            
-            
 
 
         } catch (ValidationException $e) {
@@ -241,18 +236,33 @@ class UserListController extends Controller
 
 
 
-    public function getTemporaryDeferral()
-    {
-     
+    public function getTemporaryDeferral(){
+        $now = Carbon::now();
+
+        $deferralsToUpdate = Deferral::where('end_date', '<=', $now)
+        ->where('status', '!=', 1)
+        ->get();
+
+        foreach ($deferralsToUpdate as $deferral) {
+            $deferral->status = 1;
+            $deferral->save();
+
+            $user_detail = UserDetail::where('user_id', $deferral->user_id)->first();
+            if ($user_detail) {
+                $user_detail->remarks = 0;
+                $user_detail->save();
+            }
+        }
+
         $userDetails = UserDetail::join('users', 'user_details.user_id', '=', 'users.user_id')
             ->join('deferrals', 'user_details.user_id', '=', 'deferrals.user_id')
             ->join('categories', 'categories.categories_id', '=', 'deferrals.categories_id')
+            ->where('deferrals.status', 0)
             ->where('user_details.remarks', 1)
             ->where('user_details.status', 0)
             ->select('users.mobile', 'users.email', 'user_details.*', 'deferrals.*','categories.*')
             ->paginate(8);
         
-
 
         if ($userDetails->isEmpty()) {
             return response()->json([
@@ -267,8 +277,7 @@ class UserListController extends Controller
         }
     }
 
-    public function getPermanentDeferral()
-    {
+    public function getPermanentDeferral(){
      
         $userDetails = UserDetail::join('users', 'user_details.user_id', '=', 'users.user_id')
             ->join('deferrals', 'user_details.user_id', '=', 'deferrals.user_id')
@@ -292,8 +301,7 @@ class UserListController extends Controller
         }
     }
 
-    public function editUserDetails(Request $request)
-    {
+    public function editUserDetails(Request $request){
         $user = getAuthenticatedUserId();
         $userId = $user->user_id;
 

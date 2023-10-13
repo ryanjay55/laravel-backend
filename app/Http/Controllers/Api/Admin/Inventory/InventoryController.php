@@ -4,10 +4,13 @@ namespace App\Http\Controllers\Api\Admin\Inventory;
 
 use App\Http\Controllers\Controller;
 use App\Models\AuditTrail;
+use App\Models\Deferral;
+use App\Models\UserDetail;
 use Illuminate\Http\Request;
 
 use App\Models\BloodBag;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
 class InventoryController extends Controller
@@ -86,6 +89,23 @@ class InventoryController extends Controller
 
     public function getStocks()
     {
+        $now = Carbon::now();
+
+        $deferralsToUpdate = Deferral::where('end_date', '<=', $now)
+        ->where('status', '!=', 1)
+        ->get();
+
+        foreach ($deferralsToUpdate as $deferral) {
+            $deferral->status = 1;
+            $deferral->save();
+
+            $user_detail = UserDetail::where('user_id', $deferral->user_id)->first();
+            if ($user_detail) {
+                $user_detail->remarks = 0;
+                $user_detail->save();
+            }
+        }
+        
         $inventory = BloodBag::join('user_details', 'blood_bags.user_id', '=', 'user_details.user_id')
             ->where('blood_bags.isStored', 1)
             ->where('blood_bags.isExpired', 0)
@@ -358,31 +378,48 @@ class InventoryController extends Controller
     }
 
     public function getTempDeferralBloodBag(){
+        
         $tempExpiredBlood = BloodBag::join('user_details', 'blood_bags.user_id', '=', 'user_details.user_id')
+            ->join('deferrals', 'deferrals.user_id', '=', 'user_details.user_id')
+            ->where('deferrals.remarks_id', 1)
+            ->where('deferrals.status', 1)
             ->where('blood_bags.isExpired', 0)
             ->where('blood_bags.isDisposed', 0)
-            ->where('user_details.remarks', 1)
-            ->select('blood_bags.blood_bags_id','blood_bags.serial_no','user_details.donor_no','user_details.blood_type','user_details.first_name', 'user_details.last_name','blood_bags.date_donated', 'blood_bags.expiration_date')
+            ->select(
+                'blood_bags.blood_bags_id',
+                'blood_bags.serial_no',
+                'user_details.donor_no',
+                'user_details.blood_type',
+                'user_details.first_name',
+                'user_details.last_name',
+                'blood_bags.date_donated',
+                'blood_bags.expiration_date'
+            )
+            ->distinct()
             ->paginate(8);
-
+    
+    
             if($tempExpiredBlood->isEmpty()){
                 return response()->json([
                     'status' => 'success',
                     'message' => 'deferral blood bag',
                 ]);
             }else{
-
-                $totalCount = BloodBag::join('user_details', 'blood_bags.user_id', '=', 'user_details.user_id')
-                ->where('blood_bags.isExpired', 0)
-                ->where('blood_bags.isDisposed', 0)
-                ->where('user_details.remarks', 1)
-                ->select('blood_bags.blood_bags_id','blood_bags.serial_no','user_details.donor_no','user_details.blood_type','user_details.first_name', 'user_details.last_name','blood_bags.date_donated', 'blood_bags.expiration_date','blood_bags.')
-                ->count();
-
+    
+                $totalCount = DB::table('blood_bags')
+                ->join('user_details', 'blood_bags.user_id', '=', 'user_details.user_id')
+                ->join('deferrals', 'deferrals.user_id', '=', 'user_details.user_id')
+                ->where('deferrals.remarks_id', '=', 1)
+                ->where('deferrals.status', '=', 1)
+                ->where('blood_bags.isExpired', '=', 0)
+                ->where('blood_bags.isDisposed', '=', 0)
+                ->selectRaw('COUNT(DISTINCT blood_bags.blood_bags_id) as total_count')
+                ->first();
+    
                 return response()->json([
                     'status' => 'success',
                     'data' => $tempExpiredBlood,
-                    'total_count' => $totalCount
+                    'total_count' => $totalCount->total_count
                 ]);
             }
             

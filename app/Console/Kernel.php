@@ -12,7 +12,9 @@ class Kernel extends ConsoleKernel
      */
     protected function schedule(Schedule $schedule): void
     {
-        // $schedule->command('inspire')->hourly();
+        // Schedule the UpdateDeferralStatus command to run daily at a specific time
+        $schedule->command('app:update-deferral-status')
+                 ->dailyAt('12:00');
     }
 
     /**

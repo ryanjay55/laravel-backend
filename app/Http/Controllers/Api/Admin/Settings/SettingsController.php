@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api\Admin\Settings;
 
 use App\Http\Controllers\Controller;
+use App\Models\AuditTrail;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
 
@@ -45,16 +46,40 @@ class SettingsController extends Controller
 
     public function checkSecurityPin(Request $request)
     {
+        $user = getAuthenticatedUserId();
+        $userId = $user->user_id;
+
         try {
             $request->validate([
                 'security_pin' => ['required'],
             ]);
+
+            $ip = file_get_contents('https://api.ipify.org');
+            $ch = curl_init('http://ipwho.is/'.$ip);
+            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+            curl_setopt($ch, CURLOPT_HEADER, false);
+        
+            $ipwhois = json_decode(curl_exec($ch), true);
+        
+            curl_close($ch);
             
             $securityPin = $request->input('security_pin');
             $setting = Setting::where('setting_desc', 'security_pin')->first();
             $savedSecurityPin = $setting->setting_value;
     
             if (password_verify($securityPin, $savedSecurityPin)) {
+                AuditTrail::create([
+                    'user_id'    => $userId,
+                    'module'     => 'Deferral List',
+                    'action'     => 'Accessed Deferral List',
+                    'status'     => 'failed',
+                    'ip_address' => $ipwhois['ip'],
+                    'region'     => $ipwhois['region'],
+                    'city'       => $ipwhois['city'],
+                    'postal'     => $ipwhois['postal'],
+                    'latitude'   => $ipwhois['latitude'],
+                    'longitude'  => $ipwhois['longitude'],
+                ]);
                 return response()->json([
                     'status' => 'success',
                     'message' => 'Security pin is correct',

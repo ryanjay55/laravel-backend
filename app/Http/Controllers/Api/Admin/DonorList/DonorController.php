@@ -38,11 +38,8 @@ class DonorController extends Controller
             'data' => $donorList
         ]);
     }
-    
-    
 
-    public function searchDonor(Request $request)
-    {
+    public function searchDonor(Request $request){
         try {
             $request->validate([
                 'searchInput' => 'required',

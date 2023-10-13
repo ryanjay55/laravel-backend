@@ -4,9 +4,11 @@ namespace App\Http\Controllers\Api\Admin\Dashboard;
 
 use App\Http\Controllers\Controller;
 use App\Models\BloodBag;
+use App\Models\Deferral;
 use App\Models\Setting;
 use App\Models\UserDetail;
 use Illuminate\Http\Request;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 
 class DashboardController extends Controller
@@ -117,20 +119,21 @@ class DashboardController extends Controller
         ]);
     }
 
-    public function countDonorPerBarangay(){
+    public function countDonorPerBarangay() {
         $donorsPerBarangay = DB::table('user_details')
             ->leftJoin('blood_bags', 'user_details.user_id', '=', 'blood_bags.user_id')
-            ->select('user_details.barangay', DB::raw('count(*) as donor_count'))
+            ->select('user_details.barangay', DB::raw('count(distinct user_details.user_id) as donor_count'))
             ->where('blood_bags.isCollected', '=', 1)
             ->where('user_details.municipality', '=', 'CITY OF VALENZUELA')
             ->groupBy('user_details.barangay')
             ->get();
-    
+        
         return response()->json([
             'status' => 'success',
             'donors_per_barangay' => $donorsPerBarangay
         ]);
     }
+    
 
     public function mbdQuickView(){
         $data = [];
@@ -159,5 +162,42 @@ class DashboardController extends Controller
             'data'  => $data
         ]);
     }
+    
+    public function countAllDonors() {
+        $now = Carbon::now();
+
+        $deferralsToUpdate = Deferral::where('end_date', '<=', $now)
+        ->where('status', '!=', 1)
+        ->get();
+
+        foreach ($deferralsToUpdate as $deferral) {
+            $deferral->status = 1;
+            $deferral->save();
+
+            $user_detail = UserDetail::where('user_id', $deferral->user_id)->first();
+            if ($user_detail) {
+                $user_detail->remarks = 0;
+                $user_detail->save();
+            }
+        }
+
+        $donors = UserDetail::join('users', 'user_details.user_id', '=', 'users.user_id')
+        ->join('galloners', 'user_details.user_id', '=', 'galloners.user_id')
+        ->where('user_details.remarks', 0)
+        ->where('user_details.status', 0)
+        ->where('galloners.donate_qty', '>', 0) 
+        ->select('users.mobile', 'users.email', 'user_details.*', 'galloners.badge', 'galloners.donate_qty')
+        ->count();
+    
+        return response()->json([
+            'status' => 'success',
+            'data' => $donors
+        ]);
+    }
+    
+    
+    
+    
+    
     
 }
