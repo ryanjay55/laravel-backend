@@ -90,6 +90,7 @@ Route::group(['middleware' => ['auth:sanctum','admin']], function () {
     Route::post('/cancel-approve-post', [PostApprovalController::class, 'cancelApprovedPost']);
     Route::get('/get-audit-trail', [AuditTrailController::class, 'getAuditTrail']);
     Route::post('/add-to-inventory', [InventoryController::class, 'storedInInventory']);
+    Route::post('/bulk-move-to-inventory', [InventoryController::class, 'multipleMoveToInventory']);
     Route::get('/get-stocks', [InventoryController::class, 'getStocks']);
     Route::post('/filter-stocks', [InventoryController::class, 'filterBloodTypeStocks']);
     Route::post('/search-stocks', [InventoryController::class, 'searchStocks']);

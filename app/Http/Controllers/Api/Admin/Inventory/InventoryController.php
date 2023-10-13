@@ -17,7 +17,8 @@ class InventoryController extends Controller
 {
 
 
-    public function storedInInventory(Request $request){
+    public function storedInInventory(Request $request)
+    {
 
         $user = getAuthenticatedUserId();
         $userId = $user->user_id;
@@ -84,6 +85,64 @@ class InventoryController extends Controller
             ], 400);
         }
 
+    }
+
+    public function multipleMoveToInventory(Request $request)
+    {
+        $user = getAuthenticatedUserId();
+        $userId = $user->user_id;
+
+        try {
+            $validatedData = $request->validate([
+                'serial_no' => 'required|array',
+            ]);
+    
+            
+            $ip = file_get_contents('https://api.ipify.org');
+            $ch = curl_init('http://ipwho.is/'.$ip);
+            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+            curl_setopt($ch, CURLOPT_HEADER, false);
+    
+            $ipwhois = json_decode(curl_exec($ch), true);
+            curl_close($ch);
+    
+            foreach ($validatedData['serial_no'] as $serialNo) {
+                $bloodBag = BloodBag::where('serial_no', $serialNo)->first();
+    
+                if (empty($bloodBag)) {
+                    return response()->json([
+                        'status'  => 'error',
+                        'message' => 'Blood bag not found',
+                    ], 400);
+                } else {
+                    $bloodBag->update(['isStored' => 1]);
+    
+                    AuditTrail::create([
+                        'user_id'    => $userId,
+                        'module'     => 'Inventory',
+                        'action'     => 'move blood bag to stocks | blood bag ID: ' . $serialNo,
+                        'status'     => 'success',
+                        'ip_address' => $ipwhois['ip'],
+                        'region'     => $ipwhois['region'],
+                        'city'       => $ipwhois['city'],
+                        'postal'     => $ipwhois['postal'],
+                        'latitude'   => $ipwhois['latitude'],
+                        'longitude'  => $ipwhois['longitude'],
+                    ]);
+                }
+            }
+    
+            return response()->json([
+                'status'    => 'success',
+                'message'   => 'Blood bags successfully move to stocks',
+            ]);
+        } catch (ValidationException $e) {
+            return response()->json([
+                'status'  => 'error',
+                'message' => 'Validation failed',
+                'errors'  => $e->validator->errors(),
+            ], 400);
+        }
     }
     
 
