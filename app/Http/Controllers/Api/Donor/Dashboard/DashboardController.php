@@ -38,35 +38,35 @@ class DashboardController extends Controller
     
         $bloodTypes = ['A+', 'A-', 'B+', 'B-', 'O+', 'O-', 'AB+', 'AB-'];
     
-        $settings = Setting::where('setting_desc', 'quarter_quota')->first();
-        $quotaPerQuarter = $settings->setting_value;
+        // $settings = Setting::where('setting_desc', 'quarter_quota')->first();
+        // $quotaPerQuarter = $settings->setting_value;
     
         $result = [];
     
         foreach ($bloodTypes as $bloodType) {
             $bloodBagsCount = $bloodBags->where('blood_type', $bloodType)->count();
-            $quota = $quotaPerQuarter / count($bloodTypes);
-            $availabilityPercentage = ($bloodBagsCount / $quota) * 100;
+            // $quota = $quotaPerQuarter / count($bloodTypes);
+            // $availabilityPercentage = ($bloodBagsCount / $quota) * 100;
     
             $legend = '';
     
             if ($bloodBagsCount <= 0) {
                 $legend = 'Empty';
+            } elseif ($bloodBagsCount <= 11) {
+                $legend = 'Critically low';
+            } elseif ($bloodBagsCount <= 19) {
+                $legend = 'Low';
+            } elseif ($bloodBagsCount <= 99) {
+                $legend = 'Normal';
             } else {
-                if ($availabilityPercentage <= 10) {
-                    $legend = 'Critically low';
-                } elseif ($availabilityPercentage <= 50) {
-                    $legend = 'Low';
-                } else {
-                    $legend = 'Normal';
-                }
+                $legend = 'High';
             }
     
             $result[] = [
                 'blood_type' => $bloodType,
                 'status' => $bloodBagsCount > 0 ? 'Available' : 'Unavailable',
                 'legend' => $legend,
-                'percentage' => $availabilityPercentage,
+                // 'percentage' => $availabilityPercentage,
             ];
         }
     

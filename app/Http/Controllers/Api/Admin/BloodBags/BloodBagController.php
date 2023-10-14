@@ -239,7 +239,7 @@ class BloodBagController extends Controller
                ->where('blood_bags.status', '=', 0)
                ->where('blood_bags.isStored', '=', 0)
                ->where('blood_bags.isExpired', '=', 0)
-               ->orderBy('blood_bags.date_donated', 'asc')
+               ->orderBy('blood_bags.date_donated', 'desc')
                ->paginate(8);
     
            $EXPIRATION = 37;
@@ -342,8 +342,11 @@ class BloodBagController extends Controller
             
             $bloodBags = DB::table('user_details')
                 ->join('blood_bags', 'user_details.user_id', '=', 'blood_bags.user_id')
-                ->where('blood_bags.status', '=', 0) 
+                ->where('user_details.remarks', '=', 0)
+                ->where('blood_bags.status', '=', 0)
                 ->where('blood_bags.isStored', '=', 0)
+                ->where('blood_bags.isExpired', '=', 0)
+                ->orderBy('blood_bags.date_donated', 'asc')
                 ->where(function ($query) use ($searchInput) {
                     $query->where('user_details.donor_no', 'LIKE', '%' . $searchInput . '%')
                         ->orWhere('user_details.first_name', 'LIKE', '%' . $searchInput . '%')

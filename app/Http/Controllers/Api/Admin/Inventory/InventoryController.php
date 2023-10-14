@@ -94,7 +94,7 @@ class InventoryController extends Controller
 
         try {
             $validatedData = $request->validate([
-                'serial_no' => 'required|array',
+                'blood_bags_id' => 'required|array',
             ]);
     
             
@@ -106,8 +106,8 @@ class InventoryController extends Controller
             $ipwhois = json_decode(curl_exec($ch), true);
             curl_close($ch);
     
-            foreach ($validatedData['serial_no'] as $serialNo) {
-                $bloodBag = BloodBag::where('serial_no', $serialNo)->first();
+            foreach ($validatedData['blood_bags_id'] as $serialNo) {
+                $bloodBag = BloodBag::where('blood_bags_id', $serialNo)->first();
     
                 if (empty($bloodBag)) {
                     return response()->json([

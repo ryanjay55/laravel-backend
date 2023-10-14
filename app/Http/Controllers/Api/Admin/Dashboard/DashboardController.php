@@ -13,6 +13,61 @@ use Illuminate\Support\Facades\DB;
 
 class DashboardController extends Controller
 {
+
+ 
+    public function getDashboardStock()
+    {
+        $bloodBags = DB::table('user_details')
+            ->leftJoin('blood_bags', 'user_details.user_id', '=', 'blood_bags.user_id')
+            ->select('user_details.blood_type', 'blood_bags.serial_no', 'blood_bags.date_donated', 'bled_by')
+            ->whereIn('user_details.blood_type', ['A+', 'A-', 'B+', 'B-', 'O+', 'O-', 'AB+', 'AB-'])
+            ->where('blood_bags.isStored', '=', 1)
+            ->where('blood_bags.isExpired', '=', '0')
+            ->where('blood_bags.status', '=', '0')
+            ->get();
+    
+        $bloodTypes = ['A+', 'A-', 'B+', 'B-', 'O+', 'O-', 'AB+', 'AB-'];
+    
+        // $settings = Setting::where('setting_desc', 'quarter_quota')->first();
+        // $quotaPerQuarter = $settings->setting_value;
+    
+        $result = [];
+    
+        foreach ($bloodTypes as $bloodType) {
+            $bloodBagsCount = $bloodBags->where('blood_type', $bloodType)->count();
+    
+            $legend = '';
+    
+            if ($bloodBagsCount <= 0) {
+                $legend = 'Empty';
+            } elseif ($bloodBagsCount <= 11) {
+                $legend = 'Critically low';
+            } elseif ($bloodBagsCount <= 19) {
+                $legend = 'Low';
+            } elseif ($bloodBagsCount <= 99) {
+                $legend = 'Normal';
+            } else {
+                $legend = 'High';
+            }
+    
+            $totalBloodBagsCount = $bloodBags->count();
+            $availabilityPercentage = ($bloodBagsCount / 100) * 100;
+    
+            $result[] = [
+                'blood_type' => $bloodType,
+                'status' => $bloodBagsCount > 0 ? 'Available' : 'Unavailable',
+                'legend' => $legend,
+                'count' => $bloodBagsCount,
+                'percentage' => $availabilityPercentage,
+            ];
+        }
+    
+    
+        return response()->json([
+            'blood_bags' => $result,
+        ]);
+    }
+
     public function getQuota()
     {
         $bloodBags = DB::table('user_details')
@@ -89,52 +144,89 @@ class DashboardController extends Controller
         ]);
     }
 
-    public function countBloodBagPerMonth(){
-        $currentYear = date('Y');
-        
-        $bloodBags = DB::table('user_details')
-            ->leftJoin('blood_bags', 'user_details.user_id', '=', 'blood_bags.user_id')
-            ->select('user_details.blood_type', 'blood_bags.serial_no', 'blood_bags.date_donated', 'bled_by')
-            ->whereIn('user_details.blood_type', ['A+', 'A-', 'B+', 'B-', 'O+', 'O-', 'AB+', 'AB-'])
-            ->where('blood_bags.isStored', '=', 1)
-            ->where('blood_bags.isExpired', '=', '0')
-            ->where('blood_bags.status', '=', '0')
-            ->where('user_details.remarks', '=', '0')
-            ->whereYear('date_donated', $currentYear)
-            ->get();
-    
-        $monthCounts = [];
-    
-        for ($i = 1; $i <= 12; $i++) {
-            $monthName = date('F', mktime(0, 0, 0, $i, 1));
-            $startDate = date('Y-m-d', strtotime($currentYear.'-'.$i.'-01'));
-            $endDate = date('Y-m-t', strtotime($currentYear.'-'.$i.'-01'));
-            $monthCount = $bloodBags->whereBetween('date_donated', [$startDate, $endDate])->count();
-            $monthCounts[$monthName] = $monthCount;
-        }
-    
-        return response()->json([
-            'status' => 'success',
-            'month_counts' => $monthCounts
-        ]);
-    }
+   public function countBloodBagPerMonth() {
+       $currentYear = date('Y');
+       $currentMonth = date('n');
+       $monthCounts = [];
+   
+       for ($i = 1; $i <= $currentMonth; $i++) {
+           $monthName = date('F', mktime(0, 0, 0, $i, 1));
+           $startDate = date('Y-m-d', strtotime($currentYear.'-'.$i.'-01'));
+           $endDate = date('Y-m-t', strtotime($currentYear.'-'.$i.'-01'));
+           
+           $bloodBags = DB::table('user_details')
+               ->leftJoin('blood_bags', 'user_details.user_id', '=', 'blood_bags.user_id')
+               ->select('user_details.blood_type', 'blood_bags.serial_no', 'blood_bags.date_donated', 'bled_by')
+               ->whereIn('user_details.blood_type', ['A+', 'A-', 'B+', 'B-', 'O+', 'O-', 'AB+', 'AB-'])
+               ->where('blood_bags.isStored', '=', 1)
+               ->where('blood_bags.isExpired', '=', '0')
+               ->where('blood_bags.status', '=', '0')
+               ->where('user_details.remarks', '=', '0')
+               ->whereYear('date_donated', $currentYear)
+               ->whereBetween('date_donated', [$startDate, $endDate])
+               ->count();
+   
+           $monthCounts[$monthName] = $bloodBags;
+       }
+       
+      // Retrieve the latest updated_at value
+      $latestUpdatedAt = DB::table('user_details')
+          ->leftJoin('blood_bags', 'user_details.user_id', '=', 'blood_bags.user_id')
+          ->select(DB::raw("IFNULL(DATE_FORMAT(blood_bags.updated_at, '%Y-%m-%d %h:%i:%s %p'), '') AS latest_updated_at"))
+          ->whereIn('user_details.blood_type', ['A+', 'A-', 'B+', 'B-', 'O+', 'O-', 'AB+', 'AB-'])
+          ->where('blood_bags.isStored', '=', 1)
+          ->where('blood_bags.isExpired', '=', '0')
+          ->where('blood_bags.status', '=', '0')
+          ->where('user_details.remarks', '=', '0')
+          ->whereYear('date_donated', $currentYear)
+          ->whereBetween('date_donated', [$startDate, $endDate])
+          ->orderBy('blood_bags.updated_at', 'desc')
+          ->value('latest_updated_at');
+      
+      return response()->json([
+          'status' => 'success',
+          'month_counts' => array($monthCounts),
+          'latest_date' => $latestUpdatedAt
+      ]);
+   }
+
+   
 
     public function countDonorPerBarangay() {
         $donorsPerBarangay = DB::table('user_details')
             ->leftJoin('blood_bags', 'user_details.user_id', '=', 'blood_bags.user_id')
-            ->select('user_details.barangay', DB::raw('count(distinct user_details.user_id) as donor_count'))
+            ->select(
+                'user_details.barangay',
+                DB::raw('count(distinct user_details.user_id) as donor_count'),
+                DB::raw('MAX(blood_bags.created_at) as latest_date_donated')
+            )
             ->where('blood_bags.isCollected', '=', 1)
             ->where('user_details.municipality', '=', 'CITY OF VALENZUELA')
             ->groupBy('user_details.barangay')
             ->get();
-        
+    
+        // Find the maximum date considering AM/PM
+        $latestDate = $donorsPerBarangay->max(function ($donor) {
+            return strtotime($donor->latest_date_donated);
+        });
+    
+        // Format the maximum date to the desired 12-hour format
+        $latestDate = date('Y-m-d h:i A', $latestDate);
+    
+        // Convert the latest_date_donated field in each result to 12-hour format
+        $donorsPerBarangay->transform(function ($donor) {
+            $donor->latest_date_donated = date('Y-m-d h:i A', strtotime($donor->latest_date_donated));
+            return $donor;
+        });
+    
         return response()->json([
             'status' => 'success',
-            'donors_per_barangay' => $donorsPerBarangay
+            'donors_per_barangay' => $donorsPerBarangay,
+            'latest_date' => $latestDate,
         ]);
     }
     
-
+    
     public function mbdQuickView(){
         $data = [];
         $totalDonors = DB::table('user_details')
@@ -191,7 +283,7 @@ class DashboardController extends Controller
     
         return response()->json([
             'status' => 'success',
-            'data' => $donors
+            'donorCount' => $donors
         ]);
     }
     

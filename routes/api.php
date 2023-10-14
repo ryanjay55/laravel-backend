@@ -109,11 +109,12 @@ Route::group(['middleware' => ['auth:sanctum','admin']], function () {
     Route::post('/create-security-pin', [SettingsController::class, 'createSecurityPin']);
     Route::post('/check-security-pin', [SettingsController::class, 'checkSecurityPin']);
 
-    Route::get('/get-quota',[DashboardDashboardController::class, 'getQuota']);
-    Route::get('/count-bloodbag-per-month',[DashboardDashboardController::class, 'countBloodBagPerMonth']);
-    Route::get('/count-donor-per-barangay',[DashboardDashboardController::class, 'countDonorPerBarangay']);
-    Route::get('/mbd-quick-view',[DashboardDashboardController::class, 'mbdQuickView']);
-    Route::get('/get-number-of-donors',[DashboardDashboardController::class, 'countAllDonors']);
+    Route::get('/dashboard-get-stocks',[DashboardDashboardController::class, 'getDashboardStock']);
+    Route::get('/dashboard-get-quota',[DashboardDashboardController::class, 'getQuota']);
+    Route::get('/dashboard-count-bloodbag-per-month',[DashboardDashboardController::class, 'countBloodBagPerMonth']);
+    Route::get('/dashboard-count-donor-per-barangay',[DashboardDashboardController::class, 'countDonorPerBarangay']);
+    Route::get('/dashboard-mbd-quick-view',[DashboardDashboardController::class, 'mbdQuickView']);
+    Route::get('/dashboard-get-number-of-donors',[DashboardDashboardController::class, 'countAllDonors']);
 
 });
 
