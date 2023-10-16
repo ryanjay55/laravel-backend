@@ -3,11 +3,13 @@
 namespace App\Http\Controllers\Api\Admin\BloodBags;
 
 use App\Http\Controllers\Controller;
+use App\Models\BledBy;
 use App\Models\BloodBag;
 use App\Models\AuditTrail;
 use App\Models\Galloner;
 use App\Models\User;
 use App\Models\UserDetail;
+use App\Models\Venue;
 use App\Rules\SerialNumberBloodBagUpdate;
 use App\Rules\ValidateDateDonated;
 use Dompdf\Dompdf;
@@ -138,7 +140,7 @@ class BloodBagController extends Controller
                             $donor = User::where('user_id', $validatedData['user_id'])->first();
                             $donorEmail = $donor->email;
 
-                            Mail::to($donorEmail)->send(new ThankyouForDonationMail($donor));
+                            // Mail::to($donorEmail)->send(new ThankyouForDonationMail($donor));
 
                             $galloner = Galloner::where('user_id', $validatedData['user_id'])->first();
                             $galloner->donate_qty += 1;
@@ -192,7 +194,7 @@ class BloodBagController extends Controller
                         $donor = User::where('user_id', $validatedData['user_id'])->first();
                         $donorEmail = $donor->email;
 
-                        Mail::to($donorEmail)->send(new ThankyouForDonationMail($donor));
+                        // Mail::to($donorEmail)->send(new ThankyouForDonationMail($donor));
                         
                         $galloner = Galloner::where('user_id', $validatedData['user_id'])->first();
                         $galloner->donate_qty += 1;
@@ -228,6 +230,152 @@ class BloodBagController extends Controller
             
     }
     
+    public function addBledBy(Request $request)
+    {
+        $user = getAuthenticatedUserId();
+        $userId = $user->user_id;
+
+        try {
+            $request->validate([
+                'first_name'     => ['required', 'string'],
+                'middle_name'    => ['nullable', 'string'],
+                'last_name'      => ['required', 'string'],
+                'sex'            => ['required'],
+                'street'         => ['required', 'string'],
+                'region'         => ['required'],
+                'province'       => ['required'],
+                'municipality'   => ['required'],
+                'barangay'       => ['required' ],
+                'postalcode'     => ['required', 'integer'],
+            ]);
+
+            $ip = file_get_contents('https://api.ipify.org');
+            $ch = curl_init('http://ipwho.is/'.$ip);
+            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+            curl_setopt($ch, CURLOPT_HEADER, false);
+        
+            $ipwhois = json_decode(curl_exec($ch), true);
+        
+            curl_close($ch);
+
+            $userDetail = UserDetail::create([
+                'first_name'     => ucwords(strtolower($request->input('first_name'))),
+                'middle_name'    => ucwords(strtolower($request->input('middle_name'))),
+                'last_name'      => ucwords(strtolower($request->input('last_name'))),
+                'sex'            => $request->input('sex'),
+                'street'         => $request->input('street'),
+                'region'         => $request->input('region'),
+                'province'       => $request->input('province'),
+                'municipality'   => $request->input('municipality'),
+                'barangay'       => $request->input('barangay'),
+                'postalcode'     => $request->input('postalcode'),
+                
+            ]);
+
+            $userDetailId = $userDetail->user_details_id;
+  
+            BledBy::create([
+                'user_details_id' => $userDetailId,
+            ]);
+        
+            AuditTrail::create([
+                'user_id'    => $userId,
+                'module'     => 'Settings',
+                'action'     => 'Added Bled By | ' . $request->input('first_name') . ' ' . $request->input('last_name'),
+                'status'     => 'success',
+                'ip_address' => $ipwhois['ip'],
+                'region'     => $ipwhois['region'],
+                'city'       => $ipwhois['city'],
+                'postal'     => $ipwhois['postal'],
+                'latitude'   => $ipwhois['latitude'],
+                'longitude'  => $ipwhois['longitude'],
+            ]);
+
+
+
+            return response()->json([
+                'status' => 'success',
+                'message' => 'Bled By added successfully'
+            ]);
+    
+        } catch (ValidationException $e) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Validation failed',
+                'errors' => $e->validator->errors(),
+            ], 400);
+        }
+    }
+
+    public function addVenue(Request $request)
+    {
+        $user = getAuthenticatedUserId();
+        $userId = $user->user_id;
+
+        try {
+            $request->validate([
+                'venues_desc'     => ['required'],
+            ]);
+
+            $ip = file_get_contents('https://api.ipify.org');
+            $ch = curl_init('http://ipwho.is/'.$ip);
+            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+            curl_setopt($ch, CURLOPT_HEADER, false);
+        
+            $ipwhois = json_decode(curl_exec($ch), true);
+        
+            curl_close($ch);
+
+            Venue::create([
+                'venues_desc'     => ucwords(strtolower($request->input('venues_desc'))),
+            ]);
+
+  
+            AuditTrail::create([
+                'user_id'    => $userId,
+                'module'     => 'Settings',
+                'action'     => 'Added Venue | ' . $request->input('venues_desc'),
+                'status'     => 'success',
+                'ip_address' => $ipwhois['ip'],
+                'region'     => $ipwhois['region'],
+                'city'       => $ipwhois['city'],
+                'postal'     => $ipwhois['postal'],
+                'latitude'   => $ipwhois['latitude'],
+                'longitude'  => $ipwhois['longitude'],
+            ]);
+
+
+
+            return response()->json([
+                'status' => 'success',
+                'message' => 'Venue added successfully'
+            ]);
+    
+        } catch (ValidationException $e) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Validation failed',
+                'errors' => $e->validator->errors(),
+            ], 400);
+        }
+    }
+
+    public function getBledByAndVenue()
+    {
+        $bledBy = UserDetail::join('bled_by', 'user_details.user_details_id', '=', 'bled_by.user_details_id')
+            ->select(DB::raw("CONCAT(user_details.first_name, ' ', user_details.last_name) AS full_name"))
+            ->get();
+        
+        $venue = Venue::where('status', 0)
+            ->select('venues_desc')
+            ->get();
+        
+        return response()->json([
+            'status' => 'success',
+            'bledBy' => $bledBy,
+            'venue' => $venue
+        ]); 
+    }
 
    public function collectedBloodBag()
    {
@@ -239,6 +387,7 @@ class BloodBagController extends Controller
                ->where('blood_bags.status', '=', 0)
                ->where('blood_bags.isStored', '=', 0)
                ->where('blood_bags.isExpired', '=', 0)
+               ->where('blood_bags.separate', '=', 0)
                ->orderBy('blood_bags.date_donated', 'desc')
                ->paginate(8);
     
@@ -311,9 +460,32 @@ class BloodBagController extends Controller
            if ($venue != 'All') {
                $bloodBags->where('blood_bags.venue', $venue);
            }
-           
+   
            $totalCount = $bloodBags->count();
            $bloodBags = $bloodBags->orderBy('blood_bags.date_donated','asc')->paginate(8);
+   
+           $EXPIRATION = 37;
+           $today = Carbon::today();
+   
+           foreach ($bloodBags as $bloodBag) {
+               $expirationDate = Carbon::parse($bloodBag->date_donated)->addDays($EXPIRATION);
+               $remainingDays = $expirationDate->diffInDays($today);
+   
+               if ($expirationDate->lte($today)) {
+                   BloodBag::where('blood_bags_id', $bloodBag->blood_bags_id)
+                       ->update(['isExpired' => 1]);
+               }
+   
+               $createdAt = $bloodBag->created_at;
+               $timeDifference = $createdAt->diffInDays(now());
+               $bloodBag->countdown = max(0, 3 - $timeDifference);
+   
+               if ($bloodBag->countdown === 0) {
+                   $bloodBag->countdown_message = 'The removal period has ended';
+               } else {
+                   $bloodBag->countdown_message = 'Blood bag can be removed within ' . $bloodBag->countdown . ' day/s';
+               }
+           }
    
            return response()->json([
                'status' => 'success',

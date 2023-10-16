@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\AuditTrail;
+use App\Models\BloodBag;
 use App\Models\Deferral;
 use App\Models\User;
 use App\Models\UserDetail;
@@ -24,6 +25,7 @@ class UserListController extends Controller
             ->where('user_details.status', 0)
             ->where('users.isAdmin', 0)
             ->select('users.mobile', 'users.email', 'user_details.*', 'galloners.badge', 'galloners.donate_qty')
+            ->orderBy('user_details.user_id', 'desc')
             ->paginate(8);
 
         if ($userDetails->isEmpty()) { 
@@ -156,7 +158,7 @@ class UserListController extends Controller
             curl_close($ch);
 
             $user_detail = UserDetail::where('user_id', $validatedData['user_id'])->first();
-
+            $blood_bag =BloodBag::where('user_id', $validatedData['user_id'])->first();
             if($user_detail->remarks == 1 || $user_detail->remarks == 2){
                 return response()->json([
                     'status' => 'error',
@@ -167,7 +169,9 @@ class UserListController extends Controller
                 if($validatedData['remarks'] === '1'){
                     $user_detail->remarks = 1;
                     $user_detail->save();
-
+                    $blood_bag->separate = 1;
+                    $blood_bag->save();
+                    
                     $deferredStartDate = now();
                     $deferredDuration = $validatedData['duration'];
                     

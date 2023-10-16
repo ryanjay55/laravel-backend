@@ -76,6 +76,10 @@ Route::group(
 Route::group(['middleware' => ['auth:sanctum','admin']], function () {
 
     Route::post('/add-bloodbag', [BloodBagController::class, 'store']);
+    Route::post('/add-bledby', [BloodBagController::class, 'addBledBy']);
+    Route::post('/add-venue', [BloodBagController::class, 'addVenue']);
+    Route::get('/get-bledby-and-venue', [BloodBagController::class, 'getBledByAndVenue']);
+
     Route::get('/get-collected-bloodbags', [BloodBagController::class, 'collectedBloodBag']);
     Route::post('/filter-collected-bloodbags', [BloodBagController::class, 'filterBloodTypeCollectedBloodBag']);
     Route::post('/search-collected-bloodbag', [BloodBagController::class, 'searchCollectedBloodBag']);

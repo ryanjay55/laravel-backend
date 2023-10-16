@@ -48,4 +48,8 @@ class UserDetail extends Model
         return $this->hasOne(Galloner::class, 'user_id', 'user_id');
     }
     
+    public function bledBy()
+    {
+        return $this->hasMany(BledBy::class, 'user_details_id');
+    }
 }

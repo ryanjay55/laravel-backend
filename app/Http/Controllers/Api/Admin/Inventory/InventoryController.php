@@ -441,7 +441,9 @@ class InventoryController extends Controller
         $tempExpiredBlood = BloodBag::join('user_details', 'blood_bags.user_id', '=', 'user_details.user_id')
             ->join('deferrals', 'deferrals.user_id', '=', 'user_details.user_id')
             ->where('deferrals.remarks_id', 1)
-            ->where('deferrals.status', 1)
+            ->where('blood_bags.separate', 1)
+            // ->where('deferrals.status', 1)
+            ->where('blood_bags.isCollected', 1)
             ->where('blood_bags.isExpired', 0)
             ->where('blood_bags.isDisposed', 0)
             ->select(
