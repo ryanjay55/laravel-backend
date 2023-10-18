@@ -36,7 +36,7 @@ class DashboardController extends Controller
             ->where('blood_bags.status', '=', '0')
             ->get();
     
-        $bloodTypes = ['A+', 'A-', 'B+', 'B-', 'O+', 'O-', 'AB+', 'AB-'];
+        $bloodTypes = ['A+', 'B+', 'O+', 'AB+', 'A-', 'B-', 'O-', 'AB-'];
     
         // $settings = Setting::where('setting_desc', 'quarter_quota')->first();
         // $quotaPerQuarter = $settings->setting_value;

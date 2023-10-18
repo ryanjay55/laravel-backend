@@ -26,7 +26,7 @@ class DashboardController extends Controller
             ->where('blood_bags.status', '=', '0')
             ->get();
     
-        $bloodTypes = ['A+', 'A-', 'B+', 'B-', 'O+', 'O-', 'AB+', 'AB-'];
+        $bloodTypes = ['A+', 'B+', 'O+', 'AB+', 'A-', 'B-', 'O-', 'AB-'];
     
         // $settings = Setting::where('setting_desc', 'quarter_quota')->first();
         // $quotaPerQuarter = $settings->setting_value;
@@ -229,11 +229,13 @@ class DashboardController extends Controller
     
     public function mbdQuickView(){
         $data = [];
-        $totalDonors = DB::table('user_details')
-            ->leftJoin('blood_bags', 'user_details.user_id', '=', 'blood_bags.user_id')
-            ->select('user_details.barangay', DB::raw('count(*) as donor_count'))
-            ->where('blood_bags.isCollected', '=', 1)
-            ->count();
+        $totalDonors = UserDetail::join('users', 'user_details.user_id', '=', 'users.user_id')
+        ->join('galloners', 'user_details.user_id', '=', 'galloners.user_id')
+        ->where('user_details.remarks', 0)
+        ->where('user_details.status', 0)
+        ->where('galloners.donate_qty', '>', 0) 
+        ->select('users.mobile', 'users.email', 'user_details.*', 'galloners.badge', 'galloners.donate_qty')
+        ->count();
 
         $totalTempDeferral = UserDetail::where('remarks','1')->count();
         $totalPermaDeferral = UserDetail::where('remarks','2')->count();

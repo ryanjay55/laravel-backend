@@ -169,8 +169,6 @@ class UserListController extends Controller
                 if($validatedData['remarks'] === '1'){
                     $user_detail->remarks = 1;
                     $user_detail->save();
-                    $blood_bag->separate = 1;
-                    $blood_bag->save();
                     
                     $deferredStartDate = now();
                     $deferredDuration = $validatedData['duration'];
