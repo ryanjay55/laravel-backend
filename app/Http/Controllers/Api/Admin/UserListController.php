@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\AuditTrail;
 use App\Models\BloodBag;
 use App\Models\Deferral;
+use App\Models\DeferralCategory;
 use App\Models\User;
 use App\Models\UserDetail;
 use App\Rules\EmailUpdateProfile;
@@ -133,6 +134,17 @@ class UserListController extends Controller
             ], 400);
         }
     }
+
+    public function getDeferralCategories(){
+        $tempCategories = DeferralCategory::where('deferral_type_id', 1)->get();
+        $permaCategories = DeferralCategory::where('deferral_type_id', 2)->get();
+
+        return response()->json([
+            'status' => 'success',
+            'tempCategories' => $tempCategories,
+            'permaCategories' => $permaCategories
+        ]);
+    }
     
     public function moveToDeferral(Request $request){
         $user = getAuthenticatedUserId();
@@ -142,8 +154,8 @@ class UserListController extends Controller
         try {
             $validatedData = $request->validate([
                 'user_id'           => 'required',
-                'category'          => 'required',
-                'specific_reason'   => '',
+                'deferral_type_id'  => 'required',
+                'categories_id'     => 'required',
                 'remarks'           => 'required',
                 'duration'          => ['numeric','min:1']
             ],[

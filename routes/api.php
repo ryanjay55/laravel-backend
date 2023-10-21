@@ -86,9 +86,12 @@ Route::group(['middleware' => ['auth:sanctum','admin']], function () {
     Route::get('/export-pdf-collected-bloodbags', [BloodBagController::class, 'exportBloodBagAsPdf']);
     Route::put('/edit-bloodbag', [BloodBagController::class, 'editBloodBag']);
     Route::delete('/remove-bloodbag', [BloodBagController::class, 'removeBlood']);
+
+    Route::get('/get-defferal-categories', [UserListController::class, 'getDeferralCategories']);
     Route::post('/move-to-defferal', [UserListController::class, 'moveToDeferral']);
     Route::get('/get-temporary-defferal', [UserListController::class, 'getTemporaryDeferral']);
     Route::get('/get-permanent-defferal', [UserListController::class, 'getPermanentDeferral']);
+
     Route::put('/edit-user-details', [UserListController::class, 'editUserDetails']);
     Route::post('/approve-post', [PostApprovalController::class, 'approvePost']);
     Route::post('/cancel-approve-post', [PostApprovalController::class, 'cancelApprovedPost']);

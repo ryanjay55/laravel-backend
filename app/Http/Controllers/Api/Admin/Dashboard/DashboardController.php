@@ -17,57 +17,63 @@ class DashboardController extends Controller
 
  
     public function getDashboardStock()
-    {
-        $bloodBags = DB::table('user_details')
-            ->leftJoin('blood_bags', 'user_details.user_id', '=', 'blood_bags.user_id')
-            ->select('user_details.blood_type', 'blood_bags.serial_no', 'blood_bags.date_donated', 'bled_by')
-            ->whereIn('user_details.blood_type', ['A+', 'A-', 'B+', 'B-', 'O+', 'O-', 'AB+', 'AB-'])
-            ->where('blood_bags.isStored', '=', 1)
-            ->where('blood_bags.isExpired', '=', '0')
-            ->where('blood_bags.status', '=', '0')
-            ->get();
+{
+    $bloodBags = DB::table('user_details')
+        ->leftJoin('blood_bags', 'user_details.user_id', '=', 'blood_bags.user_id')
+        ->select('user_details.blood_type', 'blood_bags.serial_no', 'blood_bags.date_donated', 'bled_by', 'blood_bags.created_at') // Include 'created_at' in the select
+        ->whereIn('user_details.blood_type', ['A+', 'A-', 'B+', 'B-', 'O+', 'O-', 'AB+', 'AB-'])
+        ->where('blood_bags.isStored', '=', 1)
+        ->where('blood_bags.isExpired', '=', '0')
+        ->where('blood_bags.status', '=', '0')
+        ->get();
     
-        $bloodTypes = ['A+', 'B+', 'O+', 'AB+', 'A-', 'B-', 'O-', 'AB-'];
+    $bloodTypes = ['A+', 'B+', 'O+', 'AB+', 'A-', 'B-', 'O-', 'AB-'];
     
-        // $settings = Setting::where('setting_desc', 'quarter_quota')->first();
-        // $quotaPerQuarter = $settings->setting_value;
+    $result = [];
+    $latestCreatedAt = null; // Initialize a variable to store the latest created_at value
+
+    // Find the latest created_at value
+    $latestCreatedAt = $bloodBags->max('created_at');
     
-        $result = [];
-    
-        foreach ($bloodTypes as $bloodType) {
-            $bloodBagsCount = $bloodBags->where('blood_type', $bloodType)->count();
-    
-            $legend = '';
-    
-            if ($bloodBagsCount <= 0) {
-                $legend = 'Empty';
-            } elseif ($bloodBagsCount <= 11) {
-                $legend = 'Critically low';
-            } elseif ($bloodBagsCount <= 19) {
-                $legend = 'Low';
-            } elseif ($bloodBagsCount <= 99) {
-                $legend = 'Normal';
-            } else {
-                $legend = 'High';
-            }
-    
-            $totalBloodBagsCount = $bloodBags->count();
-            $availabilityPercentage = ($bloodBagsCount / 100) * 100;
-    
-            $result[] = [
-                'blood_type' => $bloodType,
-                'status' => $bloodBagsCount > 0 ? 'Available' : 'Unavailable',
-                'legend' => $legend,
-                'count' => $bloodBagsCount,
-                'percentage' => $availabilityPercentage,
-            ];
+    // Format the latestCreatedAt
+    $formattedLatestCreatedAt = $latestCreatedAt ? date('Y-m-d h:i A', strtotime($latestCreatedAt)) : null;
+
+    foreach ($bloodTypes as $bloodType) {
+        $bloodBagsCount = $bloodBags->where('blood_type', $bloodType)->count();
+
+        $legend = '';
+
+        if ($bloodBagsCount <= 0) {
+            $legend = 'Empty';
+        } elseif ($bloodBagsCount <= 11) {
+            $legend = 'Critically low';
+        } elseif ($bloodBagsCount <= 19) {
+            $legend = 'Low';
+        } elseif ($bloodBagsCount <= 99) {
+            $legend = 'Normal';
+        } else {
+            $legend = 'High';
         }
-    
-    
-        return response()->json([
-            'blood_bags' => $result,
-        ]);
+
+        $totalBloodBagsCount = $bloodBags->count();
+        $availabilityPercentage = ($bloodBagsCount / $totalBloodBagsCount) * 100;
+
+        $result[] = [
+            'blood_type' => $bloodType,
+            'status' => $bloodBagsCount > 0 ? 'Available' : 'Unavailable',
+            'legend' => $legend,
+            'count' => $bloodBagsCount,
+            'percentage' => $availabilityPercentage,
+        ];
     }
+
+    return response()->json([
+        'blood_bags' => $result,
+        'latest_created_at' => $formattedLatestCreatedAt, // Return the formatted value
+    ]);
+}
+
+
 
     public function getQuota()
     {
@@ -173,7 +179,7 @@ class DashboardController extends Controller
       // Retrieve the latest updated_at value
       $latestUpdatedAt = DB::table('user_details')
           ->leftJoin('blood_bags', 'user_details.user_id', '=', 'blood_bags.user_id')
-          ->select(DB::raw("IFNULL(DATE_FORMAT(blood_bags.updated_at, '%Y-%m-%d %h:%i:%s %p'), '') AS latest_updated_at"))
+          ->select(DB::raw("IFNULL(DATE_FORMAT(blood_bags.created_at, '%Y-%m-%d %h:%i:%s %p'), '') AS latest_updated_at"))
           ->whereIn('user_details.blood_type', ['A+', 'A-', 'B+', 'B-', 'O+', 'O-', 'AB+', 'AB-'])
           ->where('blood_bags.isStored', '=', 1)
           ->where('blood_bags.isExpired', '=', '0')
@@ -229,57 +235,77 @@ class DashboardController extends Controller
     
     public function mbdQuickView(Request $request)
     {
-        try{
+        try {
             $month = $request->input('month');
             $year = $request->input('year');
 
-        $data = [];
+            $data = [];
 
-        $query = UserDetail::join('users', 'user_details.user_id', '=', 'users.user_id')
-            ->join('galloners', 'user_details.user_id', '=', 'galloners.user_id')
-            ->join('blood_bags', 'user_details.user_id', '=', 'blood_bags.user_id')
-            ->where('user_details.remarks', 0)
-            ->where('user_details.status', 0)
-            ->where('galloners.donate_qty', '>', 0);
+            $query = UserDetail::join('users', 'user_details.user_id', '=', 'users.user_id')
+                ->join('galloners', 'user_details.user_id', '=', 'galloners.user_id')
+                ->join('blood_bags', 'user_details.user_id', '=', 'blood_bags.user_id')
+                ->where('user_details.remarks', 0)
+                ->where('user_details.status', 0)
+                ->where('galloners.donate_qty', '>', 0);
 
-        if ($month != 'All'){
-            $totalDonors = $query->whereMonth('blood_bags.date_donated', $month)->whereYear('blood_bags.date_donated', $year)->count();
-            $totalTempDeferral = Deferral::where('remarks_id', '1')->whereMonth('created_at', $month)->whereYear('created_at', $year)->count();
-            $totalPermaDeferral = Deferral::where('remarks_id', '2')->whereMonth('created_at', $month)->whereYear('created_at', $year)->count();
-            $totalDeferral = $totalTempDeferral + $totalPermaDeferral;
-            $totalDispensed = BloodBag::where('isUsed', '1')->whereMonth('dispensed_date', $month)->whereYear('dispensed_date', $year)->count();
-            $totalExpired = BloodBag::where('isExpired', '1')->whereMonth('expiration_date', $month)->whereYear('expiration_date', $year)->count();
-        }else{
+            // Apply month filter if a specific month is selected
+            if ($month != 'All') {
+                $query->whereMonth('blood_bags.date_donated', $month);
+            }
+
+            // Apply year filter if a specific year is selected
+            if ($year != 'All') {
+                $query->whereYear('blood_bags.date_donated', $year);
+            }
+
             $totalDonors = $query->count();
-            $totalTempDeferral = Deferral::where('remarks_id', '1')->count();
-            $totalPermaDeferral = Deferral::where('remarks_id', '2')->count();
-            $totalDeferral = $totalTempDeferral + $totalPermaDeferral;
-            $totalDispensed = BloodBag::where('isUsed', '1')->count();
-            $totalExpired = BloodBag::where('isExpired', '1')->count();
-        }
 
+            // Filter totalTempDeferral, totalPermaDeferral, totalDispensed, and totalExpired
+            $totalTempDeferral = Deferral::where('remarks_id', '1')->where('user_id', '>', 0);
+            $totalPermaDeferral = Deferral::where('remarks_id', '2')->where('user_id', '>', 0);
+            $totalDispensed = BloodBag::where('isUsed', '1')->where('user_id', '>', 0);
+            $totalExpired = BloodBag::where('isExpired', '1')->where('user_id', '>', 0);
 
-        $data[] = [
-            'total_donors' => $totalDonors,
-            'total_deferrals' => $totalDeferral,
-            'total_dispensed' => $totalDispensed,
-            'total_expired' => $totalExpired
-        ];
+            if ($month != 'All') {
+                $totalTempDeferral->whereMonth('created_at', $month);
+                $totalPermaDeferral->whereMonth('created_at', $month);
+                $totalDispensed->whereMonth('dispensed_date', $month);
+                $totalExpired->whereMonth('expiration_date', $month);
+            }
 
-        return response()->json([
-            'status' => 'success',
-            'data' => $data
-        ]);
+            if ($year != 'All') {
+                $totalTempDeferral->whereYear('created_at', $year);
+                $totalPermaDeferral->whereYear('created_at', $year);
+                $totalDispensed->whereYear('dispensed_date', $year);
+                $totalExpired->whereYear('expiration_date', $year);
+            }
 
-            
-        }catch (ValidationException $e) {
+            $totalTempDeferral = $totalTempDeferral->count();
+            $totalPermaDeferral = $totalPermaDeferral->count();
+            $totalDispensed = $totalDispensed->count();
+            $totalExpired = $totalExpired->count();
+
+            $data[] = [
+                'total_donors' => $totalDonors,
+                'total_deferrals' => $totalTempDeferral + $totalPermaDeferral,
+                'total_dispensed' => $totalDispensed,
+                'total_expired' => $totalExpired
+            ];
+
+            return response()->json([
+                'status' => 'success',
+                'data' => $data
+            ]);
+        } catch (ValidationException $e) {
             return response()->json([
                 'status' => 'error',
-               'message' => 'Validation failed',
-               'errors' => $e->validator->errors(),
+                'message' => 'Validation failed',
+                'errors' => $e->validator->errors(),
             ]);
         }
     }
+
+    
     
 
     // public function countAllDonors() {
