@@ -10,6 +10,7 @@ use App\Models\UserDetail;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 
 class DashboardController extends Controller
 {
@@ -226,23 +227,37 @@ class DashboardController extends Controller
         ]);
     }
     
-    
-    public function mbdQuickView(){
+    public function mbdQuickView(Request $request)
+    {
+        try{
+            $month = $request->input('month');
+            $year = $request->input('year');
+
         $data = [];
-        $totalDonors = UserDetail::join('users', 'user_details.user_id', '=', 'users.user_id')
-        ->join('galloners', 'user_details.user_id', '=', 'galloners.user_id')
-        ->where('user_details.remarks', 0)
-        ->where('user_details.status', 0)
-        ->where('galloners.donate_qty', '>', 0) 
-        ->select('users.mobile', 'users.email', 'user_details.*', 'galloners.badge', 'galloners.donate_qty')
-        ->count();
 
-        $totalTempDeferral = UserDetail::where('remarks','1')->count();
-        $totalPermaDeferral = UserDetail::where('remarks','2')->count();
-        $totalDeferral = $totalTempDeferral + $totalPermaDeferral;
+        $query = UserDetail::join('users', 'user_details.user_id', '=', 'users.user_id')
+            ->join('galloners', 'user_details.user_id', '=', 'galloners.user_id')
+            ->join('blood_bags', 'user_details.user_id', '=', 'blood_bags.user_id')
+            ->where('user_details.remarks', 0)
+            ->where('user_details.status', 0)
+            ->where('galloners.donate_qty', '>', 0);
 
-        $totalDispensed = BloodBag::where('isUsed','1')->count();
-        $totalExpired = BloodBag::where('isExpired','1')->count();
+        if ($month != 'All'){
+            $totalDonors = $query->whereMonth('blood_bags.date_donated', $month)->whereYear('blood_bags.date_donated', $year)->count();
+            $totalTempDeferral = Deferral::where('remarks_id', '1')->whereMonth('created_at', $month)->whereYear('created_at', $year)->count();
+            $totalPermaDeferral = Deferral::where('remarks_id', '2')->whereMonth('created_at', $month)->whereYear('created_at', $year)->count();
+            $totalDeferral = $totalTempDeferral + $totalPermaDeferral;
+            $totalDispensed = BloodBag::where('isUsed', '1')->whereMonth('dispensed_date', $month)->whereYear('dispensed_date', $year)->count();
+            $totalExpired = BloodBag::where('isExpired', '1')->whereMonth('expiration_date', $month)->whereYear('expiration_date', $year)->count();
+        }else{
+            $totalDonors = $query->count();
+            $totalTempDeferral = Deferral::where('remarks_id', '1')->count();
+            $totalPermaDeferral = Deferral::where('remarks_id', '2')->count();
+            $totalDeferral = $totalTempDeferral + $totalPermaDeferral;
+            $totalDispensed = BloodBag::where('isUsed', '1')->count();
+            $totalExpired = BloodBag::where('isExpired', '1')->count();
+        }
+
 
         $data[] = [
             'total_donors' => $totalDonors,
@@ -250,44 +265,54 @@ class DashboardController extends Controller
             'total_dispensed' => $totalDispensed,
             'total_expired' => $totalExpired
         ];
-        
+
         return response()->json([
             'status' => 'success',
-            'data'  => $data
+            'data' => $data
         ]);
-    }
-    
-    public function countAllDonors() {
-        $now = Carbon::now();
 
-        $deferralsToUpdate = Deferral::where('end_date', '<=', $now)
-        ->where('status', '!=', 1)
-        ->get();
-
-        foreach ($deferralsToUpdate as $deferral) {
-            $deferral->status = 1;
-            $deferral->save();
-
-            $user_detail = UserDetail::where('user_id', $deferral->user_id)->first();
-            if ($user_detail) {
-                $user_detail->remarks = 0;
-                $user_detail->save();
-            }
+            
+        }catch (ValidationException $e) {
+            return response()->json([
+                'status' => 'error',
+               'message' => 'Validation failed',
+               'errors' => $e->validator->errors(),
+            ]);
         }
-
-        $donors = UserDetail::join('users', 'user_details.user_id', '=', 'users.user_id')
-        ->join('galloners', 'user_details.user_id', '=', 'galloners.user_id')
-        ->where('user_details.remarks', 0)
-        ->where('user_details.status', 0)
-        ->where('galloners.donate_qty', '>', 0) 
-        ->select('users.mobile', 'users.email', 'user_details.*', 'galloners.badge', 'galloners.donate_qty')
-        ->count();
-    
-        return response()->json([
-            'status' => 'success',
-            'donorCount' => $donors
-        ]);
     }
+    
+
+    // public function countAllDonors() {
+    //     $now = Carbon::now();
+
+    //     $deferralsToUpdate = Deferral::where('end_date', '<=', $now)
+    //     ->where('status', '!=', 1)
+    //     ->get();
+
+    //     foreach ($deferralsToUpdate as $deferral) {
+    //         $deferral->status = 1;
+    //         $deferral->save();
+
+    //         $user_detail = UserDetail::where('user_id', $deferral->user_id)->first();
+    //         if ($user_detail) {
+    //             $user_detail->remarks = 0;
+    //             $user_detail->save();
+    //         }
+    //     }
+
+    //     $donors = UserDetail::join('users', 'user_details.user_id', '=', 'users.user_id')
+    //     ->join('galloners', 'user_details.user_id', '=', 'galloners.user_id')
+    //     ->where('user_details.remarks', 0)
+    //     ->where('user_details.status', 0)
+    //     ->where('galloners.donate_qty', '>', 0) 
+    //     ->select('users.mobile', 'users.email', 'user_details.*', 'galloners.badge', 'galloners.donate_qty')
+    //     ->count();
+    
+    //     return response()->json([
+    //         'status' => 'success',
+    //         'donorCount' => $donors
+    //     ]);
+    // }
     
     
     

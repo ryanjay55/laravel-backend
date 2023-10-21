@@ -113,6 +113,37 @@ class BloodBagController extends Controller
 
                         }else{
 
+                            $galloner = Galloner::where('user_id', $validatedData['user_id'])->first();
+
+                            if ($galloner->donate_qty === 0) {
+                                // First-time donor
+                                $userDetails = UserDetail::where('user_id', $validatedData['user_id'])->first();
+                                $userDetails->donor_types_id = 1;
+                                $userDetails->save();
+                            } elseif ($galloner->donate_qty >= 1) {
+                            
+                                $lastDonationDate = Carbon::parse($lastRecord->date_donated);
+                                $currentDonationDate = Carbon::parse($validatedData['date_donated']);
+                                $minDonationInterval = clone $lastDonationDate;
+                                $minDonationInterval->addMonths(12);
+    
+                                if ($currentDonationDate <= $lastDonationDate) {
+                                    // Lapsed donor
+                                    $userDetails = UserDetail::where('user_id', $validatedData['user_id'])->first();
+                                    $userDetails->donor_types_id = 3;
+                                    $userDetails->save();
+                                } else {
+                                    // Regular donor
+                                    $userDetails = UserDetail::where('user_id', $validatedData['user_id'])->first();
+                                    $userDetails->donor_types_id = 2;
+                                    $userDetails->save();
+                                }
+                            } elseif ($galloner->donate_qty >= 8) {
+                                // Galloneer
+                                $userDetails = UserDetail::where('user_id', $validatedData['user_id'])->first();
+                                $userDetails->donorType = 4;
+                                $userDetails->save();
+                            }
                             BloodBag::create([
                                 'user_id'      => $validatedData['user_id'],
                                 'serial_no'    => $validatedData['serial_no'],
@@ -142,17 +173,16 @@ class BloodBagController extends Controller
 
                             // Mail::to($donorEmail)->send(new ThankyouForDonationMail($donor));
 
-                            $galloner = Galloner::where('user_id', $validatedData['user_id'])->first();
                             $galloner->donate_qty += 1;
                             $galloner->save();
                             
-                            if($galloner->donate_qty == 4){
+                            if($galloner->donate_qty == 2){
                                 $galloner->badge = 'bronze';
                                 $galloner->save();
-                            }elseif($galloner->donate_qty == 8){
+                            }elseif($galloner->donate_qty == 4){
                                 $galloner->badge = 'silver';
                                 $galloner->save();
-                            }elseif($galloner->donate_qty == 12){
+                            }elseif($galloner->donate_qty == 8){
                                 $galloner->badge = 'gold';
                                 $galloner->save();
                             }
@@ -166,6 +196,38 @@ class BloodBagController extends Controller
                         
 
                     } else {
+
+                        $galloner = Galloner::where('user_id', $validatedData['user_id'])->first();
+
+                        if ($galloner->donate_qty === 0) {
+                                // First-time donor
+                                $userDetails = UserDetail::where('user_id', $validatedData['user_id'])->first();
+                                $userDetails->donor_types_id = 1;
+                                $userDetails->save();
+                            } elseif ($galloner->donate_qty >= 1) {
+                            
+                                $lastDonationDate = Carbon::parse($lastRecord->date_donated);
+                                $currentDonationDate = Carbon::parse($validatedData['date_donated']);
+                                $minDonationInterval = clone $lastDonationDate;
+                                $minDonationInterval->addMonths(12);
+    
+                                if ($currentDonationDate <= $lastDonationDate) {
+                                    // Lapsed donor
+                                    $userDetails = UserDetail::where('user_id', $validatedData['user_id'])->first();
+                                    $userDetails->donor_types_id = 3;
+                                    $userDetails->save();
+                                } else {
+                                    // Regular donor
+                                    $userDetails = UserDetail::where('user_id', $validatedData['user_id'])->first();
+                                    $userDetails->donor_types_id = 2;
+                                    $userDetails->save();
+                                }
+                            } elseif ($galloner->donate_qty >= 8) {
+                                // Galloneer
+                                $userDetails = UserDetail::where('user_id', $validatedData['user_id'])->first();
+                                $userDetails->donorType = 4;
+                                $userDetails->save();
+                            }
                       
                         BloodBag::create([
                             'user_id'      => $validatedData['user_id'],
@@ -196,21 +258,21 @@ class BloodBagController extends Controller
 
                         // Mail::to($donorEmail)->send(new ThankyouForDonationMail($donor));
                         
-                        $galloner = Galloner::where('user_id', $validatedData['user_id'])->first();
                         $galloner->donate_qty += 1;
                         $galloner->save();
                         
-                        if($galloner->donate_qty == 4){
+                        if($galloner->donate_qty == 2){
                             $galloner->badge = 'bronze';
                             $galloner->save();
-                        }elseif($galloner->donate_qty == 8){
+                        }elseif($galloner->donate_qty == 4){
                             $galloner->badge = 'silver';
                             $galloner->save();
-                        }elseif($galloner->donate_qty == 12){
+                        }elseif($galloner->donate_qty == 8){
                             $galloner->badge = 'gold';
                             $galloner->save();
                         }
-                    
+                        
+
                         return response()->json([
                             'status'  => 'success',
                             'message' => 'Blood bag added successfully',

@@ -28,6 +28,7 @@ class UserDetail extends Model
         'barangay',
         'postalcode',
         'remarks',
+        'donor_types_id',
     
     ];
 

@@ -19,10 +19,11 @@ class DonorController extends Controller
         $donorList = UserDetail::join('users', 'user_details.user_id', '=', 'users.user_id')
             ->join('galloners', 'user_details.user_id', '=', 'galloners.user_id')
             ->join('blood_bags', 'user_details.user_id', '=', 'blood_bags.user_id')
+            ->join('donor_types', 'user_details.donor_types_id', '=', 'donor_types.donor_types_id') // Join the donor_types table
             ->where('user_details.remarks', 0)
             ->where('user_details.status', 0)
             ->where('galloners.donate_qty', '>', 0) 
-            ->select('users.mobile', 'users.email', 'user_details.*', 'galloners.badge', 'galloners.donate_qty')
+            ->select('users.mobile', 'users.email', 'user_details.*', 'galloners.badge', 'galloners.donate_qty', 'donor_types.donor_type_desc')
             ->distinct('user_details.user_id')
             ->orderBy('blood_bags.date_donated', 'desc')
             ->paginate(8);
@@ -49,33 +50,66 @@ class DonorController extends Controller
             'data' => $donorList
         ]);
     }
+
+    public function filterDonorList(Request $request)
+    {
+        try {
+            $bloodType = $request->input('blood_type');
+            $donorType = $request->input('donor_type');
     
-    // public function donorList() {
-    //     $donorList = UserDetail::join('users', 'user_details.user_id', '=', 'users.user_id')
-    //         ->join('galloners', 'user_details.user_id', '=', 'galloners.user_id')
-    //         ->join('blood_bags', 'user_details.user_id', '=', 'blood_bags.user_id')
-    //         ->where('user_details.remarks', 0)
-    //         ->where('user_details.status', 0)
-    //         ->where('galloners.donate_qty', '>', 0) 
-    //         ->select('users.mobile', 'users.email', 'user_details.*', 'galloners.badge', 'galloners.donate_qty','blood_bags.serial_no', 'blood_bags.date_donated')
-    //         ->orderBy('blood_bags.date_donated', 'desc')
-    //         ->paginate(8);
+            $donorList = UserDetail::join('users', 'user_details.user_id', '=', 'users.user_id')
+                ->join('galloners', 'user_details.user_id', '=', 'galloners.user_id')
+                ->join('blood_bags', 'user_details.user_id', '=', 'blood_bags.user_id')
+                ->join('donor_types', 'user_details.donor_types_id', '=', 'donor_types.donor_types_id')
+                ->where('user_details.remarks', 0)
+                ->where('user_details.status', 0)
+                ->where('galloners.donate_qty', '>', 0)
+                ->select('users.mobile', 'users.email', 'user_details.*', 'galloners.badge', 'galloners.donate_qty', 'donor_types.donor_type_desc')
+                ->distinct('user_details.user_id');
     
-    //     // Transform the results to include a list of blood bags for each user
-    //     // $donorList->transform(function ($donor) {
-    //     //     $bloodBags = BloodBag::where('user_id', $donor->user_id)
-    //     //         ->select('serial_no', 'date_donated')
-    //     //         ->orderBy('date_donated', 'desc')
-    //     //         ->get();
-    //     //     $donor->blood_bags = $bloodBags;
-    //     //     return $donor;
-    //     // });
+            if ($bloodType !== 'All') {
+                $donorList->where('user_details.blood_type', $bloodType);
+            }
+            if ($donorType !== 'All') {
+                $donorList->where('donor_types.donor_type_desc', $donorType);
+            }
     
-    //     return response()->json([
-    //         'status' => 'success',
-    //         'data' => $donorList
-    //     ]);
-    // }
+            $donorList = $donorList->orderBy('blood_bags.date_donated', 'desc')->paginate(8);
+    
+            // Transform the results to include a list of blood bags for each user
+            $donorList->transform(function ($donor) {
+                $bloodBags = BloodBag::where('user_id', $donor->user_id)
+                    ->select('serial_no', 'date_donated')
+                    ->orderBy('date_donated', 'asc')
+                    ->get();
+    
+                $donor->blood_bags = $bloodBags;
+    
+                // Retrieve the last date_donated
+                $lastDonated = $bloodBags->last()->date_donated ?? null;
+    
+                $donor->last_donated = $lastDonated;
+    
+                return $donor;
+            });
+    
+            $totalCount = $donorList->total();
+    
+            return response()->json([
+                'status' => 'success',
+                'data' => $donorList,
+                'total_count' => $totalCount
+            ]);
+    
+        } catch (ValidationException $e) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Validation failed',
+                'errors' => $e->validator->errors(),
+            ], 400);
+        }
+    }
+    
 
     public function searchDonor(Request $request){
         try {
@@ -87,9 +121,12 @@ class DonorController extends Controller
             
             $userDetails = UserDetail::join('users', 'user_details.user_id', '=', 'users.user_id')
                 ->join('galloners', 'user_details.user_id', '=', 'galloners.user_id')
-                ->where('galloners.donate_qty', '>', 0) 
+                ->join('blood_bags', 'user_details.user_id', '=', 'blood_bags.user_id')
+                ->join('donor_types', 'user_details.donor_types_id', '=', 'donor_types.donor_types_id')
                 ->where('user_details.remarks', 0)
                 ->where('user_details.status', 0)
+                ->where('galloners.donate_qty', '>', 0)
+                ->distinct('user_details.user_id')
                 ->where(function ($query) use ($searchInput) {
                     $query->where('users.mobile', 'LIKE', '%' . $searchInput . '%')
                         ->orWhere('users.email', 'LIKE', '%' . $searchInput . '%')
@@ -102,18 +139,26 @@ class DonorController extends Controller
                         ->orWhere('galloners.donate_qty', 'LIKE', '%' . $searchInput . '%');
                         
                 })
-                ->select('users.mobile', 'users.email', 'user_details.*', 'galloners.badge', 'galloners.donate_qty')
+                ->select('users.mobile', 'users.email', 'user_details.*', 'galloners.badge', 'galloners.donate_qty', 'donor_types.donor_type_desc')
+                ->orderBy('blood_bags.date_donated', 'desc')
                 ->paginate(8);
 
             // Transform the results to include a list of blood bags for each user
             $userDetails->transform(function ($donor) {
-            $bloodBags = BloodBag::where('user_id', $donor->user_id)
-                ->select('serial_no', 'date_donated')
-                ->get();
-            
-            $donor->blood_bags = $bloodBags;
-            return $donor;
-        });
+                $bloodBags = BloodBag::where('user_id', $donor->user_id)
+                    ->select('serial_no', 'date_donated')
+                    ->orderBy('date_donated', 'asc')
+                    ->get();
+                
+                $donor->blood_bags = $bloodBags;
+                
+                // Retrieve the last date_donated
+                $lastDonated = $bloodBags->last()->date_donated ?? null;
+                
+                $donor->last_donated = $lastDonated;
+                
+                return $donor;
+            });
 
             if($userDetails->isEmpty()) {
                 return response()->json([

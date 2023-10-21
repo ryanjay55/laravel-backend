@@ -108,6 +108,7 @@ Route::group(['middleware' => ['auth:sanctum','admin']], function () {
     Route::post('/dispose-blood', [InventoryController::class, 'disposeBlood']);
     Route::get('/export-pdf-user-details', [UserListController::class, 'exportUserDetailsAsPdf']);
     Route::get('/get-donor-list', [DonorController::class, 'donorList']);
+    Route::post('/filter-donor-list', [DonorController::class, 'filterDonorList']);
     Route::post('/search-donor', [DonorController::class, 'searchDonor']);
     Route::get('/export-pdf-donor-list', [DonorController::class, 'exportDonorListAsPdf']);
     Route::post('/create-security-pin', [SettingsController::class, 'createSecurityPin']);
@@ -118,7 +119,7 @@ Route::group(['middleware' => ['auth:sanctum','admin']], function () {
     Route::get('/dashboard-count-bloodbag-per-month',[DashboardDashboardController::class, 'countBloodBagPerMonth']);
     Route::get('/dashboard-count-donor-per-barangay',[DashboardDashboardController::class, 'countDonorPerBarangay']);
     Route::get('/dashboard-mbd-quick-view',[DashboardDashboardController::class, 'mbdQuickView']);
-    Route::get('/dashboard-get-number-of-donors',[DashboardDashboardController::class, 'countAllDonors']);
+    // Route::get('/dashboard-get-number-of-donors',[DashboardDashboardController::class, 'countAllDonors']);
 
 });
 
