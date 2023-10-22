@@ -156,7 +156,7 @@ class UserListController extends Controller
                 'user_id'           => 'required',
                 'deferral_type_id'  => 'required',
                 'categories_id'     => 'required',
-                'remarks'           => 'required',
+                'remarks'           => '',
                 'duration'          => ['numeric','min:1']
             ],[
                 'duration.min' => 'Minimum duration is 1 day.',
@@ -178,7 +178,7 @@ class UserListController extends Controller
                 ], 400);
             }else{
 
-                if($validatedData['remarks'] === '1'){
+                if($validatedData['deferral_type_id'] === '1'){
                     $user_detail->remarks = 1;
                     $user_detail->save();
                     
@@ -192,9 +192,8 @@ class UserListController extends Controller
 
                     Deferral::create([
                         'user_id'           => $validatedData['user_id'],
-                        'categories_id'     => $validatedData['category'],
-                        'specific_reason'   => $validatedData['specific_reason'],
-                        'remarks_id'        => $validatedData['remarks'],
+                        'categories_id'     => $validatedData['categories_id'],
+                        'deferral_type_id'   => $validatedData['deferral_type_id'],
                         'deferred_duration' => $validatedData['duration'],
                         'end_date'          => $endDateOfDeferral
                     ]);
@@ -211,15 +210,19 @@ class UserListController extends Controller
                         'latitude'   => $ipwhois['latitude'],
                         'longitude'  => $ipwhois['longitude'],
                     ]);
+
+                    return response()->json([
+                        'status' => 'success',
+                        'message' => 'User added to temporary deferral.',
+                    ]);
                 }else{
                     $user_detail->remarks = 2;
                     $user_detail->save();
 
                     Deferral::create([
-                        'user_id'   => $validatedData['user_id'],
-                        'categories_id'  => $validatedData['category'],
-                        'specific_reason' => $validatedData['specific_reason'],
-                        'remarks_id'         => $validatedData['remarks'],
+                        'user_id'           => $validatedData['user_id'],
+                        'categories_id'     => $validatedData['categories_id'],
+                        'deferral_type_id'   => $validatedData['deferral_type_id'],
                     ]);
 
                     AuditTrail::create([
@@ -233,6 +236,11 @@ class UserListController extends Controller
                         'postal'     => $ipwhois['postal'],
                         'latitude'   => $ipwhois['latitude'],
                         'longitude'  => $ipwhois['longitude'],
+                    ]);
+
+                    return response()->json([
+                        'status' => 'success',
+                        'message' => 'User added to permanent deferral.',
                     ]);
                 }
             }

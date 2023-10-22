@@ -15,8 +15,7 @@ class Deferral extends Model
     protected $fillable = [
         'user_id',
         'categories_id',
-        'specific_reason',
-        'remarks_id',
+        'deferral_type_id',
         'deferred_duration',
         'end_date'
     ];
