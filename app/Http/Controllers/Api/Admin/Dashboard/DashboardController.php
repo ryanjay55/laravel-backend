@@ -17,61 +17,62 @@ class DashboardController extends Controller
 
  
     public function getDashboardStock()
-{
-    $bloodBags = DB::table('user_details')
-        ->leftJoin('blood_bags', 'user_details.user_id', '=', 'blood_bags.user_id')
-        ->select('user_details.blood_type', 'blood_bags.serial_no', 'blood_bags.date_donated', 'bled_by', 'blood_bags.created_at') // Include 'created_at' in the select
-        ->whereIn('user_details.blood_type', ['A+', 'A-', 'B+', 'B-', 'O+', 'O-', 'AB+', 'AB-'])
-        ->where('blood_bags.isStored', '=', 1)
-        ->where('blood_bags.isExpired', '=', '0')
-        ->where('blood_bags.status', '=', '0')
-        ->get();
-    
-    $bloodTypes = ['A+', 'B+', 'O+', 'AB+', 'A-', 'B-', 'O-', 'AB-'];
-    
-    $result = [];
-    $latestCreatedAt = null; // Initialize a variable to store the latest created_at value
+    {
+        $bloodBags = DB::table('user_details')
+            ->leftJoin('blood_bags', 'user_details.user_id', '=', 'blood_bags.user_id')
+            ->select('user_details.blood_type', 'blood_bags.serial_no', 'blood_bags.date_donated', 'bled_by', 'blood_bags.created_at') // Include 'created_at' in the select
+            ->whereIn('user_details.blood_type', ['A+', 'A-', 'B+', 'B-', 'O+', 'O-', 'AB+', 'AB-'])
+            ->where('blood_bags.isStored', '=', 1)
+            ->where('blood_bags.isExpired', '=', '0')
+            ->where('blood_bags.status', '=', '0')
+            ->get();
+        
+        $bloodTypes = ['A+', 'B+', 'O+', 'AB+', 'A-', 'B-', 'O-', 'AB-'];
+        
+        $result = [];
+        $latestCreatedAt = null; // Initialize a variable to store the latest created_at value
 
-    // Find the latest created_at value
-    $latestCreatedAt = $bloodBags->max('created_at');
-    
-    // Format the latestCreatedAt
-    $formattedLatestCreatedAt = $latestCreatedAt ? date('Y-m-d h:i A', strtotime($latestCreatedAt)) : null;
+        // Find the latest created_at value
+        $latestCreatedAt = $bloodBags->max('created_at');
+        
+        // Format the latestCreatedAt
+        $formattedLatestCreatedAt = $latestCreatedAt ? date('Y-m-d h:i A', strtotime($latestCreatedAt)) : null;
+        if (!$formattedLatestCreatedAt || count($bloodBags) === 0) {
+            // Set the formattedLatestCreatedAt to the current date and time
+            $formattedLatestCreatedAt = date('Y-m-d h:i A');
+        }
+        foreach ($bloodTypes as $bloodType) {
+            $bloodBagsCount = $bloodBags->where('blood_type', $bloodType)->count();
 
-    foreach ($bloodTypes as $bloodType) {
-        $bloodBagsCount = $bloodBags->where('blood_type', $bloodType)->count();
+            $legend = '';
 
-        $legend = '';
+            if ($bloodBagsCount <= 0) {
+                $legend = 'Empty';
+            } elseif ($bloodBagsCount <= 11) {
+                $legend = 'Critically low';
+            } elseif ($bloodBagsCount <= 19) {
+                $legend = 'Low';
+            } elseif ($bloodBagsCount <= 99) {
+                $legend = 'Normal';
+            } else {
+                $legend = 'High';
+            }
 
-        if ($bloodBagsCount <= 0) {
-            $legend = 'Empty';
-        } elseif ($bloodBagsCount <= 11) {
-            $legend = 'Critically low';
-        } elseif ($bloodBagsCount <= 19) {
-            $legend = 'Low';
-        } elseif ($bloodBagsCount <= 99) {
-            $legend = 'Normal';
-        } else {
-            $legend = 'High';
+            $totalBloodBagsCount = $bloodBags->count();
+
+            $result[] = [
+                'blood_type' => $bloodType,
+                'status' => $bloodBagsCount > 0 ? 'Available' : 'Unavailable',
+                'legend' => $legend,
+                'count' => $bloodBagsCount,
+            ];
         }
 
-        $totalBloodBagsCount = $bloodBags->count();
-        $availabilityPercentage = ($bloodBagsCount / $totalBloodBagsCount) * 100;
-
-        $result[] = [
-            'blood_type' => $bloodType,
-            'status' => $bloodBagsCount > 0 ? 'Available' : 'Unavailable',
-            'legend' => $legend,
-            'count' => $bloodBagsCount,
-            'percentage' => $availabilityPercentage,
-        ];
+        return response()->json([
+            'blood_bags' => $result,
+            'latest_created_at' => $formattedLatestCreatedAt, // Return the formatted value
+        ]);
     }
-
-    return response()->json([
-        'blood_bags' => $result,
-        'latest_created_at' => $formattedLatestCreatedAt, // Return the formatted value
-    ]);
-}
 
 
 
@@ -261,8 +262,8 @@ class DashboardController extends Controller
             $totalDonors = $query->count();
 
             // Filter totalTempDeferral, totalPermaDeferral, totalDispensed, and totalExpired
-            $totalTempDeferral = Deferral::where('remarks_id', '1')->where('user_id', '>', 0);
-            $totalPermaDeferral = Deferral::where('remarks_id', '2')->where('user_id', '>', 0);
+            $totalTempDeferral = Deferral::where('deferral_type_id', '1')->where('user_id', '>', 0);
+            $totalPermaDeferral = Deferral::where('deferral_type_id', '2')->where('user_id', '>', 0);
             $totalDispensed = BloodBag::where('isUsed', '1')->where('user_id', '>', 0);
             $totalExpired = BloodBag::where('isExpired', '1')->where('user_id', '>', 0);
 
