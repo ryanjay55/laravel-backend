@@ -458,26 +458,29 @@ class BloodBagController extends Controller
    
            // Calculate the countdown for each blood bag
            $currentTime = now(); // Current timestamp
+           // Calculate the countdown for each blood bag
+           $currentTime = now(); // Current timestamp
            foreach ($bloodBags as $bloodBag) {
                $expirationDate = Carbon::parse($bloodBag->date_donated)->addDays($EXPIRATION);
                $remainingDays = $expirationDate->diffInDays($bloodBag->date_donated);
-   
+           
                if ($expirationDate->lte($today)) {
                    BloodBag::where('blood_bags_id', $bloodBag->blood_bags_id)
                        ->update(['isExpired' => 1]);
                }
-   
+           
                $createdAt = $bloodBag->created_at;
                $timeDifference = $createdAt->diffInDays($currentTime); // Calculate the difference in days
                $bloodBag->countdown = max(0, 3 - $timeDifference); // Calculate the countdown (minimum 0)
-   
+           
                // Check if the countdown is 0 and add a message
                if ($bloodBag->countdown === 0) {
                    $bloodBag->countdown_message = 'The removal period has ended';
+                   $bloodBag->countdown_end_date = "This blood bag cannot be removed at this time";
                } else {
                    $bloodBag->countdown_message = 'Blood bag can be removed within ' . $bloodBag->countdown . ' day/s';
+                   $bloodBag->countdown_end_date = $expirationDate->format('Y-m-d');
                }
-            
            }
    
            // Return the paginated results with decrypted serial_no
@@ -622,10 +625,13 @@ class BloodBagController extends Controller
         $user = getAuthenticatedUserId();
         $userId = $user->user_id;
 
-        $bloodBags = DB::table('user_details')
-            ->join('blood_bags', 'user_details.user_id', '=', 'blood_bags.user_id')
-            ->select('user_details.donor_no','user_details.first_name', 'user_details.last_name', 'user_details.blood_type','blood_bags.serial_no', 'blood_bags.date_donated', 'blood_bags.expiration_date' ,'bled_by','venue')
-            ->where('blood_bags.status', '=', 0) 
+        $bloodBags = UserDetail::join('blood_bags', 'user_details.user_id', '=', 'blood_bags.user_id')
+            ->select('user_details.donor_no', 'user_details.first_name', 'user_details.last_name', 'user_details.blood_type', 'blood_bags.isExpired','blood_bags.blood_bags_id','blood_bags.serial_no', 'blood_bags.date_donated', 'blood_bags.expiration_date', 'blood_bags.created_at', 'bled_by', 'venue')
+            ->where('user_details.remarks', '=', 0)
+            ->where('blood_bags.status', '=', 0)
+            ->where('blood_bags.isStored', '=', 0)
+            ->where('blood_bags.isExpired', '=', 0)
+            ->where('blood_bags.separate', '=', 0)
             ->get();
 
             $ip = file_get_contents('https://api.ipify.org');

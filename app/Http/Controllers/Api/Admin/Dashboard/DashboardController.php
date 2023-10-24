@@ -239,7 +239,7 @@ class DashboardController extends Controller
         try {
             $month = $request->input('month');
             $year = $request->input('year');
-
+            
             $data = [];
 
             $query = UserDetail::join('users', 'user_details.user_id', '=', 'users.user_id')

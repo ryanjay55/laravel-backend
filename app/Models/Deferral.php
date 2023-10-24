@@ -16,6 +16,8 @@ class Deferral extends Model
         'user_id',
         'categories_id',
         'deferral_type_id',
+        'venue',
+        'date_deferred',
         'deferred_duration',
         'end_date'
     ];

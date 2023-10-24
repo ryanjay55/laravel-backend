@@ -157,11 +157,14 @@ class UserListController extends Controller
                 'deferral_type_id'  => 'required',
                 'categories_id'     => 'required',
                 'remarks'           => '',
-                'duration'          => ['numeric','min:1']
+                'duration'          => ['numeric','min:1'],
+                'venue'             => 'required',
+                'date_deferred'     => 'required'
             ],[
                 'duration.min' => 'Minimum duration is 1 day.',
             ]);
             
+            $date_deferred = Carbon::parse($validatedData['date_deferred']);
             $ip = file_get_contents('https://api.ipify.org');
             $ch = curl_init('http://ipwho.is/'.$ip);
             curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
@@ -182,10 +185,10 @@ class UserListController extends Controller
                     $user_detail->remarks = 1;
                     $user_detail->save();
                     
-                    $deferredStartDate = now();
+                    // $deferredStartDate = now();
                     $deferredDuration = $validatedData['duration'];
                     
-                    $endDateOfDeferral = Carbon::parse($deferredStartDate)
+                    $endDateOfDeferral = Carbon::parse($date_deferred)
                         ->addDays($deferredDuration)
                         ->addDay() 
                         ->toDateString();
@@ -195,6 +198,8 @@ class UserListController extends Controller
                         'categories_id'     => $validatedData['categories_id'],
                         'deferral_type_id'   => $validatedData['deferral_type_id'],
                         'deferred_duration' => $validatedData['duration'],
+                        'date_deferred'     => $validatedData['date_deferred'],
+                        'venue'             => $validatedData['venue'],
                         'end_date'          => $endDateOfDeferral
                     ]);
 
@@ -223,6 +228,8 @@ class UserListController extends Controller
                         'user_id'           => $validatedData['user_id'],
                         'categories_id'     => $validatedData['categories_id'],
                         'deferral_type_id'   => $validatedData['deferral_type_id'],
+                        'venue'             => $validatedData['venue'],
+                        'date_deferred'     => $validatedData['date_deferred'],
                     ]);
 
                     AuditTrail::create([

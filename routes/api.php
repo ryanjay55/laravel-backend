@@ -16,6 +16,7 @@ use App\Http\Controllers\Api\Donor\BloodJourney\BloodJourneyController;
 use App\Http\Controllers\Api\Donor\Dashboard\DashboardController;
 use App\Http\Controllers\Api\Donor\DonorPost\DonorPostController;
 use App\Http\Controllers\Api\Admin\Inventory\InventoryController;
+use App\Http\Controllers\Api\Admin\Mbd\MbdController;
 use App\Http\Controllers\Api\Donor\Profile\ProfileController;
 use App\Http\Controllers\Api\Admin\Settings\SettingsController;
 
@@ -123,6 +124,8 @@ Route::group(['middleware' => ['auth:sanctum','admin']], function () {
     Route::get('/dashboard-count-donor-per-barangay',[DashboardDashboardController::class, 'countDonorPerBarangay']);
     Route::get('/dashboard-mbd-quick-view',[DashboardDashboardController::class, 'mbdQuickView']);
     // Route::get('/dashboard-get-number-of-donors',[DashboardDashboardController::class, 'countAllDonors']);
+
+    Route::post('/mbd',[MbdController::class, 'getMbdSummary']);
 
 });
 
