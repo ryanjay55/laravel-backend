@@ -127,6 +127,9 @@ Route::group(['middleware' => ['auth:sanctum','admin']], function () {
 
     Route::post('/mbd',[MbdController::class, 'getMbdSummary']);
 
+    Route::post('/dispensed-blood', [InventoryController::class, 'dispensedBlood']);
+    Route::get('/registered-users', [InventoryController::class, 'getRegisteredUsers']);
+
 });
 
 

@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api\Admin\Inventory;
 use App\Http\Controllers\Controller;
 use App\Models\AuditTrail;
 use App\Models\Deferral;
+use App\Models\PatientReceiver;
 use App\Models\UserDetail;
 use Illuminate\Http\Request;
 
@@ -170,6 +171,7 @@ class InventoryController extends Controller
             ->where('blood_bags.isExpired', 0)
             ->where('user_details.remarks', 0)
             ->where('blood_bags.isDisposed', 0)
+            ->where('blood_bags.isUsed', 0)
             ->select('blood_bags.blood_bags_id', 'blood_bags.serial_no', 'user_details.first_name', 'user_details.last_name', 'user_details.blood_type', 'user_details.donor_no', 'blood_bags.date_donated', 'blood_bags.expiration_date')
             ->orderBy('blood_bags.expiration_date')
             ->paginate(8);
@@ -652,5 +654,135 @@ class InventoryController extends Controller
    }
 
 
+   public function dispensedBlood(Request $request)
+   {
+       $user = getAuthenticatedUserId();
+       $userId = $user->user_id;
+   
+       try {
+           $validatedData = $request->validate([
+               'blood_bags_id' => 'required|array',
+               'first_name' => 'required',
+               'middle_name' => 'required',
+               'last_name' => 'required',
+               'dob' => 'required',
+               'sex' => 'required',
+               'diagnosis' => 'required',
+               'blood_type' => 'required',
+               'hospital' => 'required',
+               'payment'   => 'required'
+           ]);
+           
+           $user_id = $request->user_id;
+           $first_name = $validatedData['first_name'];
+           $middle_name = $validatedData['middle_name'];
+           $last_name = $validatedData['last_name'];
+           $dob = $validatedData['dob'];
+           $blood_type = $validatedData['blood_type'];
+           $hospital = $validatedData['hospital'];
+           $payment = $validatedData['payment'];
+           $sex = $validatedData['sex'];
+           $diagnosis = $validatedData['diagnosis'];
+
+           $ip = file_get_contents('https://api.ipify.org');
+           $ch = curl_init('http://ipwho.is/'.$ip);
+           curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+           curl_setopt($ch, CURLOPT_HEADER, false);
+   
+           $ipwhois = json_decode(curl_exec($ch), true);
+           curl_close($ch);
+
+           $patientReceiverId = '';
+           if ($user_id == null) {
+               $patientReceiver = PatientReceiver::create([
+                   'first_name' => $first_name,
+                   'middle_name' => $middle_name,
+                   'last_name' => $last_name,
+                   'dob' => $dob,
+                   'sex' => $sex,
+                   'blood_type' => $blood_type,
+                   'diagnosis' => $diagnosis,
+                   'hospital' => $hospital,
+                   'payment' => $payment,
+               ]);
+               $patientReceiverId = PatientReceiver::latest()->value('patient_receivers_id');
+           } else {
+               $patientReceiver = PatientReceiver::create([
+                   'user_id' => $user_id,
+                   'first_name' => $first_name,
+                   'middle_name' => $middle_name,
+                   'last_name' => $last_name,
+                   'dob' => $dob,
+                   'sex' => $sex,
+                   'blood_type' => $blood_type,
+                   'diagnosis' => $user_id,
+                   'hospital' => $hospital,
+                   'payment' => $payment,
+               ]);
+
+               $patientReceiverId = PatientReceiver::latest()->value('patient_receivers_id');
+           }
+           
+      
+           foreach ($validatedData['blood_bags_id'] as $bloodBagId) {
+            $bloodBag = BloodBag::where('blood_bags_id', $bloodBagId)->first();
+            $bloodBag->patient_receivers_id =  $patientReceiverId;
+            $bloodBag->isUsed = 1;
+            $bloodBag->dispensed_date = now();
+            $bloodBag->save();
+
+            if (empty($bloodBag)) {
+                return response()->json([
+                    'status'  => 'error',
+                    'message' => 'Blood bag not found',
+                ], 400);
+            } else {
+
+                 
+                AuditTrail::create([
+                    'user_id'    => $userId,
+                    'module'     => 'Inventory',
+                    'action'     => 'Dipensed blood bag | blood bag ID: ' . $bloodBagId,
+                    'status'     => 'success',
+                    'ip_address' => $ipwhois['ip'],
+                    'region'     => $ipwhois['region'],
+                    'city'       => $ipwhois['city'],
+                    'postal'     => $ipwhois['postal'],
+                    'latitude'   => $ipwhois['latitude'],
+                    'longitude'  => $ipwhois['longitude'],
+                ]);
+            }
+        }
+
+            
+           return response()->json([
+               'status'    => 'success',
+               'message'   => 'Blood bags successfully dispensed',
+           ]);
+       } catch (ValidationException $e) {
+           return response()->json([
+               'status'  => 'error',
+               'message' => 'Validation failed',
+               'errors'  => $e->validator->errors(),
+           ], 400);
+       }
+   }
+
+   public function getRegisteredUsers(){
+        $userDetails = UserDetail::join('users', 'user_details.user_id', '=', 'users.user_id')
+            ->join('galloners', 'user_details.user_id', '=', 'galloners.user_id')
+            ->where('user_details.status', 0)
+            ->where('users.isAdmin', 0)
+            ->select('users.mobile', 'users.email', 'user_details.*', 'galloners.badge', 'galloners.donate_qty')
+            ->orderBy('user_details.user_id', 'desc')
+            ->get();
+
+        return response()->json([
+            'status'    => 'success',
+            'userDetails'   => $userDetails,
+        ]);
+   }
+
+  
 }
 

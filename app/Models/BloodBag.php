@@ -14,6 +14,7 @@ class BloodBag extends Model
 
     protected $fillable = [
         'user_id',
+        'patient_receivers_id',
         'serial_no',
         'date_donated',
         'venue',
@@ -23,6 +24,7 @@ class BloodBag extends Model
         'expiration_date',
         'isExpired',
         'isDisposed',
+        'dispensed_date',
         'remaining_days'
     ];
 

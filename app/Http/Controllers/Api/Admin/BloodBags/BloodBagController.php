@@ -36,6 +36,7 @@ class BloodBagController extends Controller
                     'date_donated'  => ['required', 'date', new ValidateDateDonated],
                     'venue'         => 'required|string',
                     'bled_by'       => 'required|string',
+                    'donation_type' => 'required'
                 ],[
                     'serial_no.unique' => 'The serial number is already used.',
                 ]);               
@@ -144,6 +145,7 @@ class BloodBagController extends Controller
                                 $userDetails->donorType = 4;
                                 $userDetails->save();
                             }
+                            
                             BloodBag::create([
                                 'user_id'      => $validatedData['user_id'],
                                 'serial_no'    => $validatedData['serial_no'],
@@ -152,7 +154,8 @@ class BloodBagController extends Controller
                                 'bled_by'      => ucwords(strtolower($validatedData['bled_by'])),
                                 'expiration_date' => $expirationDate,
                                 'remaining_days'  => $remainingDays,
-                                'isCollected'   => 1
+                                'isCollected'   => 1,
+                                'donation_type_id' => $validatedData['donation_type']
                             ]);
                         
                             AuditTrail::create([
@@ -237,7 +240,8 @@ class BloodBagController extends Controller
                             'bled_by'      => ucwords(strtolower($validatedData['bled_by'])),
                             'expiration_date' => $expirationDate,
                             'remaining_days'  => $remainingDays,
-                            'isCollected'   => 1
+                            'isCollected'   => 1,
+                            'donation_type_id' => $validatedData['donation_type']
                         ]);
                     
                         AuditTrail::create([
