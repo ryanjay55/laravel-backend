@@ -36,6 +36,9 @@ class MbdController extends Controller
             $getAgeDistributionRight = app(BloodBag::class)->getAgeDistributionRight($venue, $startDate, $endDate);
             $getTempCategoriesDeferral = app(BloodBag::class)->getTempCategoriesDeferral($venue, $startDate, $endDate);
             $countDeferral = app(BloodBag::class)->countDeferral($venue, $startDate, $endDate);
+            $numberOfUnitsCollected = app(BloodBag::class)->numberOfUnitsCollected($venue, $startDate, $endDate);
+            $countDeferredDonors = app(BloodBag::class)->countDeferredDonors($venue, $startDate, $endDate);
+            
 
             return response()->json([
                 'status'    => 'success',
@@ -48,7 +51,9 @@ class MbdController extends Controller
                 'getAgeDistributionLeft' => $getAgeDistributionLeft,
                 'getAgeDistributionRight' => $getAgeDistributionRight,
                 'getTempCategoriesDeferral' => $getTempCategoriesDeferral,
-                'countDeferral'      => $countDeferral
+                'countDeferral'      => $countDeferral,
+                'numberOfUnitsCollected' => $numberOfUnitsCollected,
+                'countDeferredDonors' => $countDeferredDonors,
            
             ]);
         

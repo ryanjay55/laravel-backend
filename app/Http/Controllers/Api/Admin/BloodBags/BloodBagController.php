@@ -145,7 +145,7 @@ class BloodBagController extends Controller
                                 $userDetails->donorType = 4;
                                 $userDetails->save();
                             }
-                            
+
                             BloodBag::create([
                                 'user_id'      => $validatedData['user_id'],
                                 'serial_no'    => $validatedData['serial_no'],

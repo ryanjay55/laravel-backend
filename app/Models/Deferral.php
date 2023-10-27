@@ -19,6 +19,7 @@ class Deferral extends Model
         'venue',
         'date_deferred',
         'deferred_duration',
-        'end_date'
+        'end_date',
+        'donation_type_id'
     ];
 }

@@ -25,7 +25,8 @@ class BloodBag extends Model
         'isExpired',
         'isDisposed',
         'dispensed_date',
-        'remaining_days'
+        'remaining_days',
+        'donation_type_id',
     ];
 
     
@@ -137,6 +138,7 @@ class BloodBag extends Model
            WHERE
            venue = :venue
            AND date_donated BETWEEN :startDate AND :endDate
+           AND bb.donation_type_id = 1
            GROUP BY
            genders.sex";
    
@@ -172,6 +174,7 @@ class BloodBag extends Model
         JOIN blood_bags AS bb ON ud.user_id = bb.user_id
         WHERE venue = :venue
         AND date_donated BETWEEN :startDate AND :endDate
+        AND bb.donation_type_id = 1
         GROUP BY sex";
 
         $result = DB::select($sql, [
@@ -197,6 +200,7 @@ class BloodBag extends Model
     JOIN galloners AS g ON ud.user_id = g.user_id
     WHERE bb.venue = :venue
         AND bb.date_donated BETWEEN :startDate AND :endDate
+        AND bb.donation_type_id = 1
     GROUP BY ud.sex";
     
         $result = DB::select($sql, [
@@ -264,6 +268,7 @@ class BloodBag extends Model
             JOIN blood_bags bb ON ud.user_id = bb.user_id
             WHERE bb.venue = :venue
             AND bb.date_donated BETWEEN :startDate AND :endDate
+            AND bb.donation_type_id = 1
         ) AS age_data
         GROUP BY sex";
    
@@ -292,6 +297,7 @@ class BloodBag extends Model
             JOIN blood_bags bb ON ud.user_id = bb.user_id
             WHERE bb.venue = :venue
             AND bb.date_donated BETWEEN :startDate AND :endDate
+            AND bb.donation_type_id = 1
             ) AS age_data
             GROUP BY sex";
 
@@ -305,44 +311,62 @@ class BloodBag extends Model
     }
 
 
-    public function getTempCategoriesDeferral($venue, $startDate, $endDate)
-    {
-        $sql = "SELECT
-                    genders.sex,
-                    COALESCE(SUM(category_counts.count), 0) AS count,
-                    COALESCE(SUM(category_counts.history), 0) AS history,
-                    COALESCE(SUM(category_counts.low_hgb), 0) AS low_hgb,
-                    COALESCE(SUM(category_counts.others), 0) AS others
-                FROM (
-                    SELECT 'Male' AS sex
-                    UNION ALL
-                    SELECT 'Female' AS sex
-                ) AS genders
-                LEFT JOIN (
-                    SELECT
-                        ud.sex,
-                        COALESCE(SUM(CASE WHEN d.categories_id = 1 THEN 1 ELSE 0 END), 0) AS history,
-                        COALESCE(SUM(CASE WHEN d.categories_id = 2 THEN 1 ELSE 0 END), 0) AS low_hgb,
-                        COALESCE(SUM(CASE WHEN d.categories_id = 3 THEN 1 ELSE 0 END), 0) AS others,
-                        COALESCE(COUNT(*), 0) AS count
-                    FROM user_details ud
-                    LEFT JOIN deferrals AS d ON ud.user_id = d.user_id
-                    LEFT JOIN deferral_types AS dt ON d.deferral_type_id = dt.deferral_type_id
-                    WHERE d.venue = :venue
-                    AND d.date_deferred BETWEEN :startDate AND :endDate
-                    AND d.categories_id IN (1, 2, 3)
-                    GROUP BY ud.sex
-                ) AS category_counts ON genders.sex = category_counts.sex
-                GROUP BY genders.sex";
-    
-        $result = DB::select($sql, [
-            'venue' => $venue,
-            'startDate' => $startDate,
-            'endDate' => $endDate,
-        ]);
-    
-        return $result;
-    }
+   public function getTempCategoriesDeferral($venue, $startDate, $endDate)
+   {
+       $sql = "SELECT
+                   genders.sex,
+                   COALESCE(SUM(category_counts.count), 0) AS count,
+                   COALESCE(SUM(category_counts.history), 0) AS history,
+                   COALESCE(SUM(category_counts.low_hgb), 0) AS low_hgb,
+                   COALESCE(SUM(category_counts.others), 0) AS others
+               FROM (
+                   SELECT 'Male' AS sex
+                   UNION ALL
+                   SELECT 'Female' AS sex
+               ) AS genders
+               LEFT JOIN (
+                   SELECT
+                       ud.sex,
+                       COALESCE(SUM(CASE WHEN d.categories_id = 1 THEN 1 ELSE 0 END), 0) AS history,
+                       COALESCE(SUM(CASE WHEN d.categories_id = 2 THEN 1 ELSE 0 END), 0) AS low_hgb,
+                       COALESCE(SUM(CASE WHEN d.categories_id = 3 THEN 1 ELSE 0 END), 0) AS others,
+                       COALESCE(COUNT(*), 0) AS count
+                   FROM user_details ud
+                   LEFT JOIN deferrals AS d ON ud.user_id = d.user_id
+                   LEFT JOIN deferral_types AS dt ON d.deferral_type_id = dt.deferral_type_id
+                   WHERE d.venue = :venue
+                   AND d.date_deferred BETWEEN :startDate AND :endDate
+                   AND d.categories_id IN (1, 2, 3)
+                   AND d.donation_type_id = 1
+                   GROUP BY ud.sex
+               ) AS category_counts ON genders.sex = category_counts.sex
+               GROUP BY genders.sex";
+   
+       $result = DB::select($sql, [
+           'venue' => $venue,
+           'startDate' => $startDate,
+           'endDate' => $endDate,
+       ]);
+   
+       // Append the count of males and females if they are missing in the result set
+       $hasMale = false;
+       $hasFemale = false;
+       foreach ($result as $row) {
+           if ($row->sex === 'Male') {
+               $hasMale = true;
+           } elseif ($row->sex === 'Female') {
+               $hasFemale = true;
+           }
+       }
+       if (!$hasMale) {
+           $result[] = (object) ['sex' => 'Male', 'count' => 0, 'history' => 0, 'low_hgb' => 0, 'others' => 0];
+       }
+       if (!$hasFemale) {
+           $result[] = (object) ['sex' => 'Female', 'count' => 0, 'history' => 0, 'low_hgb' => 0, 'others' => 0];
+       }
+   
+       return $result;
+   }
 
     public function countDeferral($venue, $startDate, $endDate)
     {
@@ -382,8 +406,34 @@ class BloodBag extends Model
         return $result;
     }
 
-    public function bloodBagsSummary($venue, $startDate, $endDate){
+    public function numberOfUnitsCollected($venue, $startDate, $endDate){
+        $sql = "SELECT COUNT(*) AS unit_count FROM blood_bags
+                WHERE venue = :venue
+                AND date_donated BETWEEN :startDate AND :endDate";
+    
+        $result = DB::select($sql, [
+            'venue' => $venue,
+            'startDate' => $startDate,
+            'endDate' => $endDate,
+        ]);
+    
+        return $result[0]->unit_count;
+    }
+
+    public function countDeferredDonors($venue, $startDate, $endDate){
+        $sql = "SELECT COUNT(*) as deferred_count
+        FROM deferrals
+        WHERE date_deferred BETWEEN :startDate AND :endDate
+        AND venue = :venue
+        AND (deferral_type_id = 1 OR deferral_type_id = 2)";
         
+        $result = DB::select($sql, [
+            'venue' => $venue,
+            'startDate' => $startDate,
+            'endDate' => $endDate,
+        ]);
+    
+        return $result[0]->deferred_count;
     }
 }
 

@@ -159,7 +159,8 @@ class UserListController extends Controller
                 'remarks'           => '',
                 'duration'          => ['numeric','min:1'],
                 'venue'             => 'required',
-                'date_deferred'     => 'required'
+                'date_deferred'     => 'required',
+                'donation_type'     => 'required'
             ],[
                 'duration.min' => 'Minimum duration is 1 day.',
             ]);
@@ -200,7 +201,8 @@ class UserListController extends Controller
                         'deferred_duration' => $validatedData['duration'],
                         'date_deferred'     => $validatedData['date_deferred'],
                         'venue'             => $validatedData['venue'],
-                        'end_date'          => $endDateOfDeferral
+                        'end_date'          => $endDateOfDeferral,
+                        'donation_type_id'     => $validatedData['donation_type']
                     ]);
 
                     AuditTrail::create([
@@ -230,6 +232,8 @@ class UserListController extends Controller
                         'deferral_type_id'   => $validatedData['deferral_type_id'],
                         'venue'             => $validatedData['venue'],
                         'date_deferred'     => $validatedData['date_deferred'],
+                        'donation_type_id'     => $validatedData['donation_type']
+
                     ]);
 
                     AuditTrail::create([
