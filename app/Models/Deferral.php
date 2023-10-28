@@ -22,4 +22,5 @@ class Deferral extends Model
         'end_date',
         'donation_type_id'
     ];
+
 }

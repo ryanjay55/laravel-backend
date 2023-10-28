@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Api\Admin\DispensedBlood\DispensedBloodController;
 use Illuminate\Support\Facades\Route;
 
 use App\Http\Controllers\Api\AddressController;
@@ -129,6 +130,10 @@ Route::group(['middleware' => ['auth:sanctum','admin']], function () {
 
     Route::post('/dispensed-blood', [InventoryController::class, 'dispensedBlood']);
     Route::get('/registered-users', [InventoryController::class, 'getRegisteredUsers']);
+
+
+    Route::post('/dispensed-list', [DispensedBloodController::class, 'dispensedBloodList']);
+    Route::get('/get-all-serial-no', [DispensedBloodController::class, 'getAllSerialNumber']);
 
 });
 

@@ -29,7 +29,17 @@ class BloodBag extends Model
         'donation_type_id',
     ];
 
-    
+    public function getAllSerialNo(){
+        $sql = "select bb.serial_no, pr.created_at from blood_bags bb
+        join patient_receivers as pr on pr.patient_receivers_id = bb.patient_receivers_id 
+        ORDER BY pr.created_at DESC";
+
+        $result = DB::connection('mysql')->select($sql);
+
+        return $result;
+    }
+
+
    public function getManPower($venue, $startDate, $endDate) {
        $sql = "SELECT COUNT(DISTINCT bled_by) as man_power
                FROM blood_bags
