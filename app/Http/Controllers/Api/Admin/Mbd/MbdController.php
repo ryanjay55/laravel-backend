@@ -38,7 +38,10 @@ class MbdController extends Controller
             $countDeferral = app(BloodBag::class)->countDeferral($venue, $startDate, $endDate);
             $numberOfUnitsCollected = app(BloodBag::class)->numberOfUnitsCollected($venue, $startDate, $endDate);
             $countDeferredDonors = app(BloodBag::class)->countDeferredDonors($venue, $startDate, $endDate);
-            
+            //PD
+            $getTempCategoriesDeferralPD = app(BloodBag::class)->getTempCategoriesDeferralPD($venue, $startDate, $endDate);
+            $countDeferralPD =app(BloodBag::class)->countDeferralPD($venue, $startDate, $endDate);
+            $bloodCollectionPD =  app(BloodBag::class)->bloodCollectionPD($venue, $startDate, $endDate);
 
             return response()->json([
                 'status'    => 'success',
@@ -54,6 +57,9 @@ class MbdController extends Controller
                 'countDeferral'      => $countDeferral,
                 'numberOfUnitsCollected' => $numberOfUnitsCollected,
                 'countDeferredDonors' => $countDeferredDonors,
+                'getTempCategoriesDeferralPD' => $getTempCategoriesDeferralPD,
+                'countDeferralPD' => $countDeferralPD,
+                'bloodCollectionPD' => $bloodCollectionPD,
            
             ]);
         

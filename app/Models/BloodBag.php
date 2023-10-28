@@ -84,6 +84,7 @@ class BloodBag extends Model
        LEFT JOIN blood_bags AS bb ON ud.user_id = bb.user_id
        WHERE venue = :venue
            AND date_donated BETWEEN :startDate AND :endDate
+           AND donation_type_id = 1
        GROUP BY all_blood_types.blood_type";
    
        $result = DB::connection('mysql')->select($sql, [
@@ -392,6 +393,7 @@ class BloodBag extends Model
                     WHERE d.venue = :venue
                     AND d.date_deferred BETWEEN :startDate AND :endDate
                     AND d.deferral_type_id IN (1, 2)
+                    AND d.donation_type_id = 1
                     GROUP BY ud.sex
                 ) AS category_counts ON genders.sex = category_counts.sex
                 GROUP BY genders.sex";
@@ -435,6 +437,125 @@ class BloodBag extends Model
     
         return $result[0]->deferred_count;
     }
+
+
+    //PATIENT DIRECTED
+    public function getTempCategoriesDeferralPD($venue, $startDate, $endDate)
+   {
+       $sql = "SELECT
+                   genders.sex,
+                   COALESCE(SUM(category_counts.count), 0) AS count,
+                   COALESCE(SUM(category_counts.history), 0) AS history,
+                   COALESCE(SUM(category_counts.low_hgb), 0) AS low_hgb,
+                   COALESCE(SUM(category_counts.others), 0) AS others
+               FROM (
+                   SELECT 'Male' AS sex
+                   UNION ALL
+                   SELECT 'Female' AS sex
+               ) AS genders
+               LEFT JOIN (
+                   SELECT
+                       ud.sex,
+                       COALESCE(SUM(CASE WHEN d.categories_id = 1 THEN 1 ELSE 0 END), 0) AS history,
+                       COALESCE(SUM(CASE WHEN d.categories_id = 2 THEN 1 ELSE 0 END), 0) AS low_hgb,
+                       COALESCE(SUM(CASE WHEN d.categories_id = 3 THEN 1 ELSE 0 END), 0) AS others,
+                       COALESCE(COUNT(*), 0) AS count
+                   FROM user_details ud
+                   LEFT JOIN deferrals AS d ON ud.user_id = d.user_id
+                   LEFT JOIN deferral_types AS dt ON d.deferral_type_id = dt.deferral_type_id
+                   WHERE d.venue = :venue
+                   AND d.date_deferred BETWEEN :startDate AND :endDate
+                   AND d.categories_id IN (1, 2, 3)
+                   AND d.donation_type_id = 2
+                   GROUP BY ud.sex
+               ) AS category_counts ON genders.sex = category_counts.sex
+               GROUP BY genders.sex";
+   
+       $result = DB::select($sql, [
+           'venue' => $venue,
+           'startDate' => $startDate,
+           'endDate' => $endDate,
+       ]);
+   
+       // Append the count of males and females if they are missing in the result set
+       $hasMale = false;
+       $hasFemale = false;
+       foreach ($result as $row) {
+           if ($row->sex === 'Male') {
+               $hasMale = true;
+           } elseif ($row->sex === 'Female') {
+               $hasFemale = true;
+           }
+       }
+       if (!$hasMale) {
+           $result[] = (object) ['sex' => 'Male', 'count' => 0, 'history' => 0, 'low_hgb' => 0, 'others' => 0];
+       }
+       if (!$hasFemale) {
+           $result[] = (object) ['sex' => 'Female', 'count' => 0, 'history' => 0, 'low_hgb' => 0, 'others' => 0];
+       }
+   
+       return $result;
+   }
+
+   public function countDeferralPD($venue, $startDate, $endDate)
+    {
+        $sql = "SELECT
+                    genders.sex,
+                    COALESCE(SUM(category_counts.count), 0) AS count,
+                    COALESCE(SUM(category_counts.temporary), 0) AS temporary,
+                    COALESCE(SUM(category_counts.permanent), 0) AS permanent
+                FROM (
+                    SELECT 'Male' AS sex
+                    UNION ALL
+                    SELECT 'Female' AS sex
+                ) AS genders
+                LEFT JOIN (
+                    SELECT
+                        ud.sex,
+                        COALESCE(SUM(CASE WHEN d.deferral_type_id = 1 THEN 1 ELSE 0 END), 0) AS temporary,
+                        COALESCE(SUM(CASE WHEN d.deferral_type_id = 2 THEN 1 ELSE 0 END), 0) AS permanent,
+                        COALESCE(COUNT(*), 0) AS count
+                    FROM user_details ud
+                    LEFT JOIN deferrals AS d ON ud.user_id = d.user_id
+                    LEFT JOIN deferral_types AS dt ON d.deferral_type_id = dt.deferral_type_id
+                    WHERE d.venue = :venue
+                    AND d.date_deferred BETWEEN :startDate AND :endDate
+                    AND d.deferral_type_id IN (1, 2)
+                    AND d.donation_type_id = 2
+                    GROUP BY ud.sex
+                ) AS category_counts ON genders.sex = category_counts.sex
+                GROUP BY genders.sex";
+  
+    
+        $result = DB::select($sql, [
+            'venue' => $venue,
+            'startDate' => $startDate,
+            'endDate' => $endDate,
+        ]);
+    
+        return $result;
+    }
+
+    public function bloodCollectionPD($venue, $startDate, $endDate) {
+        $result = DB::table('user_details as ud')
+            ->leftJoin('blood_bags as bb', 'ud.user_id', '=', 'bb.user_id')
+            ->select(
+                DB::raw("CASE WHEN ud.sex = 'Female' THEN 'Female' ELSE 'Male' END AS Gender"),
+                DB::raw("SUM(CASE WHEN REPLACE(REPLACE(ud.blood_type, '+', ''), '-', '') = 'O' THEN 1 ELSE 0 END) AS O"),
+                DB::raw("SUM(CASE WHEN REPLACE(REPLACE(ud.blood_type, '+', ''), '-', '') = 'A' THEN 1 ELSE 0 END) AS A"),
+                DB::raw("SUM(CASE WHEN REPLACE(REPLACE(ud.blood_type, '+', ''), '-', '') = 'B' THEN 1 ELSE 0 END) AS B"),
+                DB::raw("SUM(CASE WHEN REPLACE(REPLACE(ud.blood_type, '+', ''), '-', '') = 'AB' THEN 1 ELSE 0 END) AS AB")
+            )
+            ->where('venue', $venue)
+            ->whereBetween('date_donated', [$startDate, $endDate])
+            ->where('bb.donation_type_id', 2)
+            ->groupBy('Gender')
+            ->get();
+    
+        return $result;
+    }
+    
+    
 }
 
 
