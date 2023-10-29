@@ -121,8 +121,8 @@ Route::group(['middleware' => ['auth:sanctum','admin']], function () {
 
     Route::get('/dashboard-get-stocks',[DashboardDashboardController::class, 'getDashboardStock']);
     Route::get('/dashboard-get-quota',[DashboardDashboardController::class, 'getQuota']);
-    Route::get('/dashboard-count-bloodbag-per-month',[DashboardDashboardController::class, 'countBloodBagPerMonth']);
-    Route::get('/dashboard-count-donor-per-barangay',[DashboardDashboardController::class, 'countDonorPerBarangay']);
+    Route::post('/dashboard-count-bloodbag-per-month',[DashboardDashboardController::class, 'countBloodBagPerMonth']);
+    Route::post('/dashboard-count-donor-per-barangay',[DashboardDashboardController::class, 'countDonorPerBarangay']);
     Route::get('/dashboard-mbd-quick-view',[DashboardDashboardController::class, 'mbdQuickView']);
     // Route::get('/dashboard-get-number-of-donors',[DashboardDashboardController::class, 'countAllDonors']);
 

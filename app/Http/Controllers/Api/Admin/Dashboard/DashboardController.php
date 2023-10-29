@@ -152,30 +152,54 @@ class DashboardController extends Controller
         ]);
     }
 
-   public function countBloodBagPerMonth() {
-       $currentYear = date('Y');
-       $currentMonth = date('n');
-       $monthCounts = [];
-   
-       for ($i = 1; $i <= $currentMonth; $i++) {
-           $monthName = date('F', mktime(0, 0, 0, $i, 1));
-           $startDate = date('Y-m-d', strtotime($currentYear.'-'.$i.'-01'));
-           $endDate = date('Y-m-t', strtotime($currentYear.'-'.$i.'-01'));
-           
-           $bloodBags = DB::table('user_details')
-               ->leftJoin('blood_bags', 'user_details.user_id', '=', 'blood_bags.user_id')
-               ->select('user_details.blood_type', 'blood_bags.serial_no', 'blood_bags.date_donated', 'bled_by')
-               ->whereIn('user_details.blood_type', ['A+', 'A-', 'B+', 'B-', 'O+', 'O-', 'AB+', 'AB-'])
-               ->where('blood_bags.isStored', '=', 1)
-               ->where('blood_bags.isExpired', '=', '0')
-               ->where('blood_bags.status', '=', '0')
-               ->where('user_details.remarks', '=', '0')
-               ->whereYear('date_donated', $currentYear)
-               ->whereBetween('date_donated', [$startDate, $endDate])
-               ->count();
-   
-           $monthCounts[$monthName] = $bloodBags;
-       }
+   public function countBloodBagPerMonth(Request $request) {
+        $currentYear = date('Y');
+        $currentMonth = date('n');
+        $monthCounts = [];
+
+        $bloodType = $request->input('blood_type');
+
+        if($bloodType == 'All'){
+            for ($i = 1; $i <= $currentMonth; $i++) {
+                $monthName = date('F', mktime(0, 0, 0, $i, 1));
+                $startDate = date('Y-m-d', strtotime($currentYear.'-'.$i.'-01'));
+                $endDate = date('Y-m-t', strtotime($currentYear.'-'.$i.'-01'));
+                
+                $bloodBags = DB::table('user_details')
+                    ->leftJoin('blood_bags', 'user_details.user_id', '=', 'blood_bags.user_id')
+                    ->select('user_details.blood_type', 'blood_bags.serial_no', 'blood_bags.date_donated', 'bled_by')
+                    ->whereIn('user_details.blood_type', ['A+', 'A-', 'B+', 'B-', 'O+', 'O-', 'AB+', 'AB-'])
+                    ->where('blood_bags.isStored', '=', 1)
+                    ->where('blood_bags.isExpired', '=', '0')
+                    ->where('blood_bags.status', '=', '0')
+                    ->where('user_details.remarks', '=', '0')
+                    ->whereYear('date_donated', $currentYear)
+                    ->whereBetween('date_donated', [$startDate, $endDate])
+                    ->count();
+        
+                $monthCounts[$monthName] = $bloodBags;
+            }
+        }else{
+            for ($i = 1; $i <= $currentMonth; $i++) {
+                $monthName = date('F', mktime(0, 0, 0, $i, 1));
+                $startDate = date('Y-m-d', strtotime($currentYear.'-'.$i.'-01'));
+                $endDate = date('Y-m-t', strtotime($currentYear.'-'.$i.'-01'));
+                
+                $bloodBags = DB::table('user_details')
+                    ->leftJoin('blood_bags', 'user_details.user_id', '=', 'blood_bags.user_id')
+                    ->select('user_details.blood_type', 'blood_bags.serial_no', 'blood_bags.date_donated', 'bled_by')
+                    ->where('user_details.blood_type', $bloodType)
+                    ->where('blood_bags.isStored', '=', 1)
+                    ->where('blood_bags.isExpired', '=', '0')
+                    ->where('blood_bags.status', '=', '0')
+                    ->where('user_details.remarks', '=', '0')
+                    ->whereYear('date_donated', $currentYear)
+                    ->whereBetween('date_donated', [$startDate, $endDate])
+                    ->count();
+        
+                $monthCounts[$monthName] = $bloodBags;
+            }
+        }
        
       // Retrieve the latest updated_at value
       $latestUpdatedAt = DB::table('user_details')
@@ -198,9 +222,42 @@ class DashboardController extends Controller
       ]);
    }
 
-   
+    
+    public function countDonorPerBarangay(Request $request) {
+        $quarter = $request->input('quarter');
+    
+        $year = date('Y');
 
-    public function countDonorPerBarangay() {
+        $firstQuarterStart = $year . '-01-01';
+        $firstQuarterEnd = $year . '-03-31';
+    
+        $secondQuarterStart = $year . '-04-01';
+        $secondQuarterEnd = $year . '-06-30';
+    
+        $thirdQuarterStart = $year . '-07-01';
+        $thirdQuarterEnd = $year . '-09-30';
+    
+        $fourthQuarterStart = $year . '-10-01';
+        $fourthQuarterEnd = $year . '-12-31';
+    
+        if ($quarter === 'Q1') {
+            $startDate = $firstQuarterStart;
+            $endDate = $firstQuarterEnd;
+        } elseif ($quarter === 'Q2') {
+            $startDate = $secondQuarterStart;
+            $endDate = $secondQuarterEnd;
+        } elseif ($quarter === 'Q3') {
+            $startDate = $thirdQuarterStart;
+            $endDate = $thirdQuarterEnd;
+        } elseif ($quarter === 'Q4') {
+            $startDate = $fourthQuarterStart;
+            $endDate = $fourthQuarterEnd;
+        } elseif ($quarter === 'All') {
+            $startDate = '1970-01-01'; // Set the start date to the earliest possible date
+            $endDate = date('Y-m-d'); // Set the end date to the current date
+        
+        }
+    
         $donorsPerBarangay = DB::table('user_details')
             ->leftJoin('blood_bags', 'user_details.user_id', '=', 'blood_bags.user_id')
             ->select(
@@ -210,6 +267,7 @@ class DashboardController extends Controller
             )
             ->where('blood_bags.isCollected', '=', 1)
             ->where('user_details.municipality', '=', 'CITY OF VALENZUELA')
+            ->whereBetween('blood_bags.created_at', [$startDate, $endDate])
             ->groupBy('user_details.barangay')
             ->get();
     

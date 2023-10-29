@@ -32,7 +32,7 @@ class BloodBagController extends Controller
                 
                 $validatedData = $request->validate([
                     'user_id'       => 'required',
-                    'serial_no'     => 'required|numeric|unique:blood_bags',
+                    'serial_no'     => 'required|unique:blood_bags',
                     'date_donated'  => ['required', 'date', new ValidateDateDonated],
                     'venue'         => 'required|string',
                     'bled_by'       => 'required|string',
