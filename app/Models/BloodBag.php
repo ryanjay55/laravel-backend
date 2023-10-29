@@ -549,12 +549,18 @@ class BloodBag extends Model
     public function bloodCollectionPD($venue, $startDate, $endDate) {
         $result = DB::table('user_details as ud')
             ->leftJoin('blood_bags as bb', 'ud.user_id', '=', 'bb.user_id')
+            ->join('donor_types as dt', 'ud.donor_types_id', '=', 'dt.donor_types_id')
             ->select(
                 DB::raw("CASE WHEN ud.sex = 'Female' THEN 'Female' ELSE 'Male' END AS Gender"),
                 DB::raw("SUM(CASE WHEN REPLACE(REPLACE(ud.blood_type, '+', ''), '-', '') = 'O' THEN 1 ELSE 0 END) AS O"),
                 DB::raw("SUM(CASE WHEN REPLACE(REPLACE(ud.blood_type, '+', ''), '-', '') = 'A' THEN 1 ELSE 0 END) AS A"),
                 DB::raw("SUM(CASE WHEN REPLACE(REPLACE(ud.blood_type, '+', ''), '-', '') = 'B' THEN 1 ELSE 0 END) AS B"),
-                DB::raw("SUM(CASE WHEN REPLACE(REPLACE(ud.blood_type, '+', ''), '-', '') = 'AB' THEN 1 ELSE 0 END) AS AB")
+                DB::raw("SUM(CASE WHEN REPLACE(REPLACE(ud.blood_type, '+', ''), '-', '') = 'AB' THEN 1 ELSE 0 END) AS AB"),
+                DB::raw("MIN(TIMESTAMPDIFF(YEAR, ud.dob, CURDATE())) AS MinAge"),
+                DB::raw("MAX(TIMESTAMPDIFF(YEAR, ud.dob, CURDATE())) AS MaxAge"),
+                DB::raw("SUM(CASE WHEN dt.donor_type_desc = 'First Time' THEN 1 ELSE 0 END) AS 'first_time'"),
+                DB::raw("SUM(CASE WHEN dt.donor_type_desc = 'Regular' THEN 1 ELSE 0 END) AS 'regular'"),
+                DB::raw("SUM(CASE WHEN dt.donor_type_desc = 'Lapsed' THEN 1 ELSE 0 END) AS 'lapsed'")
             )
             ->where('venue', $venue)
             ->whereBetween('date_donated', [$startDate, $endDate])
@@ -563,6 +569,21 @@ class BloodBag extends Model
             ->get();
     
         return $result;
+    }
+
+    public function totalUnit($venue, $startDate, $endDate)
+    {
+        $sql = "SELECT COUNT(*) AS total FROM blood_bags
+                WHERE venue = :venue
+                AND date_donated BETWEEN :startDate AND :endDate";
+    
+        $result = DB::select($sql, [
+            'venue' => $venue,
+            'startDate' => $startDate,
+            'endDate' => $endDate,
+        ]);
+    
+        return $result[0]->total;
     }
     
     

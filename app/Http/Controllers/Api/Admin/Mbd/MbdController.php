@@ -26,6 +26,14 @@ class MbdController extends Controller
             $startDate = $validatedData['startDate'];
             $endDate = $validatedData['endDate'];
 
+            $expiredDate  = '';
+
+            if ($startDate !== $endDate) {
+                $expiredDate  = '';
+            }else{
+                $expiredDate = date('Y-m-d', strtotime($startDate . ' + 37 days'));
+            }
+
             $manPowerCount = app(BloodBag::class)->getManPower($venue, $startDate, $endDate);
             $manPowerList = app(BloodBag::class)->ListOfManPower($venue, $startDate, $endDate);
             $bloodCollection = app(BloodBag::class)->bloodCollection($venue, $startDate, $endDate);
@@ -42,6 +50,9 @@ class MbdController extends Controller
             $getTempCategoriesDeferralPD = app(BloodBag::class)->getTempCategoriesDeferralPD($venue, $startDate, $endDate);
             $countDeferralPD =app(BloodBag::class)->countDeferralPD($venue, $startDate, $endDate);
             $bloodCollectionPD =  app(BloodBag::class)->bloodCollectionPD($venue, $startDate, $endDate);
+
+            //all
+            $totalUnit = app(BloodBag::class)->totalUnit($venue, $startDate, $endDate);
 
             return response()->json([
                 'status'    => 'success',
@@ -60,6 +71,8 @@ class MbdController extends Controller
                 'getTempCategoriesDeferralPD' => $getTempCategoriesDeferralPD,
                 'countDeferralPD' => $countDeferralPD,
                 'bloodCollectionPD' => $bloodCollectionPD,
+                'totalUnit' => $totalUnit,
+                'expiredDate' => $expiredDate,
            
             ]);
         
