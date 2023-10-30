@@ -7,6 +7,10 @@ use App\Models\BledBy;
 use App\Models\BloodBag;
 use App\Models\AuditTrail;
 use App\Models\Galloner;
+use App\Models\ReactiveBloodBag;
+use App\Models\ReactiveRemarks;
+use App\Models\SpoiledBloodBag;
+use App\Models\SpoiledRemarks;
 use App\Models\User;
 use App\Models\UserDetail;
 use App\Models\Venue;
@@ -454,6 +458,7 @@ class BloodBagController extends Controller
                ->where('blood_bags.isStored', '=', 0)
                ->where('blood_bags.isExpired', '=', 0)
                ->where('blood_bags.separate', '=', 0)
+               ->where('blood_bags.unsafe', '=', 0)
                ->orderBy('blood_bags.date_donated', 'desc')
                ->paginate(8);
     
@@ -675,7 +680,7 @@ class BloodBagController extends Controller
     }
 
 
-    function removeBlood(Request $request){
+    public function removeBlood(Request $request){
 
         $user = getAuthenticatedUserId();
         $userId = $user->user_id;
@@ -798,7 +803,7 @@ class BloodBagController extends Controller
     }
 
 
-    function editBloodBag(Request $request){
+    public function editBloodBag(Request $request){
 
         $user = getAuthenticatedUserId();
         $userId = $user->user_id;
@@ -853,5 +858,81 @@ class BloodBagController extends Controller
         }
 
     }
+
+    public function getRemarks(){
+        $reactiveRemarks = app(ReactiveRemarks::class)->getReactiveRemarks();
+        $spoiledRemarks =  app(SpoiledRemarks::class)->getSpoiledRemarks();
+
+        return response()->json([
+            'status' => 'success',
+            'reactiveRemarks' => $reactiveRemarks,
+            'spoiledRemarks' => $spoiledRemarks
+        ]);
+    }
+
+    public function markUnsafe(Request $request){
+        $user = getAuthenticatedUserId();
+        $userId = $user->user_id;
+            try {
+                
+                $validatedData = $request->validate([
+                    'serial_no'     => 'required',
+                    'reason'  => 'required',
+                    'remarks'  => 'required',
+                ]);               
+
+                $reason = $validatedData['reason'];
+                $serialNumber = $validatedData['serial_no'];
+                $remarks = $validatedData['remarks'];
+
+                $bloodBag = BloodBag::where('serial_no', $serialNumber)->first();
+                $bloodBagId = $bloodBag->blood_bags_id;
+
+                $ip = file_get_contents('https://api.ipify.org');
+                $ch = curl_init('http://ipwho.is/'.$ip);
+                curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+                curl_setopt($ch, CURLOPT_HEADER, false);
+            
+                $ipwhois = json_decode(curl_exec($ch), true);
+            
+                curl_close($ch);
+                
+                //1 if reactive bloodbag
+                //2 if spoiled blood bag
+                if($reason == 1){
+                    $bloodBag->unsafe = 1;
+                    $bloodBag->separate = 1;
+                    $bloodBag->save();
+
+                    ReactiveBloodBag::create([
+                        'blood_bags_id' => $bloodBagId,
+                        'reactive_remarks_id' => $remarks
+                    ]);
+                }else{
+                    $bloodBag->unsafe = 2;
+                    $bloodBag->separate = 1;
+                    $bloodBag->save();
+
+                    SpoiledBloodBag::create([
+                        'blood_bags_id' => $bloodBagId,
+                        'reactive_remarks_id' => $remarks
+                    ]);
+                }
+
+                return response()->json([
+                    'status' => 'success',
+                ]);
+
+                
+            } catch (ValidationException $e) {
+                return response()->json([
+                    'status' => 'error',
+                    'message' => 'Validation failed',
+                    'errors' => $e->validator->errors(),
+                ], 400);
+            }
+            
+    }
+    
 }
 

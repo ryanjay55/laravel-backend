@@ -27,6 +27,7 @@ class BloodBag extends Model
         'dispensed_date',
         'remaining_days',
         'donation_type_id',
+        'unsafe',
     ];
 
     public function getAllSerialNo(){

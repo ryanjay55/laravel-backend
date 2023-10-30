@@ -88,6 +88,8 @@ Route::group(['middleware' => ['auth:sanctum','admin']], function () {
     Route::get('/export-pdf-collected-bloodbags', [BloodBagController::class, 'exportBloodBagAsPdf']);
     Route::put('/edit-bloodbag', [BloodBagController::class, 'editBloodBag']);
     Route::delete('/remove-bloodbag', [BloodBagController::class, 'removeBlood']);
+    Route::get('/get-unsafe-remarks', [BloodBagController::class, 'getRemarks']);
+    Route::post('/mark-unsafe', [BloodBagController::class, 'markUnsafe']);
 
     Route::get('/get-defferal-categories', [UserListController::class, 'getDeferralCategories']);
     Route::post('/move-to-defferal', [UserListController::class, 'moveToDeferral']);
