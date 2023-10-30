@@ -15,5 +15,6 @@ class ReactiveBloodBag extends Model
     protected $fillable = [
         'blood_bags_id',
         'remarks',
+        'reactive_remarks_id'
     ];
 }

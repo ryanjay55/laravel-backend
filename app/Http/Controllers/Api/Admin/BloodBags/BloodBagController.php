@@ -899,7 +899,7 @@ class BloodBagController extends Controller
                 
                 //1 if reactive bloodbag
                 //2 if spoiled blood bag
-                if($reason == 1){
+                if($reason == "Reactive"){
                     $bloodBag->unsafe = 1;
                     $bloodBag->separate = 1;
                     $bloodBag->save();
@@ -915,7 +915,7 @@ class BloodBagController extends Controller
 
                     SpoiledBloodBag::create([
                         'blood_bags_id' => $bloodBagId,
-                        'reactive_remarks_id' => $remarks
+                        'spoiled_remarks_id' => $remarks
                     ]);
                 }
 

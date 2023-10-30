@@ -214,6 +214,8 @@ class InventoryController extends Controller
                 ->where('blood_bags.isStored', 1)
                 ->where('blood_bags.isExpired', 0)
                 ->where('user_details.remarks', 0)
+                ->where('blood_bags.isDisposed', 0)
+                ->where('blood_bags.isUsed', 0)
                 ->count();
 
             return response()->json([
@@ -284,6 +286,7 @@ class InventoryController extends Controller
                 ->where('blood_bags.isExpired', 0)
                 ->where('user_details.remarks', 0)
                 ->where('blood_bags.isDisposed', 0)
+                ->where('blood_bags.isUsed', 0)
                 ->select('blood_bags.blood_bags_id', 'blood_bags.serial_no','blood_bags.priority' ,'blood_bags.remaining_days', 'user_details.first_name', 'user_details.last_name', 'user_details.blood_type', 'user_details.donor_no', 'blood_bags.date_donated', 'blood_bags.expiration_date');
     
             if ($bloodType == 'All') {
@@ -500,6 +503,8 @@ class InventoryController extends Controller
                 ->where('blood_bags.isExpired', 0)
                 ->where('blood_bags.isDisposed', 0)
                 ->where('user_details.remarks', 1)
+                ->where('blood_bags.unsafe', 2)
+                ->where('blood_bags.separate', 1)
                 ->select('blood_bags.blood_bags_id', 'blood_bags.serial_no','blood_bags.priority' ,'blood_bags.remaining_days', 'user_details.first_name', 'user_details.last_name', 'user_details.blood_type', 'user_details.donor_no', 'blood_bags.date_donated', 'blood_bags.expiration_date');
     
             if ($bloodType == 'All') {

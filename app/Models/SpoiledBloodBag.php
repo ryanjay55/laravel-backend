@@ -13,6 +13,6 @@ class SpoiledBloodBag extends Model
 
     protected $fillable = [
         'blood_bags_id',
-        'remarks',
+        'spoiled_remarks_id'
     ];
 }
