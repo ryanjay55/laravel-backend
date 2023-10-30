@@ -23,7 +23,7 @@ class DonorController extends Controller
             ->where('user_details.remarks', 0)
             ->where('user_details.status', 0)
             ->where('galloners.donate_qty', '>', 0) 
-            ->select('users.mobile', 'users.email', 'user_details.*', 'galloners.badge', 'galloners.donate_qty', 'donor_types.donor_type_desc')
+            ->select('users.mobile', 'users.email', 'user_details.*', 'galloners.badge', 'galloners.donate_qty', 'donor_types.donor_type_desc', 'blood_bags.date_donated') // Add 'blood_bags.date_donated' to the SELECT list
             ->distinct('user_details.user_id')
             ->orderBy('blood_bags.date_donated', 'desc')
             ->paginate(8);
@@ -64,7 +64,7 @@ class DonorController extends Controller
                 ->where('user_details.remarks', 0)
                 ->where('user_details.status', 0)
                 ->where('galloners.donate_qty', '>', 0)
-                ->select('users.mobile', 'users.email', 'user_details.*', 'galloners.badge', 'galloners.donate_qty', 'donor_types.donor_type_desc')
+                ->select('users.mobile', 'users.email', 'user_details.*', 'galloners.badge', 'galloners.donate_qty', 'donor_types.donor_type_desc', 'blood_bags.date_donated')
                 ->distinct('user_details.user_id');
     
             if ($bloodType !== 'All') {

@@ -11,6 +11,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
+use DateTime;
 
 class DashboardController extends Controller
 {
@@ -253,8 +254,8 @@ class DashboardController extends Controller
             $startDate = $fourthQuarterStart;
             $endDate = $fourthQuarterEnd;
         } elseif ($quarter === 'All') {
-            $startDate = '1970-01-01'; // Set the start date to the earliest possible date
-            $endDate = date('Y-m-d'); // Set the end date to the current date
+            $startDate = '1970-01-01'; 
+            $endDate = date('2099-12-31'); 
         
         }
     

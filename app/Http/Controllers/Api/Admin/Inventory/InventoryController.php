@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api\Admin\Inventory;
 use App\Http\Controllers\Controller;
 use App\Models\AuditTrail;
 use App\Models\Deferral;
+use App\Models\Hospital;
 use App\Models\PatientReceiver;
 use App\Models\UserDetail;
 use Illuminate\Http\Request;
@@ -783,6 +784,15 @@ class InventoryController extends Controller
         ]);
    }
 
+    public function getHospitals(){
+        $hospitals = app(Hospital::class)->getAllHospital();
+
+        return response()->json([
+            'status'    => 'success',
+            'hospitals'   => $hospitals,
+        ]);
+    }
   
+    
 }
 

@@ -100,6 +100,9 @@ Route::group(['middleware' => ['auth:sanctum','admin']], function () {
     Route::get('/get-audit-trail', [AuditTrailController::class, 'getAuditTrail']);
     Route::post('/add-to-inventory', [InventoryController::class, 'storedInInventory']);
     Route::post('/bulk-move-to-inventory', [InventoryController::class, 'multipleMoveToInventory']);
+    Route::get('/get-hospitals', [InventoryController::class, 'getHospitals']);
+
+
     Route::get('/get-stocks', [InventoryController::class, 'getStocks']);
     Route::post('/filter-stocks', [InventoryController::class, 'filterBloodTypeStocks']);
     Route::post('/search-stocks', [InventoryController::class, 'searchStocks']);
