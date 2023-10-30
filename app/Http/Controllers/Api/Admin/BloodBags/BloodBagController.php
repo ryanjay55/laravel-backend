@@ -475,7 +475,7 @@ class BloodBagController extends Controller
            
                $createdAt = $bloodBag->created_at;
                $timeDifference = $createdAt->diffInDays($currentTime); // Calculate the difference in days
-               $bloodBag->countdown = max(0, 3 - $timeDifference); // Calculate the countdown (minimum 0)
+               $bloodBag->countdown = max(3, 0 - $timeDifference); // Calculate the countdown (minimum 0)
            
                // Check if the countdown is 0 and add a message
                if ($bloodBag->countdown === 0) {
@@ -483,8 +483,7 @@ class BloodBagController extends Controller
                    $bloodBag->countdown_end_date = "This blood bag cannot be removed at this time";
                } else {
                    $bloodBag->countdown_message = 'Blood bag can be removed within ' . $bloodBag->countdown . ' day/s';
-                   $bloodBag->countdown_end_date = $expirationDate->format('Y-m-d');
-               }
+                   $bloodBag->countdown_end_date = Carbon::parse($bloodBag->date_donated)->addDays($bloodBag->countdown)->format('Y-m-d');               }
            }
    
            // Return the paginated results with decrypted serial_no
@@ -547,7 +546,7 @@ class BloodBagController extends Controller
    
                $createdAt = $bloodBag->created_at;
                $timeDifference = $createdAt->diffInDays(now());
-               $bloodBag->countdown = max(0, 3 - $timeDifference);
+               $bloodBag->countdown = max(3, 0 - $timeDifference);
    
                if ($bloodBag->countdown === 0) {
                    $bloodBag->countdown_message = 'The removal period has ended';
