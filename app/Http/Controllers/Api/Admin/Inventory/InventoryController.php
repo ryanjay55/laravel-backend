@@ -492,39 +492,46 @@ class InventoryController extends Controller
             
     }
 
+    //TEMPDEF = REACTIVE
     public function filterBloodTypeTempDeferral(Request $request)
     {
         try {
             $bloodType = $request->input('blood_type');
             $startDate = $request->input('startDate');
+            $remarks = $request->input('remarks');
             $endDate = $request->input('endDate');
     
-            $inventory = BloodBag::join('user_details', 'blood_bags.user_id', '=', 'user_details.user_id')
+            $inventory = BloodBag::join('reactive_blood_bags', 'reactive_blood_bags.blood_bags_id', '=', 'blood_bags.blood_bags_id')
+                ->join('user_details', 'blood_bags.user_id', '=', 'user_details.user_id')
+                ->join('reactive_remarks', 'reactive_remarks.reactive_remarks_id', '=', 'reactive_blood_bags.reactive_remarks_id')
                 ->where('blood_bags.isExpired', 0)
                 ->where('blood_bags.isDisposed', 0)
-                ->where('user_details.remarks', 1)
-                ->where('blood_bags.unsafe', 2)
-                ->where('blood_bags.separate', 1)
-                ->select('blood_bags.blood_bags_id', 'blood_bags.serial_no','blood_bags.priority' ,'blood_bags.remaining_days', 'user_details.first_name', 'user_details.last_name', 'user_details.blood_type', 'user_details.donor_no', 'blood_bags.date_donated', 'blood_bags.expiration_date');
-    
+                ->where('blood_bags.separate', 1);
+
             if ($bloodType == 'All') {
                 if ($startDate && $endDate) {
-                    $inventory->whereBetween('blood_bags.expiration_date', [$startDate, $endDate]);
+                    $inventory->whereBetween('reactive_blood_bags.created_at', [$startDate, $endDate]);
+                }
+                if ($remarks && $remarks != 'All') {
+                    $inventory->where('reactive_remarks.reactive_remarks_desc', $remarks);
                 }
                 $totalCount = $inventory->count();
-                $inventory = $inventory->orderBy('blood_bags.expiration_date')->paginate(8);
+                $inventory = $inventory->orderBy('reactive_blood_bags.created_at')->paginate(8);
             } else {
                 $inventory->where('user_details.blood_type', $bloodType);
                 if ($startDate && $endDate) {
-                    $inventory->whereBetween('blood_bags.expiration_date', [$startDate, $endDate]);
+                    $inventory->whereBetween('reactive_blood_bags.created_at', [$startDate, $endDate]);
+                }
+                if ($remarks && $remarks != 'All') {
+                    $inventory->where('reactive_remarks.reactive_remarks_desc', $remarks);
                 }
                 $totalCount = $inventory->count();
-                $inventory = $inventory->orderBy('blood_bags.expiration_date')->paginate(8);
+                $inventory = $inventory->orderBy('reactive_blood_bags.created_at')->paginate(8);
             }
     
             return response()->json([
                 'status' => 'success',
-                'data' => $inventory,
+                'data' => ($inventory),
                 'total_count' => $totalCount
             ]);
 
@@ -563,28 +570,36 @@ class InventoryController extends Controller
     {
         try {
             $bloodType = $request->input('blood_type');
+            $remarks = $request->input('remarks');
             $startDate = $request->input('startDate');
             $endDate = $request->input('endDate');
     
-            $inventory = BloodBag::join('user_details', 'blood_bags.user_id', '=', 'user_details.user_id')
+            $inventory = BloodBag::join('spoiled_blood_bags', 'spoiled_blood_bags.blood_bags_id', '=', 'blood_bags.blood_bags_id')
+                ->join('user_details', 'blood_bags.user_id', '=', 'user_details.user_id')
+                ->join('spoiled_remarks', 'spoiled_remarks.spoiled_remarks_id', '=', 'spoiled_blood_bags.spoiled_remarks_id')
                 ->where('blood_bags.isExpired', 0)
                 ->where('blood_bags.isDisposed', 0)
-                ->where('user_details.remarks', 2)
-                ->select('blood_bags.blood_bags_id', 'blood_bags.serial_no','blood_bags.priority' ,'blood_bags.remaining_days', 'user_details.first_name', 'user_details.last_name', 'user_details.blood_type', 'user_details.donor_no', 'blood_bags.date_donated', 'blood_bags.expiration_date');
+                ->where('blood_bags.separate', 1);
     
             if ($bloodType == 'All') {
                 if ($startDate && $endDate) {
-                    $inventory->whereBetween('blood_bags.expiration_date', [$startDate, $endDate]);
+                    $inventory->whereBetween('spoiled_blood_bags.created_at', [$startDate, $endDate]);
+                }
+                if ($remarks && $remarks != 'All') {
+                    $inventory->where('spoiled_remarks.spoiled_remarks_desc', $remarks);
                 }
                 $totalCount = $inventory->count();
-                $inventory = $inventory->orderBy('blood_bags.expiration_date')->paginate(8);
+                $inventory = $inventory->orderBy('spoiled_blood_bags.created_at')->paginate(8);
             } else {
                 $inventory->where('user_details.blood_type', $bloodType);
                 if ($startDate && $endDate) {
-                    $inventory->whereBetween('blood_bags.expiration_date', [$startDate, $endDate]);
+                    $inventory->whereBetween('spoiled_blood_bags.created_at', [$startDate, $endDate]);
+                }
+                if ($remarks && $remarks != 'All') {
+                    $inventory->where('spoiled_remarks.spoiled_remarks_desc', $remarks);
                 }
                 $totalCount = $inventory->count();
-                $inventory = $inventory->orderBy('blood_bags.expiration_date')->paginate(8);
+                $inventory = $inventory->orderBy('spoiled_blood_bags.created_at')->paginate(8);
             }
     
             return response()->json([
@@ -592,7 +607,7 @@ class InventoryController extends Controller
                 'data' => $inventory,
                 'total_count' => $totalCount
             ]);
-
+    
         } catch (ValidationException $e) {
             return response()->json([
                 'status' => 'error',
