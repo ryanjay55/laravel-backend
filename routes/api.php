@@ -139,6 +139,7 @@ Route::group(['middleware' => ['auth:sanctum','admin']], function () {
 
     Route::post('/dispensed-list', [DispensedBloodController::class, 'dispensedBloodList']);
     Route::get('/get-all-serial-no', [DispensedBloodController::class, 'getAllSerialNumber']);
+    Route::post('/filter-dispensed-list', [DispensedBloodController::class, 'filterDispensedList']);
 
 });
 
