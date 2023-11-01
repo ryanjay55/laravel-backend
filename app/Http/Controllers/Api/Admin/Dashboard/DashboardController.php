@@ -211,8 +211,6 @@ class DashboardController extends Controller
           ->where('blood_bags.isExpired', '=', '0')
           ->where('blood_bags.status', '=', '0')
           ->where('user_details.remarks', '=', '0')
-          ->whereYear('date_donated', $currentYear)
-          ->whereBetween('date_donated', [$startDate, $endDate])
           ->orderBy('blood_bags.updated_at', 'desc')
           ->value('latest_updated_at');
       
