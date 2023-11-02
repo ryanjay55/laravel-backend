@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api\Admin\DonorList;
 use App\Http\Controllers\Controller;
 use App\Models\AuditTrail;
 use App\Models\BloodBag;
+use App\Models\PatientReceiver;
 use App\Models\UserDetail;
 use Dompdf\Dompdf;
 use Faker\Core\Blood;
@@ -15,41 +16,47 @@ use Illuminate\Validation\ValidationException;
 class DonorController extends Controller
 {
     
-    public function donorList() {
-        $donorList = UserDetail::join('users', 'user_details.user_id', '=', 'users.user_id')
-            ->join('galloners', 'user_details.user_id', '=', 'galloners.user_id')
-            ->join('blood_bags', 'user_details.user_id', '=', 'blood_bags.user_id')
-            ->join('donor_types', 'user_details.donor_types_id', '=', 'donor_types.donor_types_id') // Join the donor_types table
-            ->where('user_details.remarks', 0)
-            ->where('user_details.status', 0)
-            ->where('galloners.donate_qty', '>', 0) 
-            ->select('users.mobile', 'users.email', 'user_details.*', 'galloners.badge', 'galloners.donate_qty', 'donor_types.donor_type_desc', 'blood_bags.date_donated') // Add 'blood_bags.date_donated' to the SELECT list
-            ->distinct('user_details.user_id')
-            ->orderBy('blood_bags.date_donated', 'desc')
-            ->paginate(8);
-        
-        // Transform the results to include a list of blood bags for each user
-        $donorList->transform(function ($donor) {
-            $bloodBags = BloodBag::where('user_id', $donor->user_id)
-                ->select('serial_no', 'date_donated')
-                ->orderBy('date_donated', 'asc')
-                ->get();
-            
-            $donor->blood_bags = $bloodBags;
-            
-            // Retrieve the last date_donated
-            $lastDonated = $bloodBags->last()->date_donated ?? null;
-            
-            $donor->last_donated = $lastDonated;
-            
-            return $donor;
-        });
-    
-        return response()->json([
-            'status' => 'success',
-            'data' => $donorList
-        ]);
-    }
+   public function donorList() {
+       $donorList = UserDetail::join('users', 'user_details.user_id', '=', 'users.user_id')
+           ->join('galloners', 'user_details.user_id', '=', 'galloners.user_id')
+           ->join('blood_bags', 'user_details.user_id', '=', 'blood_bags.user_id')
+           ->join('donor_types', 'user_details.donor_types_id', '=', 'donor_types.donor_types_id') // Join the donor_types table
+           ->where('user_details.remarks', 0)
+           ->where('user_details.status', 0)
+           ->where('galloners.donate_qty', '>', 0) 
+           ->select('users.mobile', 'users.email', 'user_details.*', 'galloners.badge', 'galloners.donate_qty', 'donor_types.donor_type_desc', 'blood_bags.date_donated') // Add 'blood_bags.date_donated' to the SELECT list
+           ->distinct('user_details.user_id')
+           ->orderBy('blood_bags.date_donated', 'desc')
+           ->paginate(8);
+       
+       // Transform the results to include a list of blood bags for each user
+       $donorList->transform(function ($donor) {
+           $bloodBags = BloodBag::where('user_id', $donor->user_id)
+               ->select('serial_no', 'date_donated')
+               ->orderBy('date_donated', 'asc')
+               ->get();
+           
+           $donor->blood_bags_received = PatientReceiver::join('blood_bags', 'patient_receivers.patient_receivers_id', '=', 'blood_bags.patient_receivers_id')
+                ->select('blood_bags.serial_no', 'patient_receivers.created_at')
+                ->where('patient_receivers.user_id', '=', $donor->user_id)
+                ->orderBy('patient_receivers.created_at', 'asc')
+               ->get();
+           
+           $donor->blood_bags = $bloodBags;
+           
+           // Retrieve the last date_donated
+           $lastDonated = $bloodBags->last()->date_donated ?? null;
+           
+           $donor->last_donated = $lastDonated;
+           
+           return $donor;
+       });
+   
+       return response()->json([
+           'status' => 'success',
+           'data' => $donorList
+       ]);
+   }
 
     public function filterDonorList(Request $request)
     {

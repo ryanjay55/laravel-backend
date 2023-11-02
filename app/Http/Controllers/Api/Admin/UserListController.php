@@ -269,45 +269,71 @@ class UserListController extends Controller
 
 
 
-    public function getTemporaryDeferral(){
-        $now = Carbon::now();
+    public function getTemporaryDeferral(Request $request){
+        try {
+            $category = $request->input('category');
+            $remarks = $request->input('remarks');
+    
+            $now = Carbon::now();
 
-        $deferralsToUpdate = Deferral::where('end_date', '<=', $now)
-        ->where('status', '!=', 1)
-        ->get();
+            $deferralsToUpdate = Deferral::where('end_date', '<=', $now)
+            ->where('status', '!=', 1)
+            ->get();
 
-        foreach ($deferralsToUpdate as $deferral) {
-            $deferral->status = 1;
-            $deferral->save();
+            foreach ($deferralsToUpdate as $deferral) {
+                $deferral->status = 1;
+                $deferral->save();
 
-            $user_detail = UserDetail::where('user_id', $deferral->user_id)->first();
-            if ($user_detail) {
-                $user_detail->remarks = 0;
-                $user_detail->save();
+                $user_detail = UserDetail::where('user_id', $deferral->user_id)->first();
+                if ($user_detail) {
+                    $user_detail->remarks = 0;
+                    $user_detail->save();
+                }
             }
-        }
 
-        $userDetails = UserDetail::join('users', 'user_details.user_id', '=', 'users.user_id')
-            ->join('deferrals', 'user_details.user_id', '=', 'deferrals.user_id')
-            ->join('categories', 'categories.categories_id', '=', 'deferrals.categories_id')
-            ->where('deferrals.status', 0)
-            ->where('user_details.remarks', 1)
-            ->where('user_details.status', 0)
-            ->select('users.mobile', 'users.email', 'user_details.*', 'deferrals.*','categories.*')
-            ->paginate(8);
+            $userDetails = UserDetail::join('users', 'user_details.user_id', '=', 'users.user_id')
+                ->join('deferrals', 'user_details.user_id', '=', 'deferrals.user_id')
+                ->join('categories', 'categories.categories_id', '=', 'deferrals.categories_id')
+                ->where('deferrals.status', 0)
+                ->where('user_details.remarks', 1)
+                ->where('user_details.status', 0)
+                ->select('users.mobile', 'users.email', 'user_details.*', 'deferrals.*','categories.*');
+            
+
+                if ($userDetails->count() === 0) {
+                    return response()->json([
+                        'status' => 'success',
+                        'message' => 'No donor has been temporarily deferred.'
+                    ], 200);
+                } else {
+
+                if ($category == 'All') {
+                    $totalCount = $userDetails->count();
+                    $userDetails = $userDetails->orderBy('deferrals.date_deferred')->paginate(8);
+            } else {
+                $userDetails->where('categories.category_desc', $category);
+                if ($remarks) {
+                    $userDetails->where('categories.remarks', $remarks);
+                }
+                $totalCount = $userDetails->count();
+                $userDetails = $userDetails->orderBy('deferrals.date_deferred')->paginate(8);
+            }
+                
+                return response()->json([
+                    'status' => 'success',
+                    'data' => $userDetails,
+                    'total_count' => $totalCount
+                ], 200);
+            }
+    
+        } catch (ValidationException $e) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Validation failed',
+                'errors' => $e->validator->errors(),
+            ], 400);
+        }
         
-
-        if ($userDetails->isEmpty()) {
-            return response()->json([
-                'status' => 'success',
-                'message' => 'No donor has been temporary deferred.'
-            ], 200);
-        } else {
-            return response()->json([
-                'status' => 'success',
-                'data' => $userDetails
-            ], 200);
-        }
     }
 
     public function getPermanentDeferral(){
