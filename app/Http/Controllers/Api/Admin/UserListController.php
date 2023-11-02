@@ -307,17 +307,25 @@ class UserListController extends Controller
                     ], 200);
                 } else {
 
-                if ($category == 'All') {
-                    $totalCount = $userDetails->count();
-                    $userDetails = $userDetails->orderBy('deferrals.date_deferred')->paginate(8);
-            } else {
-                $userDetails->where('categories.category_desc', $category);
-                if ($remarks) {
-                    $userDetails->where('categories.remarks', $remarks);
-                }
-                $totalCount = $userDetails->count();
-                $userDetails = $userDetails->orderBy('deferrals.date_deferred')->paginate(8);
-            }
+               if ($category == 'All' && $remarks == 'All') {
+                   $totalCount = $userDetails->count();
+                   $userDetails = $userDetails->orderBy('deferrals.date_deferred')->paginate(8);
+               } elseif ($category == 'All') {
+                   if ($remarks) {
+                       $userDetails->where('categories.remarks', $remarks);
+                   }
+                   $totalCount = $userDetails->count();
+                   $userDetails = $userDetails->orderBy('deferrals.date_deferred')->paginate(8);
+               } elseif ($remarks == 'All') {
+                   $userDetails->where('categories.category_desc', $category);
+                   $totalCount = $userDetails->count();
+                   $userDetails = $userDetails->orderBy('deferrals.date_deferred')->paginate(8);
+               } else {
+                   $userDetails->where('categories.category_desc', $category);
+                   $userDetails->where('categories.remarks', $remarks);
+                   $totalCount = $userDetails->count();
+                   $userDetails = $userDetails->orderBy('deferrals.date_deferred')->paginate(8);
+               }
                 
                 return response()->json([
                     'status' => 'success',
@@ -336,27 +344,41 @@ class UserListController extends Controller
         
     }
 
-    public function getPermanentDeferral(){
-     
-        $userDetails = UserDetail::join('users', 'user_details.user_id', '=', 'users.user_id')
-            ->join('deferrals', 'user_details.user_id', '=', 'deferrals.user_id')
-            ->join('categories', 'categories.categories_id', '=', 'deferrals.categories_id')
-            ->where('user_details.remarks', 2)
-            ->where('user_details.status', 0)
-            ->select('users.mobile', 'users.email', 'user_details.*', 'deferrals.*','categories.*')
-            ->paginate(8);
-        
-
-        if ($userDetails->isEmpty()) {
+    public function getPermanentDeferral(Request $request)
+    {
+        try {
+            $category = $request->input('category');
+    
+            $userDetails = UserDetail::join('users', 'user_details.user_id', '=', 'users.user_id')
+                ->join('deferrals', 'user_details.user_id', '=', 'deferrals.user_id')
+                ->join('categories', 'categories.categories_id', '=', 'deferrals.categories_id')
+                ->where('user_details.remarks', 2)
+                ->where('user_details.status', 0)
+                ->select('users.mobile', 'users.email', 'user_details.*', 'deferrals.*', 'categories.*');
+    
+            if ($category != 'All') {
+                $userDetails->where('categories.category_desc', $category);
+            }
+    
+            $userDetails = $userDetails->paginate(8);
+    
+            // if ($userDetails->isEmpty()) {
+            //     return response()->json([
+            //         'status' => 'success',
+            //         'message' => 'No donor has been permanent deferred.'
+            //     ], 200);
+            // } else {
+                return response()->json([
+                    'status' => 'success',
+                    'data' => $userDetails
+                ], 200);
+            // }
+        } catch (ValidationException $e) {
             return response()->json([
-                'status' => 'success',
-                'message' => 'No donor has been permanent deferred.'
-            ], 200);
-        } else {
-            return response()->json([
-                'status' => 'success',
-                'data' => $userDetails
-            ], 200);
+                'status' => 'error',
+                'message' => 'Validation failed',
+                'errors' => $e->validator->errors(),
+            ], 400);
         }
     }
 
