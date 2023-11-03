@@ -25,13 +25,7 @@ class AuditTrailController extends Controller
               return $query->whereBetween(DB::raw('DATE(audit_trails.created_at)'), [$startDate, $endDate]);
           })
           ->paginate(8);
-  
-      if ($logs->isEmpty()) {
-          return response()->json([
-              'status' => 'success',
-              'data' => [],
-          ], 200);
-      }
+
   
       return response()->json([
           'status' => 'success',
