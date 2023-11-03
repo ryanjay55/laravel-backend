@@ -26,6 +26,7 @@ class DashboardController extends Controller
             ->where('blood_bags.isStored', '=', 1)
             ->where('blood_bags.isExpired', '=', '0')
             ->where('blood_bags.status', '=', '0')
+            ->where('blood_bags.isUsed', '=', '0')
             ->get();
         
         $bloodTypes = ['A+', 'B+', 'O+', 'AB+', 'A-', 'B-', 'O-', 'AB-'];
@@ -205,14 +206,13 @@ class DashboardController extends Controller
       // Retrieve the latest updated_at value
       $latestUpdatedAt = DB::table('user_details')
           ->leftJoin('blood_bags', 'user_details.user_id', '=', 'blood_bags.user_id')
-          ->select(DB::raw("IFNULL(DATE_FORMAT(blood_bags.created_at, '%Y-%m-%d %h:%i:%s %p'), '') AS latest_updated_at"))
           ->whereIn('user_details.blood_type', ['A+', 'A-', 'B+', 'B-', 'O+', 'O-', 'AB+', 'AB-'])
           ->where('blood_bags.isStored', '=', 1)
           ->where('blood_bags.isExpired', '=', '0')
           ->where('blood_bags.status', '=', '0')
           ->where('user_details.remarks', '=', '0')
           ->orderBy('blood_bags.updated_at', 'desc')
-          ->value('latest_updated_at');
+          ->value('blood_bags.updated_at');
       
       return response()->json([
           'status' => 'success',
