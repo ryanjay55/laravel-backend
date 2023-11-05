@@ -98,8 +98,9 @@ class UserListController extends Controller
             $searchInput = str_replace(' ', '', $request->input('searchInput')); 
             
             $userDetails = UserDetail::join('users', 'user_details.user_id', '=', 'users.user_id')
-                ->where('user_details.remarks', 0)
+                ->join('galloners', 'user_details.user_id', '=', 'galloners.user_id')
                 ->where('user_details.status', 0)
+                ->where('users.isAdmin', 0)
                 ->where(function ($query) use ($searchInput) {
                     $query->where('users.mobile', 'LIKE', '%' . $searchInput . '%')
                         ->orWhere('users.email', 'LIKE', '%' . $searchInput . '%')

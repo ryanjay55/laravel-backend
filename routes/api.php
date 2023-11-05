@@ -48,7 +48,8 @@ Route::group([
     'prefix' => 'auth:sanctum'
 
 ], function ($router) { 
-    Route::post('/login', [AuthController::class, 'login']);    
+    // Route::match('/login', [AuthController::class, 'login']);    
+    Route::match(['get', 'post'], '/login', [AuthController::class,'login'])->name('login');
 
 });
 
@@ -118,7 +119,7 @@ Route::group(['middleware' => ['auth:sanctum','admin']], function () {
     Route::post('/dispose-blood', [InventoryController::class, 'disposeBlood']);
     Route::get('/export-pdf-user-details', [UserListController::class, 'exportUserDetailsAsPdf']);
     Route::get('/get-donor-list', [DonorController::class, 'donorList']);
-    Route::post('/filter-donor-list', [DonorController::class, 'filterDonorList']);
+    // Route::post('/filter-donor-list', [DonorController::class, 'filterDonorList']);
     Route::post('/search-donor', [DonorController::class, 'searchDonor']);
     Route::get('/export-pdf-donor-list', [DonorController::class, 'exportDonorListAsPdf']);
     Route::post('/create-security-pin', [SettingsController::class, 'createSecurityPin']);
