@@ -27,6 +27,7 @@ class UserListController extends Controller
             ->where('users.isAdmin', 0)
             ->select('users.mobile', 'users.email', 'user_details.*', 'galloners.badge', 'galloners.donate_qty')
             ->orderBy('user_details.user_id', 'desc')
+            ->distinct('user_details.user_id')
             ->paginate(8);
 
         if ($userDetails->isEmpty()) { 
@@ -101,6 +102,8 @@ class UserListController extends Controller
                 ->join('galloners', 'user_details.user_id', '=', 'galloners.user_id')
                 ->where('user_details.status', 0)
                 ->where('users.isAdmin', 0)
+                ->orderBy('user_details.user_id', 'desc')
+                ->distinct('user_details.user_id')
                 ->where(function ($query) use ($searchInput) {
                     $query->where('users.mobile', 'LIKE', '%' . $searchInput . '%')
                         ->orWhere('users.email', 'LIKE', '%' . $searchInput . '%')
