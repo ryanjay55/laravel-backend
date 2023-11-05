@@ -515,11 +515,13 @@ class BloodBagController extends Controller
            $venue = $request->input('venue');
    
            $bloodBags = UserDetail::join('blood_bags', 'user_details.user_id', '=', 'blood_bags.user_id')
-               ->select('user_details.donor_no', 'user_details.first_name', 'user_details.last_name', 'user_details.blood_type', 'blood_bags.isExpired','blood_bags.blood_bags_id','blood_bags.serial_no', 'blood_bags.date_donated', 'blood_bags.expiration_date', 'blood_bags.created_at', 'bled_by', 'venue')
-               ->where('user_details.remarks', '=', 0)
-               ->where('blood_bags.status', '=', 0)
-               ->where('blood_bags.isStored', '=', 0)
-               ->where('blood_bags.isExpired', '=', 0);
+            ->select('user_details.donor_no', 'user_details.first_name', 'user_details.last_name', 'user_details.blood_type', 'blood_bags.isExpired','blood_bags.blood_bags_id','blood_bags.serial_no', 'blood_bags.date_donated', 'blood_bags.expiration_date', 'blood_bags.created_at', 'bled_by', 'venue')
+            ->where('user_details.remarks', '=', 0)
+            ->where('blood_bags.status', '=', 0)
+            ->where('blood_bags.isStored', '=', 0)
+            ->where('blood_bags.isExpired', '=', 0)
+            ->where('blood_bags.separate', '=', 0)
+            ->where('blood_bags.unsafe', '=', 0);
    
            if ($bloodType != 'All') {
                $bloodBags->where('user_details.blood_type', $bloodType);
@@ -591,6 +593,8 @@ class BloodBagController extends Controller
                 ->where('blood_bags.status', '=', 0)
                 ->where('blood_bags.isStored', '=', 0)
                 ->where('blood_bags.isExpired', '=', 0)
+                ->where('blood_bags.separate', '=', 0)
+                ->where('blood_bags.unsafe', '=', 0)
                 ->orderBy('blood_bags.date_donated', 'asc')
                 ->where(function ($query) use ($searchInput) {
                     $query->where('user_details.donor_no', 'LIKE', '%' . $searchInput . '%')

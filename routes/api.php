@@ -1,6 +1,8 @@
 <?php
 
 use App\Http\Controllers\Api\Admin\DispensedBlood\DispensedBloodController;
+use App\Http\Controllers\Api\admin\Network\NetworkAdminController;
+use App\Http\Controllers\Api\Donor\Network\NetworkController;
 use Illuminate\Support\Facades\Route;
 
 use App\Http\Controllers\Api\AddressController;
@@ -15,7 +17,6 @@ use App\Http\Controllers\Api\Admin\UserListController;
 use App\Http\Controllers\Api\Donor\DonationHistory\DonationHistoryController;
 use App\Http\Controllers\Api\Donor\BloodJourney\BloodJourneyController;
 use App\Http\Controllers\Api\Donor\Dashboard\DashboardController;
-use App\Http\Controllers\Api\Donor\DonorPost\DonorPostController;
 use App\Http\Controllers\Api\Admin\Inventory\InventoryController;
 use App\Http\Controllers\Api\Admin\Mbd\MbdController;
 use App\Http\Controllers\Api\Donor\Profile\ProfileController;
@@ -142,6 +143,8 @@ Route::group(['middleware' => ['auth:sanctum','admin']], function () {
     Route::get('/get-all-serial-no', [DispensedBloodController::class, 'getAllSerialNumber']);
     Route::post('/filter-dispensed-list', [DispensedBloodController::class, 'filterDispensedList']);
 
+    Route::post('/mark-as-accomodated', [NetworkAdminController::class, 'markAsAccomodated']);
+
 });
 
 
@@ -159,10 +162,13 @@ Route::group(['middleware' => ['auth:sanctum']], function () {
     Route::get('/get-history', [DonationHistoryController::class, 'donationHistory']);
     Route::get('/get-day-since-last-donation', [DonationHistoryController::class, 'computeDaySinceLastDonation']);
     Route::get('/get-blood-journey', [BloodJourneyController::class, 'bloodJourney']);
-    Route::post('/create-post', [DonorPostController::class, 'createPost']);
-    Route::get('/get-donor-post', [DonorPostController::class, 'getDonorPost']);
-    Route::put('/edit-post', [DonorPostController::class, 'editPost']);
-    Route::delete('/delete-post', [DonorPostController::class, 'deletePost']);
+    // Route::post('/create-post', [DonorPostController::class, 'createPost']);
+    // Route::get('/get-donor-post', [DonorPostController::class, 'getDonorPost']);
+    // Route::put('/edit-post', [DonorPostController::class, 'editPost']);
+    // Route::delete('/delete-post', [DonorPostController::class, 'deletePost']);
+    Route::post('/request-blood', [NetworkController::class, 'createBloodRequest']);
+    Route::get('/get-requested-blood', [NetworkController::class, 'getBloodRequest']);
+    Route::get('/get-blood-components', [NetworkController::class, 'getBloodComponent']);
     Route::get('/get-user-details', [UserListController::class, 'getUserDetails']);
     Route::post('/search-user', [UserListController::class, 'searchUsers']);
     Route::put('/edit-profile', [ProfileController::class, 'updateProfile']);
