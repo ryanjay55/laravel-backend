@@ -10,7 +10,6 @@ use App\Http\Controllers\Api\Admin\AuditTrailController;
 use App\Http\Controllers\Api\Admin\BloodBags\BloodBagController;
 use App\Http\Controllers\Api\Admin\Dashboard\DashboardController as DashboardDashboardController;
 use App\Http\Controllers\Api\Admin\DonorList\DonorController;
-use App\Http\Controllers\Api\Admin\PostApproval\PostApprovalController;
 use App\Http\Controllers\Api\RegistrationController;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\Admin\UserListController;
@@ -99,13 +98,13 @@ Route::group(['middleware' => ['auth:sanctum','admin']], function () {
     Route::get('/get-permanent-defferal', [UserListController::class, 'getPermanentDeferral']);
 
     Route::put('/edit-user-details', [UserListController::class, 'editUserDetails']);
-    Route::post('/approve-post', [PostApprovalController::class, 'approvePost']);
-    Route::post('/cancel-approve-post', [PostApprovalController::class, 'cancelApprovedPost']);
+ 
     Route::get('/get-audit-trail', [AuditTrailController::class, 'getAuditTrail']);
     Route::post('/add-to-inventory', [InventoryController::class, 'storedInInventory']);
     Route::post('/bulk-move-to-inventory', [InventoryController::class, 'multipleMoveToInventory']);
     Route::get('/get-hospitals', [InventoryController::class, 'getHospitals']);
 
+    Route::get('/get-blood-request', [NetworkAdminController::class, 'getAllBloodRequest']);
 
     Route::get('/get-stocks', [InventoryController::class, 'getStocks']);
     Route::post('/filter-stocks', [InventoryController::class, 'filterBloodTypeStocks']);
@@ -169,6 +168,8 @@ Route::group(['middleware' => ['auth:sanctum']], function () {
     Route::post('/request-blood', [NetworkController::class, 'createBloodRequest']);
     Route::get('/get-requested-blood', [NetworkController::class, 'getBloodRequest']);
     Route::get('/get-blood-components', [NetworkController::class, 'getBloodComponent']);
+    Route::get('/get-latest-blood-request', [NetworkController::class, 'getLastRequest']);
+
     Route::get('/get-user-details', [UserListController::class, 'getUserDetails']);
     Route::post('/search-user', [UserListController::class, 'searchUsers']);
     Route::put('/edit-profile', [ProfileController::class, 'updateProfile']);

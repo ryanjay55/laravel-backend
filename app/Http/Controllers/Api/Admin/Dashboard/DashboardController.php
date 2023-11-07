@@ -211,8 +211,8 @@ class DashboardController extends Controller
           ->where('blood_bags.isExpired', '=', '0')
           ->where('blood_bags.status', '=', '0')
           ->where('user_details.remarks', '=', '0')
-          ->orderBy('blood_bags.updated_at', 'desc')
-          ->value('blood_bags.updated_at');
+          ->orderBy('blood_bags.created_at', 'desc')
+          ->value('blood_bags.created_at');
       
       return response()->json([
           'status' => 'success',

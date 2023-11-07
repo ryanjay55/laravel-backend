@@ -7,6 +7,7 @@ use App\Models\BloodComponent;
 use App\Models\BloodRequest;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
+use DateTime;
 
 class NetworkController extends Controller
 {
@@ -22,6 +23,8 @@ class NetworkController extends Controller
                 'hospital'    => ['required'],
                 'diagnosis'    => ['required'],
                 'schedule'    => ['required']
+            ],[
+                'blood_component_id.required'  => 'The blood component field is required.',
             ]);
     
             $bloodUnit = $validatedData['blood_units'];
@@ -30,18 +33,30 @@ class NetworkController extends Controller
             $diagnosis = $validatedData['diagnosis'];
             $schedule = $validatedData['schedule'];     
 
+
+            // Parse the ISO 8601 date string to a DateTime object
+            $date = new DateTime($schedule);
+
+            // Format the date as a human-readable string
+            $humanReadableDate = $date->format('Y-m-d H:i:s');
+
             $existedUser = BloodRequest::where('user_id', $userId)->first();
 
             if($existedUser){
                 if ($existedUser->isAccomodated == 1) {
 
+                    do {
+                        $uniqueRequestId = mt_rand(100000, 999999); // Generate a random 6-digit number
+                    } while (BloodRequest::where('request_id_number', $uniqueRequestId)->exists());
+
                     BloodRequest::create([
                         'user_id' => $userId,
+                        'request_id_number' => $uniqueRequestId,
                         'blood_units' => $bloodUnit,
                         'blood_component_id' => $bloodComponentId,
                         'hospital' => $hospital,
                         'diagnosis' => $diagnosis,
-                        'schedule' => $schedule                
+                        'schedule' => $humanReadableDate                
                     ]);
     
                     return response()->json([
@@ -56,13 +71,19 @@ class NetworkController extends Controller
                    ], 400);
                 }
             }else{
+
+                do {
+                    $uniqueRequestId = mt_rand(100000, 999999); // Generate a random 6-digit number
+                } while (BloodRequest::where('request_id_number', $uniqueRequestId)->exists());
+
                 BloodRequest::create([
                     'user_id' => $userId,
+                    'request_id_number' => $uniqueRequestId,
                     'blood_units' => $bloodUnit,
                     'blood_component_id' => $bloodComponentId,
                     'hospital' => $hospital,
                     'diagnosis' => $diagnosis,
-                    'schedule' => $schedule                
+                    'schedule' => $humanReadableDate                
                 ]);
 
                 return response()->json([
@@ -96,6 +117,24 @@ class NetworkController extends Controller
         ]);
 
     }
+    
+    public function getLastRequest(){
+        $user = getAuthenticatedUserId();
+        $userId = $user->user_id;
+    
+        $lastBloodRequest = BloodRequest::where('user_id', $userId)
+            ->join('blood_components', 'blood_request.blood_component_id', '=', 'blood_components.blood_component_id')
+            ->where('blood_request.status', 0)
+            ->latest('blood_request.created_at')
+            ->first();  
+    
+            return response()->json([
+                'status'    => 'success',
+                'data'      => $lastBloodRequest
+            ]);
+    
+    }
+    
 
     public function getBloodComponent(){
         $components = BloodComponent::all();
