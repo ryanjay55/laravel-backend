@@ -1,7 +1,7 @@
 <?php
 
 use App\Http\Controllers\Api\Admin\DispensedBlood\DispensedBloodController;
-use App\Http\Controllers\Api\admin\Network\NetworkAdminController;
+use App\Http\Controllers\Api\Admin\Network\NetworkAdminController;
 use App\Http\Controllers\Api\Donor\Network\NetworkController;
 use Illuminate\Support\Facades\Route;
 
@@ -105,6 +105,8 @@ Route::group(['middleware' => ['auth:sanctum','admin']], function () {
     Route::get('/get-hospitals', [InventoryController::class, 'getHospitals']);
 
     Route::get('/get-blood-request', [NetworkAdminController::class, 'getAllBloodRequest']);
+    Route::get('/get-request-id', [NetworkAdminController::class, 'getRequestIdNumber']);
+    Route::get('/create-network-post', [NetworkAdminController::class, 'createPost']);
 
     Route::get('/get-stocks', [InventoryController::class, 'getStocks']);
     Route::post('/filter-stocks', [InventoryController::class, 'filterBloodTypeStocks']);
@@ -157,7 +159,7 @@ Route::group(['middleware' => ['auth:sanctum','admin']], function () {
 
 Route::group(['middleware' => ['auth:sanctum']], function () {
     Route::get('/get-available-blood', [DashboardController::class, 'donorAvailableBlood']);
-    Route::get('/get-badge', [DashboardController::class, 'getBadge']);
+    Route::get('/get-donation-summary', [DashboardController::class, 'donationSummary']);
     Route::get('/get-history', [DonationHistoryController::class, 'donationHistory']);
     Route::get('/get-day-since-last-donation', [DonationHistoryController::class, 'computeDaySinceLastDonation']);
     Route::get('/get-blood-journey', [BloodJourneyController::class, 'bloodJourney']);

@@ -40,6 +40,19 @@ class BloodBag extends Model
         return $result;
     }
 
+    public function countDispensedBlood($userId)
+    {
+        $sql = 'SELECT COUNT(*) as count FROM blood_bags bb 
+        JOIN users as u ON u.user_id = bb.user_id
+        WHERE bb.user_id = :userId AND bb.isUsed = 1';
+    
+        $result = DB::connection('mysql')->selectOne($sql, [
+            'userId' => $userId,
+        ]);
+    
+        return $result->count;
+    }
+
 
    public function getManPower($venue, $startDate, $endDate) {
        $sql = "SELECT COUNT(DISTINCT bled_by) as man_power

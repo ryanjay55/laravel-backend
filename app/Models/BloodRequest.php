@@ -34,4 +34,12 @@ class BloodRequest extends Model
 
         return $result;
     }
+
+    public function getAllRequestId(){
+        $sql = "SELECT request_id_number FROM blood_request";
+
+        $result = DB::connection('mysql')->select($sql);
+
+        return $result;
+    }
 }

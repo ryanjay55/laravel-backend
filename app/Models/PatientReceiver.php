@@ -28,6 +28,18 @@ class PatientReceiver extends Model
         'status'
     ];
 
+    public function countReceivedBlood($userId)
+    {
+        $sql = 'SELECT COUNT(*) as count FROM patient_receivers pr 
+        JOIN blood_bags as bb ON bb.patient_receivers_id = pr.patient_receivers_id
+        WHERE pr.user_id = :userId';
+    
+        $result = DB::connection('mysql')->selectOne($sql, [
+            'userId' => $userId,
+        ]);
+    
+        return $result->count;
+    }
    public function getDispensedList($serialNo) {
       $sql = "SELECT pr.first_name, pr.middle_name, pr.last_name, pr.blood_type, pr.sex, pr.dob, pr.diagnosis, pr.hospital, pr.payment, pr.created_at, GROUP_CONCAT(bb.serial_no) AS serial_numbers
       FROM patient_receivers pr

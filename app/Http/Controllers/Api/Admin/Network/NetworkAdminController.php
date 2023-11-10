@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api\admin\Network;
 use App\Http\Controllers\Controller;
 use App\Models\AuditTrail;
 use App\Models\BloodRequest;
+use App\Models\NetworkPost;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
 class NetworkAdminController extends Controller
@@ -78,5 +79,76 @@ class NetworkAdminController extends Controller
             'status'    => 'success',
             'data'      => $bloodRequests
         ]);
+    }
+
+    public function getRequestIdNumber(){
+        $requestId = app(BloodRequest::class)->getAllRequestId();
+
+
+        return response()->json([
+            'status' => 'success',
+            'data'=> $requestId
+        ]);
+    }
+
+    public function createPost(Request $request){
+        $user = getAuthenticatedUserId();
+        $userId = $user->user_id;
+
+        try {
+            $request->validate([
+                'request_id_number' => 'required',
+                'donation_date' => 'required',
+                'venue' => 'required',
+                'body' => 'required',
+                'blood_components' => 'required|array',
+            ]);
+
+            $requestIdNumber = $request->input('request_id_number');
+            $donationDate = $request->input('donation_date');
+            $venue = $request->input('venue');
+            $body = $request->input('body');
+            $bloodComponents = json_encode($request->input('blood_components')); // Convert array to JSON
+
+            NetworkPost::create([
+                'request_id_number' => $requestIdNumber,
+                'donation_date'=> $donationDate,
+                'venue'=> $venue,
+                'body'=> $body,
+                'blood_components'=> $bloodComponents
+            ]); 
+
+            $ip = file_get_contents('https://api.ipify.org');
+            $ch = curl_init('http://ipwho.is/'.$ip);
+            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+            curl_setopt($ch, CURLOPT_HEADER, false);
+            $ipwhois = json_decode(curl_exec($ch), true);
+            curl_close($ch);
+
+
+            AuditTrail::create([
+                'user_id'    => $userId,
+                'module'     => 'Donor Post',
+                'action'     => 'Create Post for' . $request->input('request_id_number'),
+                'status'     => 'Success',
+                'ip_address' => $ipwhois['ip'],
+                'region'     => $ipwhois['region'],
+                'city'       => $ipwhois['city'],
+                'postal'     => $ipwhois['postal'],
+                'latitude'   => $ipwhois['latitude'],
+                'longitude'  => $ipwhois['longitude'],
+            ]);
+
+            return response()->json([
+                'status' => 'success',
+            ]);
+           
+        } catch (ValidationException $e) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Validation failed',
+                'errors' => $e->validator->errors(),
+            ], 400);
+        }
     }
 }
