@@ -69,6 +69,18 @@ class DashboardController extends Controller
     
         $result = [];
     
+        $latestCreatedAt = null; // Initialize a variable to store the latest created_at value
+
+        // Find the latest created_at value
+        $latestCreatedAt = $bloodBags->max('created_at');
+        
+        // Format the latestCreatedAt
+        $formattedLatestCreatedAt = $latestCreatedAt ? date('Y-m-d h:i A', strtotime($latestCreatedAt)) : null;
+        if (!$formattedLatestCreatedAt || count($bloodBags) === 0) {
+            // Set the formattedLatestCreatedAt to the current date and time
+            $formattedLatestCreatedAt = date('Y-m-d h:i A');
+        }
+
         foreach ($bloodTypes as $bloodType) {
             $bloodBagsCount = $bloodBags->where('blood_type', $bloodType)->count();
             // $quota = $quotaPerQuarter / count($bloodTypes);
@@ -98,6 +110,7 @@ class DashboardController extends Controller
     
         return response()->json([
             'blood_bags' => $result,
+            'latest_created_at' => $formattedLatestCreatedAt, // Return the formatted value
         ]);
     }
 

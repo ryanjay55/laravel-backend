@@ -306,6 +306,9 @@ class DashboardController extends Controller
                 ->where('user_details.status', 0)
                 ->where('galloners.donate_qty', '>', 0);
 
+            $reactive = BloodBag::join('reactive_blood_bags as rbb', 'blood_bags.blood_bags_id', '=', 'rbb.blood_bags_id');
+            $spoiled = BloodBag::join('spoiled_blood_bags as sbb', 'blood_bags.blood_bags_id', '=', 'sbb.blood_bags_id');
+
             // Apply month filter if a specific month is selected
             if ($month != 'All') {
                 $query->whereMonth('blood_bags.date_donated', $month);
@@ -314,6 +317,7 @@ class DashboardController extends Controller
             // Apply year filter if a specific year is selected
             if ($year != 'All') {
                 $query->whereYear('blood_bags.date_donated', $year);
+
             }
 
             $totalDonors = $query->count();
@@ -329,6 +333,9 @@ class DashboardController extends Controller
                 $totalPermaDeferral->whereMonth('created_at', $month);
                 $totalDispensed->whereMonth('dispensed_date', $month);
                 $totalExpired->whereMonth('expiration_date', $month);
+                $reactive->whereMonth('rbb.created_at', $month);
+                $spoiled->whereMonth('sbb.created_at', $month);
+
             }
 
             if ($year != 'All') {
@@ -336,18 +343,26 @@ class DashboardController extends Controller
                 $totalPermaDeferral->whereYear('created_at', $year);
                 $totalDispensed->whereYear('dispensed_date', $year);
                 $totalExpired->whereYear('expiration_date', $year);
+                $reactive->whereYear('rbb.created_at', $year);
+                $spoiled->whereYear('sbb.created_at', $year);
+
             }
 
             $totalTempDeferral = $totalTempDeferral->count();
             $totalPermaDeferral = $totalPermaDeferral->count();
             $totalDispensed = $totalDispensed->count();
             $totalExpired = $totalExpired->count();
+            $totalReactiveBoodBag = $reactive->count();
+            $totalSpoiledBoodBag = $spoiled->count();
+
 
             $data[] = [
                 'total_donors' => $totalDonors,
                 'total_deferrals' => $totalTempDeferral + $totalPermaDeferral,
                 'total_dispensed' => $totalDispensed,
-                'total_expired' => $totalExpired
+                'total_expired' => $totalExpired,
+                'total_reactive' =>$totalReactiveBoodBag,
+                'total_spoiled' => $totalSpoiledBoodBag,
             ];
 
             return response()->json([
@@ -364,6 +379,9 @@ class DashboardController extends Controller
     }
 
     
+    public function getBloodBagQuota(){
+        
+    }
     
 
     // public function countAllDonors() {
