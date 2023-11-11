@@ -178,7 +178,7 @@ class BloodBagController extends Controller
                             $donor = User::where('user_id', $validatedData['user_id'])->first();
                             $donorEmail = $donor->email;
 
-                            // Mail::to($donorEmail)->send(new ThankyouForDonationMail($donor));
+                            Mail::to($donorEmail)->send(new ThankyouForDonationMail($donor));
 
                             $galloner->donate_qty += 1;
                             $galloner->save();
@@ -264,7 +264,7 @@ class BloodBagController extends Controller
                         $donor = User::where('user_id', $validatedData['user_id'])->first();
                         $donorEmail = $donor->email;
 
-                        // Mail::to($donorEmail)->send(new ThankyouForDonationMail($donor));
+                        Mail::to($donorEmail)->send(new ThankyouForDonationMail($donor));
                         
                         $galloner->donate_qty += 1;
                         $galloner->save();
