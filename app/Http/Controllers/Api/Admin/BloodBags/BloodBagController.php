@@ -72,7 +72,7 @@ class BloodBagController extends Controller
                     if ($lastRecord) {
                         $lastDonationDate = Carbon::parse($lastRecord->date_donated);
                         $currentDonationDate = Carbon::parse($validatedData['date_donated']);
-                        $minDonationInterval = Carbon::parse($lastDonationDate)->addDays(37)->format('Y-m-d');
+                        $minDonationInterval = Carbon::parse($lastDonationDate)->addDays(90)->format('Y-m-d');
 
                     
                         if ($currentDonationDate <= $lastDonationDate) {
@@ -92,7 +92,7 @@ class BloodBagController extends Controller
                             return response()->json([
                                 'status'       => 'error',
                                 'last_donated' => $lastRecord->date_donated,
-                                'message'      => 'The minimum donation interval is 37 days. Please wait until ' . $minDonationInterval . ' before donating again.',
+                                'message'      => 'The minimum donation interval is 3 months. Please wait until ' . $minDonationInterval . ' before donating again.',
                             ], 400);
 
                         } elseif ($currentDonationDate < $minDonationInterval) {
@@ -113,7 +113,7 @@ class BloodBagController extends Controller
                             return response()->json([
                                 'status'       => 'error',
                                 'last_donated' => $lastRecord->date_donated,
-                                'message'      => 'The minimum donation interval is 37 days. Please wait until ' . $minDonationInterval . ' before donating again.',
+                                'message'      => 'The minimum donation interval is 3 months. Please wait until ' . $minDonationInterval . ' before donating again.',
                             ], 400);
 
                         }else{

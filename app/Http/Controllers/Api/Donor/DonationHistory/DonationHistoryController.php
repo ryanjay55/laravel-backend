@@ -83,7 +83,7 @@ class DonationHistoryController extends Controller
         }
   
         $mostRecentDonationDate = $donationHistory->first()->date_donated;
-        $nextDonationDate = Carbon::parse($mostRecentDonationDate)->addDays(37)->format('Y-m-d');
+        $nextDonationDate = Carbon::parse($mostRecentDonationDate)->addDays(90)->format('Y-m-d');
         $currentDate = Carbon::now(); 
         $daysSinceLastDonation = $currentDate->diffInDays($mostRecentDonationDate);
         

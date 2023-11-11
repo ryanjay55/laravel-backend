@@ -380,6 +380,9 @@ class DashboardController extends Controller
 
     
     public function getBloodBagQuota(){
+
+        $currentDate = Carbon::now();
+   
         
     }
     
