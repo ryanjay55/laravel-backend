@@ -72,7 +72,7 @@ class SettingsController extends Controller
                     'user_id'    => $userId,
                     'module'     => 'Deferral List',
                     'action'     => 'Accessed Deferral List',
-                    'status'     => 'failed',
+                    'status'     => 'success',
                     'ip_address' => $ipwhois['ip'],
                     'region'     => $ipwhois['region'],
                     'city'       => $ipwhois['city'],
@@ -85,6 +85,18 @@ class SettingsController extends Controller
                     'message' => 'Security pin is correct',
                 ]);
             } else {
+                AuditTrail::create([
+                    'user_id'    => $userId,
+                    'module'     => 'Deferral List',
+                    'action'     => 'Accessed Deferral List',
+                    'status'     => 'failed',
+                    'ip_address' => $ipwhois['ip'],
+                    'region'     => $ipwhois['region'],
+                    'city'       => $ipwhois['city'],
+                    'postal'     => $ipwhois['postal'],
+                    'latitude'   => $ipwhois['latitude'],
+                    'longitude'  => $ipwhois['longitude'],
+                ]);
                 return response()->json([
                     'status' => 'error',
                     'message' => 'Security pin is incorrect',

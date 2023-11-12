@@ -5,7 +5,7 @@ namespace App\Http\Controllers\Api\admin\Network;
 use App\Http\Controllers\Controller;
 use App\Models\AuditTrail;
 use App\Models\BloodRequest;
-use App\Models\NetworkPost;
+use App\Models\AdminPost;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
 class NetworkAdminController extends Controller
@@ -97,25 +97,25 @@ class NetworkAdminController extends Controller
 
         try {
             $request->validate([
-                'request_id_number' => 'required',
+                'blood_request_id' => 'required',
                 'donation_date' => 'required',
                 'venue' => 'required',
                 'body' => 'required',
-                'blood_components' => 'required|array',
+                'blood_needs' => 'required',
             ]);
 
-            $requestIdNumber = $request->input('request_id_number');
+            $requestIdNumber = $request->input('blood_request_id');
             $donationDate = $request->input('donation_date');
             $venue = $request->input('venue');
             $body = $request->input('body');
-            $bloodComponents = json_encode($request->input('blood_components')); // Convert array to JSON
+            $blood_needs = $request->input('blood_needs');
 
-            NetworkPost::create([
-                'request_id_number' => $requestIdNumber,
+            AdminPost::create([
+                'blood_request_id' => $requestIdNumber,
                 'donation_date'=> $donationDate,
                 'venue'=> $venue,
                 'body'=> $body,
-                'blood_components'=> $bloodComponents
+                'blood_needs'=> $blood_needs
             ]); 
 
             $ip = file_get_contents('https://api.ipify.org');
@@ -151,4 +151,6 @@ class NetworkAdminController extends Controller
             ], 400);
         }
     }
+
+    
 }

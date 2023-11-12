@@ -106,7 +106,7 @@ Route::group(['middleware' => ['auth:sanctum','admin']], function () {
 
     Route::get('/get-blood-request', [NetworkAdminController::class, 'getAllBloodRequest']);
     Route::get('/get-request-id', [NetworkAdminController::class, 'getRequestIdNumber']);
-    Route::get('/create-network-post', [NetworkAdminController::class, 'createPost']);
+    Route::post('/create-network-post', [NetworkAdminController::class, 'createPost']);
 
     Route::get('/get-stocks', [InventoryController::class, 'getStocks']);
     Route::post('/filter-stocks', [InventoryController::class, 'filterBloodTypeStocks']);
@@ -163,7 +163,7 @@ Route::group(['middleware' => ['auth:sanctum']], function () {
     Route::get('/get-history', [DonationHistoryController::class, 'donationHistory']);
     Route::get('/get-day-since-last-donation', [DonationHistoryController::class, 'computeDaySinceLastDonation']);
     Route::get('/get-blood-journey', [BloodJourneyController::class, 'bloodJourney']);
-    // Route::post('/create-post', [DonorPostController::class, 'createPost']);
+    // Route::post('/create-post', [NetworkAdminController::class, 'createPost']);
     // Route::get('/get-donor-post', [DonorPostController::class, 'getDonorPost']);
     // Route::put('/edit-post', [DonorPostController::class, 'editPost']);
     // Route::delete('/delete-post', [DonorPostController::class, 'deletePost']);
@@ -171,6 +171,10 @@ Route::group(['middleware' => ['auth:sanctum']], function () {
     Route::get('/get-requested-blood', [NetworkController::class, 'getBloodRequest']);
     Route::get('/get-blood-components', [NetworkController::class, 'getBloodComponent']);
     Route::get('/get-latest-blood-request', [NetworkController::class, 'getLastRequest']);
+    Route::get('/get-admin-post', [NetworkController::class, 'adminPost']);
+    Route::post('/button-interested', [NetworkController::class, 'buttonInterested']);
+    Route::get('/get-my-interest', [NetworkController::class, 'getMyInterestDonation']);
+    Route::get('/get-my-schedule-donation', [NetworkController::class, 'getMyScheduleDonation']);
 
     Route::get('/get-user-details', [UserListController::class, 'getUserDetails']);
     Route::post('/search-user', [UserListController::class, 'searchUsers']);

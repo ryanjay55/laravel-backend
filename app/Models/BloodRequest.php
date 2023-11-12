@@ -36,7 +36,7 @@ class BloodRequest extends Model
     }
 
     public function getAllRequestId(){
-        $sql = "SELECT request_id_number FROM blood_request";
+        $sql = "SELECT blood_request_id, request_id_number FROM blood_request";
 
         $result = DB::connection('mysql')->select($sql);
 
