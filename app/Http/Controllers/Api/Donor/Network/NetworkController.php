@@ -154,11 +154,21 @@ class NetworkController extends Controller
         $user = getAuthenticatedUserId();
         $userId = $user->user_id;
 
-        $post = app(AdminPost::class)->getPost();
+        $post = app(AdminPost::class)->getPendingPost();
 
         return response()->json([
             'status'    => 'success',
             'data'      => $post
+        ]);
+    }
+
+    public function getRecentPost(){
+        
+    $recentPost = AdminPost::latest()->first();
+        
+       return response()->json([
+        'status' => 'success',
+        'data' => $recentPost
         ]);
     }
 

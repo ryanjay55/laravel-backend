@@ -107,6 +107,7 @@ Route::group(['middleware' => ['auth:sanctum','admin']], function () {
     Route::get('/get-blood-request', [NetworkAdminController::class, 'getAllBloodRequest']);
     Route::get('/get-request-id', [NetworkAdminController::class, 'getRequestIdNumber']);
     Route::post('/create-network-post', [NetworkAdminController::class, 'createPost']);
+    Route::get('/get-interested-donor', [NetworkAdminController::class, 'getInterestedDonor']);
 
     Route::get('/get-stocks', [InventoryController::class, 'getStocks']);
     Route::post('/filter-stocks', [InventoryController::class, 'filterBloodTypeStocks']);
@@ -145,6 +146,7 @@ Route::group(['middleware' => ['auth:sanctum','admin']], function () {
     Route::post('/filter-dispensed-list', [DispensedBloodController::class, 'filterDispensedList']);
 
     Route::post('/mark-as-accomodated', [NetworkAdminController::class, 'markAsAccomodated']);
+    Route::post('/mark-as-declined', [NetworkAdminController::class, 'markAsDeclined']);
 
 });
 
@@ -172,6 +174,8 @@ Route::group(['middleware' => ['auth:sanctum']], function () {
     Route::get('/get-blood-components', [NetworkController::class, 'getBloodComponent']);
     Route::get('/get-latest-blood-request', [NetworkController::class, 'getLastRequest']);
     Route::get('/get-admin-post', [NetworkController::class, 'adminPost']);
+    Route::get('/get-recent-post', [NetworkController::class, 'getRecentPost']);
+
     Route::post('/button-interested', [NetworkController::class, 'buttonInterested']);
     Route::get('/get-my-interest', [NetworkController::class, 'getMyInterestDonation']);
     Route::get('/get-my-schedule-donation', [NetworkController::class, 'getMyScheduleDonation']);
