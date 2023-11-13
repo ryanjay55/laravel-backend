@@ -179,6 +179,8 @@ Route::group(['middleware' => ['auth:sanctum']], function () {
     Route::get('/get-user-details', [UserListController::class, 'getUserDetails']);
     Route::post('/search-user', [UserListController::class, 'searchUsers']);
     Route::put('/edit-profile', [ProfileController::class, 'updateProfile']);
+    Route::get('/get-achievements', [ProfileController::class, 'getAchievements']);
+
     Route::post('/logout', [AuthController::class, 'logout']);    
     Route::get('/check-role',[AuthController::class, 'checkIfAdmin']);
     Route::get('/me',[AuthController::class, 'me']);
