@@ -132,6 +132,7 @@ class NetworkAdminController extends Controller
         $bloodRequests = BloodRequest::join('user_details', 'blood_request.user_id', '=', 'user_details.user_id')
             ->join('blood_components', 'blood_request.blood_component_id', '=', 'blood_components.blood_component_id')
             ->join('users', 'user_details.user_id', '=', 'users.user_id')
+            ->where('blood_request.status', 0)
             ->select('blood_request.*', 'user_details.first_name', 'user_details.middle_name' ,'user_details.last_name', 'user_details.blood_type', 'blood_components.blood_component_desc', 'users.email', 'users.mobile')
             ->orderBy('blood_request.schedule')
             ->get();

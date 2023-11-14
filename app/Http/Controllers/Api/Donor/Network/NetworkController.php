@@ -23,7 +23,7 @@ class NetworkController extends Controller
         try {
     
             $validatedData = $request->validate([
-                'blood_units'    => ['required'],
+                'blood_units'    => ['required','numeric'],
                 'blood_component_id'  => ['required'],
                 'hospital'    => ['required'],
                 'diagnosis'    => ['required'],
@@ -45,10 +45,11 @@ class NetworkController extends Controller
             // Format the date as a human-readable string
             $humanReadableDate = $date->format('Y-m-d H:i:s');
 
-            $existedUser = BloodRequest::where('user_id', $userId)->first();
+            $existedUser = BloodRequest::where('user_id', $userId)->where('status',0)->orderBy('blood_request_id', 'desc')->first();
 
             if($existedUser){
-                if ($existedUser->isAccomodated == 1) {
+
+                if ($existedUser->isAccommodated == 1) {
 
                     do {
                         $uniqueRequestId = mt_rand(100000, 999999); // Generate a random 6-digit number
@@ -70,11 +71,13 @@ class NetworkController extends Controller
                     ]);
     
                 }else{
+
                    return response()->json([
                        'status'    => 'error',
                        'message'   => 'You cannot make a new blood request while there is a pending request.',
                    ], 400);
                 }
+                
             }else{
 
                 do {
@@ -108,12 +111,15 @@ class NetworkController extends Controller
         }
     }
 
+    //history
     public function getBloodRequest(){
         $user = getAuthenticatedUserId();
         $userId = $user->user_id;
 
-        $bloodRequest = BloodRequest::where('user_id', $userId)
-            ->where('status', 0)
+        $bloodRequest = BloodRequest::where('blood_request.user_id', $userId)
+            ->join('blood_components', 'blood_request.blood_component_id', '=', 'blood_components.blood_component_id')
+            ->join('user_details', 'blood_request.user_id', '=', 'user_details.user_id')
+            ->select('blood_request.*', 'user_details.blood_type', 'blood_components.blood_component_desc')
             ->get();
 
         return response()->json([
@@ -130,14 +136,14 @@ class NetworkController extends Controller
         $lastBloodRequest = BloodRequest::where('user_id', $userId)
             ->join('blood_components', 'blood_request.blood_component_id', '=', 'blood_components.blood_component_id')
             ->where('blood_request.status', 0)
-            ->latest('blood_request.created_at')
+            // ->where('blood_request.isAccommodated', 0)
+            ->orderBy('blood_request.blood_request_id', 'desc')
             ->first();  
     
-            return response()->json([
-                'status'    => 'success',
-                'data'      => $lastBloodRequest
-            ]);
-    
+        return response()->json([
+            'status'    => 'success',
+            'data'      => $lastBloodRequest
+        ]);
     }
     
 
@@ -188,15 +194,60 @@ class NetworkController extends Controller
             $donationHistory = BloodBag::where('user_id', $userId)
                 ->orderBy('date_donated', 'desc')
                 ->get();
-    
-            if ($donationHistory->isEmpty()) {
+
+            $myInterest = DB::table('interested_donors')
+                ->join('admin_posts', 'interested_donors.blood_request_id', '=', 'admin_posts.blood_request_id')
+                ->select('interested_donors.*', 'admin_posts.donation_date')
+                ->where('interested_donors.user_id', $userId)
+                ->orderBy('interested_donor_id', 'desc')
+                ->first();
+
+            $checkMyBloodRequest = BloodRequest::where('user_id', $userId)->where('isAccommodated', 0)->first();
+
+            if($checkMyBloodRequest){
+                $errorMessage = "Sorry, you cannot perform this action because you have a pending blood request at the moment.";
                 return response()->json([
                     'status' => 'error',
-                    'message' => 'No donation history found.'
+                    'message' => $errorMessage
                 ], 400);
             }
-    
-            // Get the most recent donation date
+
+            if($myInterest){
+
+                $donationDate = Carbon::parse($myInterest->donation_date);
+
+                if ($donationDate->isFuture()) {
+                    $formattedDate = $donationDate->format('F d, Y \a\t h:i A');
+                    $errorMessage = "Sorry, you already have a scheduled donation on $formattedDate";                        
+                    return response()->json([
+                        'status' => 'error',
+                        'message' => $errorMessage
+                    ], 400);
+
+                } else {
+                    InterestedDonor::create([
+                    'user_id' => $userId,
+                    'blood_request_id' => $requestId,
+                    
+                    ]);
+        
+                    return response()->json([
+                        'status' => 'success'
+                    ]);
+                }   
+
+            }else{
+                if ($donationHistory->isEmpty()) {
+                    InterestedDonor::create([
+                        'user_id' => $userId,
+                        'blood_request_id' => $requestId,
+                    ]);
+        
+                    return response()->json([
+                        'status' => 'success'
+                    ]);
+                }else{
+                    // Get the most recent donation date
             $mostRecentDonationDate = Carbon::parse($donationHistory->first()->date_donated)->format('F d, Y');
             $nextDonationDate = Carbon::parse($mostRecentDonationDate)->addDays(90)->format('F d, Y');
 
@@ -210,13 +261,6 @@ class NetworkController extends Controller
                     'message' => "Sorry, your most recent donation was on $mostRecentDonationDate. You are eligible to donate again on $nextDonationDate."
                 ], 400);
             } else {
-                
-                $myInterest = DB::table('interested_donors')
-                    ->join('admin_posts', 'interested_donors.blood_request_id', '=', 'admin_posts.blood_request_id')
-                    ->select('interested_donors.*', 'admin_posts.donation_date')
-                    ->where('interested_donors.user_id', $userId)
-                    ->orderBy('interested_donor_id', 'desc')
-                    ->first();
                 
                 if($myInterest){
 
@@ -246,7 +290,6 @@ class NetworkController extends Controller
                     InterestedDonor::create([
                         'user_id' => $userId,
                         'blood_request_id' => $requestId,
-                        
                     ]);
         
                     return response()->json([
@@ -255,6 +298,11 @@ class NetworkController extends Controller
                 }
                     
             }
+                }
+            }
+
+    
+            
 
         } catch (ValidationException $e) {
             return response()->json([
@@ -299,6 +347,37 @@ class NetworkController extends Controller
                 'status'    => 'success',
                 'data'      => null
             ]);
+        }
+    }
+
+    public function cancelRequest(){
+        $user = getAuthenticatedUserId();
+        $userId = $user->user_id;
+        
+        $lastBloodRequest = BloodRequest::where('user_id', $userId)
+            ->join('blood_components', 'blood_request.blood_component_id', '=', 'blood_components.blood_component_id')
+            ->where('blood_request.status', 0)
+            ->latest('blood_request.created_at')
+            ->first();  
+        
+        if ($lastBloodRequest && $lastBloodRequest->created_at->diffInHours(now()) <= 24) {
+            $lastBloodRequest->status = 1;
+            $lastBloodRequest->save();
+        
+            return response()->json([
+                'status'    => 'success',
+                'data'      => $lastBloodRequest
+            ]);
+        } elseif ($lastBloodRequest) {
+            return response()->json([
+                'status'    => 'error',
+                'message'   => 'Cannot cancel the blood request because the request exceeds 24 hours.'
+            ], 400);
+        } else {
+            return response()->json([
+                'status'    => 'error',
+                'message'   => 'Blood request not found.'
+            ], 404);
         }
     }
 }
