@@ -26,10 +26,8 @@ class DonorController extends Controller
            ->where('user_details.remarks', 0)
            ->where('user_details.status', 0)
            ->where('galloners.donate_qty', '>', 0) 
-           ->select('users.mobile', 'users.email', 'user_details.*', 'galloners.badge', 'galloners.donate_qty', 'donor_types.donor_type_desc', 'blood_bags.date_donated') // Add 'blood_bags.date_donated' to the SELECT list
-           ->distinct('user_details.user_id')
-           ->orderBy('blood_bags.date_donated', 'desc');
-
+           ->select('user_details.user_id', 'users.mobile', 'users.email', 'user_details.*', 'galloners.badge', 'galloners.donate_qty', 'donor_types.donor_type_desc', 'blood_bags.date_donated')
+           ->distinct();
            if ($bloodType !== 'All') {
             $donorList->where('user_details.blood_type', $bloodType);
         }
@@ -137,20 +135,21 @@ class DonorController extends Controller
             $searchInput = str_replace(' ', '', $request->input('searchInput')); 
             
             $userDetails =  UserDetail::join('users', 'user_details.user_id', '=', 'users.user_id')
-                ->join('galloners', 'user_details.user_id', '=', 'galloners.user_id')
-                ->join('blood_bags', 'user_details.user_id', '=', 'blood_bags.user_id')
-                ->join('donor_types', 'user_details.donor_types_id', '=', 'donor_types.donor_types_id') // Join the donor_types table
-                ->where('user_details.remarks', 0)
-                ->where('user_details.status', 0)
-                ->where('galloners.donate_qty', '>', 0) 
-                ->select('users.mobile', 'users.email', 'user_details.*', 'galloners.badge', 'galloners.donate_qty', 'donor_types.donor_type_desc', 'blood_bags.date_donated') // Add 'blood_bags.date_donated' to the SELECT list
-                ->distinct('user_details.user_id')
-                ->orderBy('blood_bags.date_donated', 'desc')
+            ->join('galloners', 'user_details.user_id', '=', 'galloners.user_id')
+            ->join('blood_bags', 'user_details.user_id', '=', 'blood_bags.user_id')
+            ->join('donor_types', 'user_details.donor_types_id', '=', 'donor_types.donor_types_id') // Join the donor_types table
+            ->where('user_details.remarks', 0)
+            ->where('user_details.status', 0)
+            ->where('galloners.donate_qty', '>', 0) 
+            ->select('users.mobile', 'users.email', 'user_details.*', 'galloners.badge', 'galloners.donate_qty', 'donor_types.donor_type_desc', 'blood_bags.date_donated') // Add 'blood_bags.date_donated' to the SELECT list
+            ->distinct('user_details.user_id')
+            ->orderBy('blood_bags.date_donated', 'desc')
                 ->where(function ($query) use ($searchInput) {
                     $query->where('users.mobile', 'LIKE', '%' . $searchInput . '%')
                         ->orWhere('users.email', 'LIKE', '%' . $searchInput . '%')
                         ->orWhere('user_details.donor_no', 'LIKE', '%' . $searchInput . '%')
                         ->orWhere('user_details.first_name', 'LIKE', '%' . $searchInput . '%')
+                        ->orWhere('user_details.middle_name', 'LIKE', '%' . $searchInput . '%')
                         ->orWhere('user_details.last_name', 'LIKE', '%' . $searchInput . '%')
                         ->orWhere('user_details.blood_type', 'LIKE', '%' . $searchInput . '%')
                         ->orWhere('user_details.dob', 'LIKE', '%' . $searchInput . '%')

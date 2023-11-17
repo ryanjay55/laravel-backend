@@ -80,18 +80,8 @@ class DashboardController extends Controller
 
     public function getQuota()
     {
-        $bloodBags = DB::table('user_details')
-            ->leftJoin('blood_bags', 'user_details.user_id', '=', 'blood_bags.user_id')
-            ->select('user_details.blood_type', 'blood_bags.serial_no', 'blood_bags.date_donated', 'bled_by')
-            ->whereIn('user_details.blood_type', ['A+', 'A-', 'B+', 'B-', 'O+', 'O-', 'AB+', 'AB-'])
-            ->where('blood_bags.isStored', '=', 1)
-            ->where('blood_bags.isExpired', '=', '0')
-            ->where('blood_bags.status', '=', '0')
-            ->where('user_details.remarks', '=', '0')
-            ->get();
-    
-        $bloodTypes = ['A+', 'A-', 'B+', 'B-', 'O+', 'O-', 'AB+', 'AB-'];
-    
+        
+
         $settingsPerQuarter = Setting::where('setting_desc', 'quarter_quota')->first();
         $settingsPerMonth = Setting::where('setting_desc', 'monthly_quota')->first();
         $settingsPerWeek = Setting::where('setting_desc', 'weekly_quota')->first();
@@ -102,57 +92,29 @@ class DashboardController extends Controller
         $quotaPerWeek = $settingsPerWeek->setting_value;
         $quotaPerDay = $settingsPerDay->setting_value;
 
+        $totalBloodBagsToday = BloodBag::where('date_donated', Carbon::today())->count();
+        $dateToday = Carbon::today()->format('F j, Y');
+        $totalBloodBagsThisWeek = BloodBag::whereBetween('date_donated', [Carbon::now()->startOfWeek(), Carbon::now()->endOfWeek()])->count();
+        $dateThisWeek = Carbon::now()->startOfWeek()->format('F j, Y') . ' - ' . Carbon::now()->endOfWeek()->format('F j, Y');
+        $totalBloodBagsThisMonth = BloodBag::whereBetween('date_donated', [Carbon::now()->startOfMonth(), Carbon::now()->endOfMonth()])->count();
+        $dateThisMonth = Carbon::now()->startOfMonth()->format('F j, Y') . ' - ' . Carbon::now()->endOfMonth()->format('F j, Y');
+        $totalBloodBagsThisQuarter = BloodBag::whereBetween('date_donated', [Carbon::now()->startOfQuarter(), Carbon::now()->endOfQuarter()])->count();
+        $dateThisQuarter = Carbon::now()->startOfQuarter()->format('F j, Y') . ' - ' . Carbon::now()->endOfQuarter()->format('F j, Y');
 
-        $result = [];
-    
-        foreach ($bloodTypes as $bloodType) {
-            $bloodBagsCount = $bloodBags->where('blood_type', $bloodType)->count();
-            $quotaQuarter = $quotaPerQuarter / count($bloodTypes);
-            $quotaMonth = $quotaPerMonth / count($bloodTypes);
-            $quotaWeek = $quotaPerWeek / count($bloodTypes);
-            $quotaDay = $quotaPerDay / count($bloodTypes);
-            
-            $availabilityPercentageQuarter = ($bloodBagsCount / $quotaQuarter) * 100;
-            $availabilityPercentageMonth = ($bloodBagsCount / $quotaMonth) * 100;
-            $availabilityPercentageWeek = ($bloodBagsCount / $quotaWeek) * 100;
-            $availabilityPercentageDay = ($bloodBagsCount / $quotaDay) * 100;
-            
-            $bloodBagsQuantity = $bloodBags
-                ->where('blood_type', $bloodType)
-                ->pluck('serial_no')
-                ->count();
-            
-            $legend = '';
-            
-            if ($bloodBagsCount <= 0) {
-                $legend = 'Empty';
-            } else {
-                if ($availabilityPercentageQuarter <= 10) {
-                    $legend = 'Critically low';
-                } elseif ($availabilityPercentageQuarter <= 50) {
-                    $legend = 'Low';
-                } else {
-                    $legend = 'Normal';
-                }
-            }
-            
-            $result[] = [
-                'blood_type' => $bloodType,
-                'status' => $bloodBagsCount > 0 ? 'Available' : 'Unavailable',
-                'legend' => $legend,
-                'percentage_quarter' => $availabilityPercentageQuarter,
-                'percentage_month' => $availabilityPercentageMonth,
-                'percentage_week' => $availabilityPercentageWeek,
-                'percentage_day' => $availabilityPercentageDay,
-                'quantity' => $bloodBagsQuantity,
-            ];
-        }
-    
         return response()->json([
             'status' => 'success',
-            'blood_bags' => $result,
+            'totalBloodBagsToday' => $totalBloodBagsToday.'/'.$quotaPerDay,
+            'dateToday' =>$dateToday,
+            'totalBloodBagsThisWeek' => $totalBloodBagsThisWeek.'/'.$quotaPerWeek,
+            'dateThisWeek' => $dateThisWeek,
+            'totalBloodBagsThisMonth' => $totalBloodBagsThisMonth.'/'.$quotaPerMonth,
+            'dateThisMonth' => $dateThisMonth,
+            'totalBloodBagsThisQuarter' => $totalBloodBagsThisQuarter.'/'.$quotaPerQuarter,
+            'dateThisQuarter' => $dateThisQuarter
         ]);
     }
+
+
 
    public function countBloodBagPerMonth(Request $request) {
         $currentYear = date('Y');

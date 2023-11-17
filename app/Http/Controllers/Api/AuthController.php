@@ -33,7 +33,20 @@ class AuthController extends Controller
                 if ($user->isAdmin == 1) {
                     return response()->json(['token' => $token, 'user' => $user, 'redirect' => 'Admin Dashboard']);
                 }else{
-                    return response()->json(['token' => $token, 'user' => $user, 'redirect' => 'Donor Dashboard']);
+                    // dd($user->user_id );
+                    $userId = $user->user_id;   
+                    $userDetail = UserDetail::where('user_id', $userId)->first();
+
+                    if(!$userDetail){
+                        return response()->json([
+                            'res'   => 'error',
+                            'user_id' => $userId,
+                            'next_step' => 2,
+                            'msg'   => 'Plese complete registration process ',
+                        ],400);
+                    }else{
+                        return response()->json(['token' => $token, 'user' => $user, 'redirect' => 'Donor Dashboard']);
+                    }
                 }
         
             } else {
