@@ -98,7 +98,8 @@ Route::group(['middleware' => ['auth:sanctum','admin']], function () {
     Route::get('/get-permanent-defferal', [UserListController::class, 'getPermanentDeferral']);
 
     Route::put('/edit-user-details', [UserListController::class, 'editUserDetails']);
- 
+    Route::post('/add-user', [UserListController::class, 'addUsers']);
+
     Route::get('/get-audit-trail', [AuditTrailController::class, 'getAuditTrail']);
     Route::post('/add-to-inventory', [InventoryController::class, 'storedInInventory']);
     Route::post('/bulk-move-to-inventory', [InventoryController::class, 'multipleMoveToInventory']);

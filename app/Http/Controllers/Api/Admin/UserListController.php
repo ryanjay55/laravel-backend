@@ -17,7 +17,12 @@ use Illuminate\Support\Carbon;
 use Illuminate\Validation\ValidationException;
 use Dompdf\Dompdf;
 use Illuminate\Support\Facades\DB;
-
+use App\Rules\ValidateUniqueEmail;
+use App\Rules\ValidateUniqueMobile;
+use Illuminate\Support\Facades\Hash;
+use App\Models\Galloner;
+use Illuminate\Support\Facades\Mail; 
+use App\Mail\RegistrationMail;
 
 class UserListController extends Controller
 {
@@ -175,10 +180,10 @@ class UserListController extends Controller
             $formattedDate = $dateNow->format('F j, Y g:i A');
 
             $pdf = new Dompdf();
-    $pdf->setPaper('A4', 'landscape');
-    $html = view('user-details', ['userDetails' => $userDetails, 'totalUsers' => $totalUserDetails, 'dateNow' => $formattedDate])->render();
-    $pdf->loadHtml($html);
-    $pdf->render();
+            $pdf->setPaper('A4', 'landscape');
+            $html = view('user-details', ['userDetails' => $userDetails, 'totalUsers' => $totalUserDetails, 'dateNow' => $formattedDate])->render();
+            $pdf->loadHtml($html);
+            $pdf->render();
     
             // Return the PDF as a response
             return response($pdf->output(), 200)
@@ -615,5 +620,90 @@ class UserListController extends Controller
         }
     }
 
+    public function addUsers(Request $request){
+        $user = getAuthenticatedUserId();
+        $userId = $user->user_id;
+
+        try {
+            $request->validate([
+                'email'                 => ['required', 'string', 'email', 'max:255','unique:users,email'],
+                'mobile'                => ['required', 'numeric', 'digits:11', 'unique:users,mobile'],
+                'first_name'            => ['required', 'string'],
+                'middle_name'           => ['required', 'string'],
+                'last_name'             => ['required', 'string'],
+                'dob'                   => ['required', 'date', 'before_or_equal:' . now()->subYears(16)->format('Y-m-d')],                
+                'sex'                   => ['required'],
+                'blood_type'            => ['required'],
+                'occupation'            => ['required', 'string'],
+                'street'                => ['required', 'string'],
+                'region'                => ['required'],
+                'province'              => ['required'],
+                'municipality'          => ['required'],
+                'barangay'              => ['required' ],
+                'postalcode'            => ['required', 'integer'],
+            ],[
+                'mobile.digits' => 'Invalid mobile number',
+                'before_or_equal'   => 'You must at least 17 years old to register',
+            ]);
+    
+            $email = $request->email;
+            $mobile = $request->mobile;
+            $carbonDob = Carbon::parse($request->dob);
+            $password = strtolower($request->last_name) . $carbonDob->format('mdY');  
+            
+            $user = User::create([
+                'email' => $email,
+                'mobile' => $mobile,
+                'isAdmin' => 0,
+                'password' => Hash::make($password),
+            ]);
+        
+            $user_id = $user->user_id;
+            $donorNo = mt_rand(10000000, 99999999); 
+
+            // Ensure the generated donor number is unique in the database
+            while (UserDetail::where('donor_no', $donorNo)->exists()) {
+                $donorNo = mt_rand(10000000, 99999999); // Regenerate if the number already exists
+            }
+            UserDetail::create([
+                'user_id' => $user_id,
+                'donor_no' => $donorNo,
+                'first_name' => ucwords(strtolower($request->first_name)),
+                'middle_name' => ucwords(strtolower($request->middle_name)),
+                'last_name' => ucwords(strtolower($request->last_name)),
+                'sex' => $request->sex,
+                'dob' => $request->dob,
+                'blood_type' => $request->blood_type,
+                'occupation' => ucwords(strtolower($request->occupation)),
+                'street' => ucwords(strtolower($request->street)),
+                'region' => $request->region,
+                'province' => $request->province,
+                'municipality' => $request->municipality,
+                'barangay' => $request->barangay,
+                'postalcode' => $request->postalcode,
+            ]);
+
+            Galloner::create([
+                'user_id'    => $user_id,
+            ]);
+            
+            // Send email notification
+            Mail::to($user->email)->send(new RegistrationMail($user));
+
+            return response()->json([
+                'status'            => 'success',
+                'message'           => 'Registration Complete.',
+                'next_step'         => '0',
+            ]);
+        
+        } catch (ValidationException $e) {
+            return response()->json([
+                'status'    => 'error',
+                'message'   => 'Validation failed',
+                'errors'    => $e->validator->errors(),
+            ], 400);
+        }
+
+    }
     
 }
