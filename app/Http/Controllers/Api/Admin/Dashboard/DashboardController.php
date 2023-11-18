@@ -81,7 +81,6 @@ class DashboardController extends Controller
     public function getQuota()
     {
         
-
         $settingsPerQuarter = Setting::where('setting_desc', 'quarter_quota')->first();
         $settingsPerMonth = Setting::where('setting_desc', 'monthly_quota')->first();
         $settingsPerWeek = Setting::where('setting_desc', 'weekly_quota')->first();
@@ -339,51 +338,5 @@ class DashboardController extends Controller
             ]);
         }
     }
-
-    
-    public function getBloodBagQuota(){
-
-        $currentDate = Carbon::now();
-   
-        
-    }
-    
-
-    // public function countAllDonors() {
-    //     $now = Carbon::now();
-
-    //     $deferralsToUpdate = Deferral::where('end_date', '<=', $now)
-    //     ->where('status', '!=', 1)
-    //     ->get();
-
-    //     foreach ($deferralsToUpdate as $deferral) {
-    //         $deferral->status = 1;
-    //         $deferral->save();
-
-    //         $user_detail = UserDetail::where('user_id', $deferral->user_id)->first();
-    //         if ($user_detail) {
-    //             $user_detail->remarks = 0;
-    //             $user_detail->save();
-    //         }
-    //     }
-
-    //     $donors = UserDetail::join('users', 'user_details.user_id', '=', 'users.user_id')
-    //     ->join('galloners', 'user_details.user_id', '=', 'galloners.user_id')
-    //     ->where('user_details.remarks', 0)
-    //     ->where('user_details.status', 0)
-    //     ->where('galloners.donate_qty', '>', 0) 
-    //     ->select('users.mobile', 'users.email', 'user_details.*', 'galloners.badge', 'galloners.donate_qty')
-    //     ->count();
-    
-    //     return response()->json([
-    //         'status' => 'success',
-    //         'donorCount' => $donors
-    //     ]);
-    // }
-    
-    
-    
-    
-    
     
 }

@@ -27,7 +27,7 @@ class UserListController extends Controller
             ->where('users.isAdmin', 0)
             ->select('users.mobile', 'users.email', 'user_details.*', 'galloners.badge', 'galloners.donate_qty')
             ->orderBy('user_details.user_id', 'desc')
-            ->distinct('user_details.user_id')
+            ->distinct('galloners.user_id')
             ->paginate(8);
 
         if ($userDetails->isEmpty()) { 
@@ -109,6 +109,7 @@ class UserListController extends Controller
                         ->orWhere('users.email', 'LIKE', '%' . $searchInput . '%')
                         ->orWhere('user_details.donor_no', 'LIKE', '%' . $searchInput . '%')
                         ->orWhere('user_details.first_name', 'LIKE', '%' . $searchInput . '%')
+                        ->orWhere('user_details.middle_name', 'LIKE', '%' . $searchInput . '%')
                         ->orWhere('user_details.last_name', 'LIKE', '%' . $searchInput . '%')
                         ->orWhere('user_details.blood_type', 'LIKE', '%' . $searchInput . '%')
                         ->orWhere('user_details.dob', 'LIKE', '%' . $searchInput . '%');
