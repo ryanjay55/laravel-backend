@@ -16,21 +16,68 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Validation\ValidationException;
 use Dompdf\Dompdf;
+use Illuminate\Support\Facades\DB;
 
 
 class UserListController extends Controller
 {
-    public function getUserDetails(){
-        $userDetails = UserDetail::join('users', 'user_details.user_id', '=', 'users.user_id')
+    public function getUserDetails()
+    {
+        $userDetails = DB::table('user_details')
+            ->join('users', 'user_details.user_id', '=', 'users.user_id')
             ->join('galloners', 'user_details.user_id', '=', 'galloners.user_id')
+            ->leftJoin('blood_bags', 'user_details.user_id', '=', 'blood_bags.user_id')
+            ->leftJoin(DB::raw('(SELECT user_id, MAX(created_at) AS latest_timestamp FROM blood_bags GROUP BY user_id) AS latest_blood_bags'), function ($join) {
+                $join->on('blood_bags.user_id', '=', 'latest_blood_bags.user_id')
+                    ->on('blood_bags.created_at', '=', 'latest_blood_bags.latest_timestamp');
+            })
+            ->select(
+                'users.user_id',
+                'users.mobile',
+                'users.email',
+                'user_details.donor_no',
+                'user_details.first_name',
+                'user_details.middle_name',
+                'user_details.last_name',
+                'user_details.blood_type',
+                'user_details.sex',
+                'user_details.street',
+                'user_details.region',
+                'user_details.province',
+                'user_details.municipality',
+                'user_details.barangay',
+                'user_details.dob',
+                'user_details.remarks',
+                'galloners.badge',
+                'galloners.donate_qty',
+                DB::raw('IFNULL(MAX(blood_bags.date_donated), NULL) AS latest_date_donated')
+            )
+            ->groupBy(
+                'users.user_id',
+                'users.mobile',
+                'users.email',
+                'user_details.donor_no',
+                'user_details.first_name',
+                'user_details.middle_name',
+                'user_details.last_name',
+                'user_details.blood_type',
+                'user_details.sex',
+                'user_details.street',
+                'user_details.region',
+                'user_details.province',
+                'user_details.municipality',
+                'user_details.barangay',
+                'user_details.dob',
+                'user_details.remarks',
+                'galloners.badge',
+                'galloners.donate_qty'
+            )
             ->where('user_details.status', 0)
             ->where('users.isAdmin', 0)
-            ->select('users.mobile', 'users.email', 'user_details.*', 'galloners.badge', 'galloners.donate_qty')
             ->orderBy('user_details.user_id', 'desc')
-            ->distinct('galloners.user_id')
             ->paginate(8);
 
-        if ($userDetails->isEmpty()) { 
+        if ($userDetails->isEmpty()) {
             return response()->json([
                 'status' => 'success',
                 'message' => 'No donor found.'
@@ -43,14 +90,63 @@ class UserListController extends Controller
         }
     }
 
+
     public function exportUserDetailsAsPdf(Request $request){
         $user = getAuthenticatedUserId();
         $userId = $user->user_id;
 
-        $userDetails = UserDetail::join('users', 'user_details.user_id', '=', 'users.user_id')
+        $userDetails = DB::table('user_details')
+            ->join('users', 'user_details.user_id', '=', 'users.user_id')
             ->join('galloners', 'user_details.user_id', '=', 'galloners.user_id')
+            ->leftJoin('blood_bags', 'user_details.user_id', '=', 'blood_bags.user_id')
+            ->leftJoin(DB::raw('(SELECT user_id, MAX(created_at) AS latest_timestamp FROM blood_bags GROUP BY user_id) AS latest_blood_bags'), function ($join) {
+                $join->on('blood_bags.user_id', '=', 'latest_blood_bags.user_id')
+                    ->on('blood_bags.created_at', '=', 'latest_blood_bags.latest_timestamp');
+            })
+            ->select(
+                'users.user_id',
+                'users.mobile',
+                'users.email',
+                'user_details.donor_no',
+                'user_details.first_name',
+                'user_details.middle_name',
+                'user_details.last_name',
+                'user_details.blood_type',
+                'user_details.sex',
+                'user_details.street',
+                'user_details.region',
+                'user_details.province',
+                'user_details.municipality',
+                'user_details.barangay',
+                'user_details.dob',
+                'user_details.remarks',
+                'galloners.badge',
+                'galloners.donate_qty',
+                DB::raw('IFNULL(MAX(blood_bags.date_donated), NULL) AS latest_date_donated')
+            )
+            ->groupBy(
+                'users.user_id',
+                'users.mobile',
+                'users.email',
+                'user_details.donor_no',
+                'user_details.first_name',
+                'user_details.middle_name',
+                'user_details.last_name',
+                'user_details.blood_type',
+                'user_details.sex',
+                'user_details.street',
+                'user_details.region',
+                'user_details.province',
+                'user_details.municipality',
+                'user_details.barangay',
+                'user_details.dob',
+                'user_details.remarks',
+                'galloners.badge',
+                'galloners.donate_qty'
+            )
             ->where('user_details.status', 0)
-            ->select('users.mobile', 'users.email', 'user_details.*', 'galloners.badge', 'galloners.donate_qty')
+            ->where('users.isAdmin', 0)
+            ->orderBy('user_details.user_id', 'desc')
             ->get();
 
             $ip = file_get_contents('https://api.ipify.org');
@@ -79,9 +175,10 @@ class UserListController extends Controller
             $formattedDate = $dateNow->format('F j, Y g:i A');
 
             $pdf = new Dompdf();
-            $html = view('user-details', ['userDetails' => $userDetails, 'totalUsers' => $totalUserDetails, 'dateNow' => $formattedDate])->render();
-            $pdf->loadHtml($html);
-            $pdf->render();
+    $pdf->setPaper('A4', 'landscape');
+    $html = view('user-details', ['userDetails' => $userDetails, 'totalUsers' => $totalUserDetails, 'dateNow' => $formattedDate])->render();
+    $pdf->loadHtml($html);
+    $pdf->render();
     
             // Return the PDF as a response
             return response($pdf->output(), 200)
@@ -97,26 +194,70 @@ class UserListController extends Controller
             ]);
 
             $searchInput = str_replace(' ', '', $request->input('searchInput')); 
+            $userDetails = DB::table('user_details')
+            ->join('users', 'user_details.user_id', '=', 'users.user_id')
+            ->join('galloners', 'user_details.user_id', '=', 'galloners.user_id')
+            ->leftJoin('blood_bags', 'user_details.user_id', '=', 'blood_bags.user_id')
+            ->leftJoin(DB::raw('(SELECT user_id, MAX(created_at) AS latest_timestamp FROM blood_bags GROUP BY user_id) AS latest_blood_bags'), function ($join) {
+                $join->on('blood_bags.user_id', '=', 'latest_blood_bags.user_id')
+                    ->on('blood_bags.created_at', '=', 'latest_blood_bags.latest_timestamp');
+            })
+            ->select(
+                'users.user_id',
+                'users.mobile',
+                'users.email',
+                'user_details.donor_no',
+                'user_details.first_name',
+                'user_details.middle_name',
+                'user_details.last_name',
+                'user_details.blood_type',
+                'user_details.sex',
+                'user_details.street',
+                'user_details.region',
+                'user_details.province',
+                'user_details.municipality',
+                'user_details.barangay',
+                'user_details.dob',
+                'user_details.remarks',
+                'galloners.badge',
+                'galloners.donate_qty',
+                DB::raw('IFNULL(MAX(blood_bags.date_donated), NULL) AS latest_date_donated')
+            )
+            ->groupBy(
+                'users.user_id',
+                'users.mobile',
+                'users.email',
+                'user_details.donor_no',
+                'user_details.first_name',
+                'user_details.middle_name',
+                'user_details.last_name',
+                'user_details.blood_type',
+                'user_details.sex',
+                'user_details.street',
+                'user_details.region',
+                'user_details.province',
+                'user_details.municipality',
+                'user_details.barangay',
+                'user_details.dob',
+                'user_details.remarks',
+                'galloners.badge',
+                'galloners.donate_qty'
+            )
+            ->where('user_details.status', 0)
+            ->where('users.isAdmin', 0)
+            ->where(function ($query) use ($searchInput) {
+                $query->where('users.mobile', 'LIKE', '%' . $searchInput . '%')
+                    ->orWhere('users.email', 'LIKE', '%' . $searchInput . '%')
+                    ->orWhere('user_details.donor_no', 'LIKE', '%' . $searchInput . '%')
+                    ->orWhere('user_details.first_name', 'LIKE', '%' . $searchInput . '%')
+                    ->orWhere('user_details.middle_name', 'LIKE', '%' . $searchInput . '%')
+                    ->orWhere('user_details.last_name', 'LIKE', '%' . $searchInput . '%')
+                    ->orWhere('user_details.blood_type', 'LIKE', '%' . $searchInput . '%')
+                    ->orWhere('user_details.dob', 'LIKE', '%' . $searchInput . '%');
+            })
+            ->orderBy('user_details.user_id', 'desc')
+            ->paginate(8);
             
-            $userDetails = UserDetail::join('users', 'user_details.user_id', '=', 'users.user_id')
-                ->join('galloners', 'user_details.user_id', '=', 'galloners.user_id')
-                ->where('user_details.status', 0)
-                ->where('users.isAdmin', 0)
-                ->orderBy('user_details.user_id', 'desc')
-                ->distinct('user_details.user_id')
-                ->where(function ($query) use ($searchInput) {
-                    $query->where('users.mobile', 'LIKE', '%' . $searchInput . '%')
-                        ->orWhere('users.email', 'LIKE', '%' . $searchInput . '%')
-                        ->orWhere('user_details.donor_no', 'LIKE', '%' . $searchInput . '%')
-                        ->orWhere('user_details.first_name', 'LIKE', '%' . $searchInput . '%')
-                        ->orWhere('user_details.middle_name', 'LIKE', '%' . $searchInput . '%')
-                        ->orWhere('user_details.last_name', 'LIKE', '%' . $searchInput . '%')
-                        ->orWhere('user_details.blood_type', 'LIKE', '%' . $searchInput . '%')
-                        ->orWhere('user_details.dob', 'LIKE', '%' . $searchInput . '%');
-                })
-                ->select('users.mobile', 'users.email', 'user_details.*')
-                ->paginate(8);
-
 
             if($userDetails->isEmpty()) {
                 return response()->json([
@@ -402,13 +543,11 @@ class UserListController extends Controller
                 'sex'                   => ['required'],
                 'dob'                   => ['required'],
                 'blood_type'            => ['required'],
-                'occupation'            => ['required', 'string'],
                 'street'                => ['required', 'string'],
                 'region'                => ['required'],
                 'province'              => ['required'],
                 'municipality'          => ['required'],
                 'barangay'              => ['required' ],
-                'postalcode'            => ['required', 'integer'],
             ]);
 
                 $ip = file_get_contents('https://api.ipify.org');
@@ -427,13 +566,11 @@ class UserListController extends Controller
                 $userDetails->sex = $validatedData['sex'];
                 $userDetails->dob = $validatedData['dob'];
                 $userDetails->blood_type = $validatedData['blood_type'];
-                $userDetails->occupation = ucwords(strtolower($validatedData['occupation']));
                 $userDetails->street = ucwords(strtolower($validatedData['street']));
                 $userDetails->region = $validatedData['region'];
                 $userDetails->province = $validatedData['province'];
                 $userDetails->municipality = $validatedData['municipality'];
                 $userDetails->barangay = $validatedData['barangay'];
-                $userDetails->postalcode = $validatedData['postalcode'];
                 $userDetails->update();
 
                 $userAuthDetails = User::where('user_id', $validatedData['user_id'])->first();

@@ -59,7 +59,7 @@
 </head>
 <body>
     <div class="container">
-        <img src="{{ asset('logo/Lifelink-logo.png') }}" alt="LifeLink Logo" class="red-cross-logo">
+        <img src="https://redcrosslifelink.com/public/logo/Lifelink-logo.png" alt="LifeLink Logo" class="red-cross-logo">
         <h1 class="red-cross-text">Registered Users</h1> 
         <div class="summary">
             <div class="total-users">Total Users: {{ $totalUsers }}</div>
@@ -73,18 +73,18 @@
                     <th>Blood Type</th>
                     <th>Email</th>
                     <th>Mobile</th>
-                    <th>Birth Date</th>
+                    <th>Last Date Donated</th>
                 </tr>
             </thead>
             <tbody>
                 @foreach($userDetails as $user)
                     <tr>
                         <td>{{ $user->donor_no }}</td>
-                        <td>{{ $user->first_name }} {{ $user->last_name }}</td>
+                        <td>{{ $user->first_name }} {{ $user->middle_name }} {{ $user->last_name }}</td>
                         <td>{{ $user->blood_type }}</td>
                         <td>{{ $user->email }}</td>
                         <td>{{ $user->mobile }}</td>
-                        <td>{{ $user->dob }}</td>
+                        <td>{{ $user->latest_date_donated }}</td>
                     </tr>
                 @endforeach
             </tbody>
