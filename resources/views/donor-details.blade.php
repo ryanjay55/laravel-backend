@@ -61,24 +61,16 @@
         }
 
         /* Display barangays in a horizontal row with four per row */
-        .donors-per-barangay ul {
-            list-style: none;
-            padding: 0;
-            margin: 0;
-            white-space: nowrap;
-            overflow-x: auto; /* Add horizontal scroll if needed */
+        .donors-per-barangay table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
         }
 
-        .donors-per-barangay li {
-            display: inline;
-            margin-right: 10px;
-            margin-bottom: 10px;
-            width: calc(25% - 10px); /* Four barangays per row with spacing */
-        }
-
-        /* Ensure the start of each letter aligns properly */
-        .donors-per-barangay li:first-child {
-            margin-left: 0;
+        .donors-per-barangay th, .donors-per-barangay td {
+            border: 1px solid #ddd;
+            padding: 10px;
+            text-align: left;
         }
     </style>
 </head>
@@ -90,15 +82,32 @@
         <div class="as-of-date">As of {{ $dateNow }}</div>
         <div class="summary">
             <div class="total-users">Total Donors: {{ $totalDonors }}</div>
-            <div class="total-users">Male Donors: {{ $maleDonor }}</div>
-            <div class="total-users">Female Donors: {{ $femaleDonor }}</div>
+            <div class="total-users">Blood Type: {{ $bloodType }}</div>
+            <div class="total-users">Donor Type: {{ $donorType }}</div>
+            <div class="total-users">Male Donors: {{ $maleCount }}</div>
+            <div class="total-users">Female Donors: {{ $femaleCount }}</div>
             <div class="donors-per-barangay">
-                <strong>Donors per Barangay:</strong>
-                <ul>
-                    @foreach($donorsPerBarangay as $barangay)
-                        <li>{{ $barangay->barangay }}: {{ $barangay->donor_count }}</li>
-                    @endforeach
-                </ul>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Barangay</th>
+                            <th>Donor Count</th>
+                            <th>Male Count</th>
+                            <th>Female Count</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach($donorsPerBarangay as $barangay)
+                        <tr>
+                            <td>{{ $barangay->barangay }}</td>
+                            <td>{{ $barangay->donor_count }}</td>
+                            <td>{{ $barangay->male_count }}</td>
+                            <td>{{ $barangay->female_count }}</td>
+                        </tr>
+                        @endforeach
+                    </tbody>
+                </table>
+                
             </div>
         </div>
         <ul class="donor-list">
@@ -112,7 +121,8 @@
                 <strong>Occupation:</strong> {{ $donor->occupation }}<br>
                 <strong>Email:</strong> {{ $donor->email }}<br>
                 <strong>Mobile:</strong> {{ $donor->mobile }}<br>
-                <strong>Address:</strong> {{ $donor->street }}, {{ $donor->barangay }}, {{ $donor->municipality }}, {{ $donor->province }}, {{ $donor->region }}<br>
+                <strong>Address:</strong> {{ $donor->street }}, {{ $donor->barangay }}, {{ $donor->municipality }},
+                {{ $donor->province }}, {{ $donor->region }}<br>
                 <strong>Donate Quantity:</strong> {{ $donor->donate_qty }}<br>
                 <strong>Badge:</strong> {{ $donor->badge }}<br>
             </li>
@@ -122,4 +132,3 @@
 </body>
 
 </html>
-

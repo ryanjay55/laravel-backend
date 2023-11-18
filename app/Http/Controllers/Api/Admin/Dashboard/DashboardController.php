@@ -265,7 +265,8 @@ class DashboardController extends Controller
                 ->join('blood_bags', 'user_details.user_id', '=', 'blood_bags.user_id')
                 ->where('user_details.remarks', 0)
                 ->where('user_details.status', 0)
-                ->where('galloners.donate_qty', '>', 0);
+                ->where('galloners.donate_qty', '>', 0)
+                ->distinct('blood_bags.user_id');
 
             $reactive = BloodBag::join('reactive_blood_bags as rbb', 'blood_bags.blood_bags_id', '=', 'rbb.blood_bags_id');
             $spoiled = BloodBag::join('spoiled_blood_bags as sbb', 'blood_bags.blood_bags_id', '=', 'sbb.blood_bags_id');

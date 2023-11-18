@@ -65,65 +65,6 @@ class DonorController extends Controller
        ]);
    }
 
-    // public function filterDonorList(Request $request)
-    // {
-    //     try {
-    //         $bloodType = $request->input('blood_type');
-    //         $donorType = $request->input('donor_type');
-    
-    //         $donorList = UserDetail::join('users', 'user_details.user_id', '=', 'users.user_id')
-    //             ->join('galloners', 'user_details.user_id', '=', 'galloners.user_id')
-    //             ->join('blood_bags', 'user_details.user_id', '=', 'blood_bags.user_id')
-    //             ->join('donor_types', 'user_details.donor_types_id', '=', 'donor_types.donor_types_id')
-    //             ->where('user_details.remarks', 0)
-    //             ->where('user_details.status', 0)
-    //             ->where('galloners.donate_qty', '>', 0)
-    //             ->select('users.mobile', 'users.email', 'user_details.*', 'galloners.badge', 'galloners.donate_qty', 'donor_types.donor_type_desc', 'blood_bags.date_donated')
-    //             ->distinct('user_details.user_id');
-    
-    //         if ($bloodType !== 'All') {
-    //             $donorList->where('user_details.blood_type', $bloodType);
-    //         }
-    //         if ($donorType !== 'All') {
-    //             $donorList->where('donor_types.donor_type_desc', $donorType);
-    //         }
-    
-    //         $donorList = $donorList->orderBy('blood_bags.date_donated', 'desc')->paginate(8);
-    
-    //         // Transform the results to include a list of blood bags for each user
-    //         $donorList->transform(function ($donor) {
-    //             $bloodBags = BloodBag::where('user_id', $donor->user_id)
-    //                 ->select('serial_no', 'date_donated')
-    //                 ->orderBy('date_donated', 'asc')
-    //                 ->get();
-    
-    //             $donor->blood_bags = $bloodBags;
-    
-    //             // Retrieve the last date_donated
-    //             $lastDonated = $bloodBags->last()->date_donated ?? null;
-    
-    //             $donor->last_donated = $lastDonated;
-    
-    //             return $donor;
-    //         });
-    
-    //         $totalCount = $donorList->total();
-    
-    //         return response()->json([
-    //             'status' => 'success',
-    //             'data' => $donorList,
-    //             'total_count' => $totalCount
-    //         ]);
-    
-    //     } catch (ValidationException $e) {
-    //         return response()->json([
-    //             'status' => 'error',
-    //             'message' => 'Validation failed',
-    //             'errors' => $e->validator->errors(),
-    //         ], 400);
-    //     }
-    // }
-    
 
     public function searchDonor(Request $request){
         try {
@@ -202,29 +143,60 @@ class DonorController extends Controller
         }
     }
 
-    public function exportDonorListAsPdf(){
+    public function exportDonorListAsPdf(Request $request){
+        $bloodType = $request->input('bloodType');
+        $donorType = $request->input('donorType');
         $user = getAuthenticatedUserId();
         $userId = $user->user_id;
     
         $donorList = UserDetail::join('users', 'user_details.user_id', '=', 'users.user_id')
+        ->join('galloners', 'user_details.user_id', '=', 'galloners.user_id')
+        ->join('donor_types', 'user_details.donor_types_id', '=', 'donor_types.donor_types_id')
+        ->where('user_details.remarks', 0)
+        ->where('user_details.status', 0)
+        ->where('galloners.donate_qty', '>', 0);
+
+        if ($bloodType !== 'All') {
+            $donorList->where('user_details.blood_type', $bloodType);
+        }
+
+        if ($donorType !== 'All') {
+            $donorList->where('donor_types.donor_type_desc', $donorType);
+        }
+
+        $donorList = $donorList->select('user_details.user_id', 'users.mobile', 'users.email', 'user_details.*', 'galloners.badge', 'galloners.donate_qty', 'galloners.updated_at', 'donor_types.donor_type_desc')
+            ->distinct()
+            ->orderBy('galloners.updated_at', 'desc')
+            ->get();
+
+        $donorsPerBarangay = DB::table('user_details')
             ->join('galloners', 'user_details.user_id', '=', 'galloners.user_id')
+            ->join('donor_types', 'user_details.donor_types_id', '=', 'donor_types.donor_types_id')
             ->where('user_details.remarks', 0)
             ->where('user_details.status', 0)
-            ->where('galloners.donate_qty', '>', 0) 
-            ->select('users.mobile', 'users.email', 'user_details.*', 'galloners.badge', 'galloners.donate_qty')
+            ->where('galloners.donate_qty', '>', 0)
+            ->select(
+                'user_details.barangay',
+                DB::raw('count(distinct user_details.user_id) as donor_count'),
+                DB::raw('sum(case when user_details.sex = "Male" then 1 else 0 end) as male_count'),
+                DB::raw('sum(case when user_details.sex = "Female" then 1 else 0 end) as female_count')
+            );
+        
+        if ($bloodType !== 'All') {
+            $donorsPerBarangay->where('user_details.blood_type', '=', $bloodType);
+        }
+        
+        if ($donorType !== 'All') {
+            $donorsPerBarangay->where('donor_types.donor_type_desc', '=', $donorType);
+        }
+        
+        $donorsPerBarangay = $donorsPerBarangay->groupBy('user_details.barangay')
+            ->orderByDesc('donor_count') // Sort by donor count in descending order
             ->get();
-    
-        $donorsPerBarangay = DB::table('user_details')
-            ->leftJoin('blood_bags', 'user_details.user_id', '=', 'blood_bags.user_id')
-            ->select('user_details.barangay', DB::raw('count(distinct user_details.user_id) as donor_count'))
-            ->where('blood_bags.isCollected', '=', 1)
-            ->groupBy('user_details.barangay')
-            ->get();
-    
-        // Count the number of male and female donors
-        $maleDonor = $donorList->where('sex', 'Male')->count();
-        $femaleDonor = $donorList->where('sex', 'Female')->count();
-    
+        
+        $maleCount = $donorsPerBarangay->sum('male_count');
+        $femaleCount = $donorsPerBarangay->sum('female_count');
+        
         $ip = file_get_contents('https://api.ipify.org');
         $ch = curl_init('http://ipwho.is/'.$ip);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
@@ -252,7 +224,7 @@ class DonorController extends Controller
         $formattedDate = $dateNow->format('F j, Y g:i A');
     
         $pdf = new Dompdf();
-        $html = view('donor-details', ['donorDetails' => $donorList, 'donorsPerBarangay' => $donorsPerBarangay, 'maleDonor' => $maleDonor, 'femaleDonor' => $femaleDonor, 'totalDonors' => $totalDonorDetails, 'dateNow' => $formattedDate])->render();
+        $html = view('donor-details', ['maleCount' => $maleCount, 'femaleCount' => $femaleCount, 'bloodType' => $bloodType, 'donorType' => $donorType, 'donorDetails' => $donorList, 'donorsPerBarangay' => $donorsPerBarangay, 'totalDonors' => $totalDonorDetails, 'dateNow' => $formattedDate])->render();
         $pdf->loadHtml($html);
         $pdf->render();
     
