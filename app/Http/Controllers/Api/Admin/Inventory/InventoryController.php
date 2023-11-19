@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api\Admin\Inventory;
 use App\Http\Controllers\Controller;
 use App\Models\AuditTrail;
 use App\Models\Deferral;
+use App\Models\LastUpdate;
 use App\Models\Hospital;
 use App\Models\PatientReceiver;
 use App\Models\UserDetail;
@@ -55,7 +56,13 @@ class InventoryController extends Controller
                     
                     $bloodBag->update(['isStored' => 1]);
                     $bloodBag->update(['isTested' => 1]);
+                    $bloodBag->update(['date_stored' => Carbon::now()]);
 
+                    LastUpdate::updateOrInsert(
+                        [],
+                        ['date_update' => now()]
+                    );
+                    
 
                     AuditTrail::create([
                         'user_id'    => $userId,
@@ -118,7 +125,13 @@ class InventoryController extends Controller
                     ], 400);
                 } else {
                     $bloodBag->update(['isStored' => 1]);
-    
+                    $bloodBag->update(['isTested' => 1]);
+                    $bloodBag->update(['date_stored' => Carbon::now()]);
+                    
+                    LastUpdate::updateOrInsert(
+                        [],
+                        ['date_update' => now()]
+                    );
                     AuditTrail::create([
                         'user_id'    => $userId,
                         'module'     => 'Inventory',
@@ -382,6 +395,10 @@ class InventoryController extends Controller
                 $bloodBag = BloodBag::where('serial_no', $validatedData['serial_no'])->first();
                 $bloodBag->update(['isStored' => 0]);
 
+                $lastUpdate = LastUpdate::first();
+                $lastUpdate->date_update = Carbon::now();
+                $lastUpdate->save();
+                
                 AuditTrail::create([
                     'user_id'    => $userId,
                     'module'     => 'Inventory',

@@ -178,7 +178,7 @@ class BloodBagController extends Controller
                             $donor = User::where('user_id', $validatedData['user_id'])->first();
                             $donorEmail = $donor->email;
 
-                            Mail::to($donorEmail)->send(new ThankyouForDonationMail($donor));
+                            // Mail::to($donorEmail)->send(new ThankyouForDonationMail($donor));
 
                             $galloner->donate_qty += 1;
                             $galloner->save();
@@ -264,7 +264,7 @@ class BloodBagController extends Controller
                         $donor = User::where('user_id', $validatedData['user_id'])->first();
                         $donorEmail = $donor->email;
 
-                        Mail::to($donorEmail)->send(new ThankyouForDonationMail($donor));
+                        // Mail::to($donorEmail)->send(new ThankyouForDonationMail($donor));
                         
                         $galloner->donate_qty += 1;
                         $galloner->save();
@@ -488,7 +488,7 @@ class BloodBagController extends Controller
                    $bloodBag->countdown_end_date = "This blood bag cannot be removed at this time";
                } else {
                    $bloodBag->countdown_message = 'Blood bag can be removed within ' . $bloodBag->countdown . ' day/s';
-                   $bloodBag->countdown_end_date = Carbon::parse($bloodBag->date_donated)->addDays($bloodBag->countdown)->format('Y-m-d');               }
+                   $bloodBag->countdown_end_date = Carbon::parse($bloodBag->created_at)->addDays($bloodBag->countdown)->format('Y-m-d');               }
            }
    
            // Return the paginated results with decrypted serial_no
@@ -633,18 +633,47 @@ class BloodBagController extends Controller
         }
     }
 
-    public function exportBloodBagAsPdf(){
+    public function exportBloodBagAsPdf(Request $request){
+        $bloodType = $request->input('blood_type');
+        $startDate = $request->input('startDate');
+        $endDate = $request->input('endDate');
+        $bledBy = $request->input('bledBy');
+        $venue = $request->input('venue');
+
         $user = getAuthenticatedUserId();
         $userId = $user->user_id;
 
         $bloodBags = UserDetail::join('blood_bags', 'user_details.user_id', '=', 'blood_bags.user_id')
-            ->select('user_details.donor_no', 'user_details.first_name', 'user_details.last_name', 'user_details.blood_type', 'blood_bags.isExpired','blood_bags.blood_bags_id','blood_bags.serial_no', 'blood_bags.date_donated', 'blood_bags.expiration_date', 'blood_bags.created_at', 'bled_by', 'venue')
-            ->where('user_details.remarks', '=', 0)
-            ->where('blood_bags.status', '=', 0)
-            ->where('blood_bags.isStored', '=', 0)
-            ->where('blood_bags.isExpired', '=', 0)
-            ->where('blood_bags.separate', '=', 0)
-            ->get();
+        ->select('user_details.donor_no', 'user_details.first_name', 'user_details.last_name', 'user_details.blood_type', 'blood_bags.isExpired', 'blood_bags.blood_bags_id', 'blood_bags.serial_no', 'blood_bags.date_donated', 'blood_bags.expiration_date', 'blood_bags.created_at', 'blood_bags.bled_by', 'blood_bags.venue')
+        ->where('user_details.remarks', '=', 0)
+        ->where('blood_bags.status', '=', 0)
+        ->where('blood_bags.isStored', '=', 0)
+        ->where('blood_bags.isExpired', '=', 0)
+        ->where('blood_bags.separate', '=', 0)
+        ->where('blood_bags.unsafe', '=', 0);
+
+        // Apply additional filters based on request parameters
+        if ($bloodType !== 'All') {
+            $bloodBags->where('user_details.blood_type', '=', $bloodType);
+        }
+
+        if (!empty($startDate)) {
+            $bloodBags->where('blood_bags.date_donated', '>=', $startDate);
+        }
+
+        if (!empty($endDate)) {
+            $bloodBags->where('blood_bags.date_donated', '<=', $endDate);
+        }
+
+        if ($bledBy !== 'All') {
+            $bloodBags->where('blood_bags.bled_by',  '=', $bledBy);
+        }
+
+        if ($venue !== 'All') {
+            $bloodBags->where('blood_bags.venue',  '=', $venue);
+        }
+
+        $bloodBags = $bloodBags->get();
 
             $ip = file_get_contents('https://api.ipify.org');
             $ch = curl_init('http://ipwho.is/'.$ip);
@@ -673,6 +702,7 @@ class BloodBagController extends Controller
             $formattedDate = $dateNow->format('F j, Y g:i A');
 
             $pdf = new Dompdf();
+            $pdf->setPaper('A4', 'landscape');
             $html = view('blood-bag-details', ['bloodBags' => $bloodBags, 'totalBloodBags' => $totalBloodBags, 'dateNow' => $formattedDate])->render();
             $pdf->loadHtml($html);
             $pdf->render();

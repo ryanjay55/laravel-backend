@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\BloodBag;
 use App\Models\Deferral;
 use App\Models\Setting;
+use App\Models\LastUpdate;
 use App\Models\UserDetail;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
@@ -35,7 +36,16 @@ class DashboardController extends Controller
         $latestCreatedAt = null; // Initialize a variable to store the latest created_at value
 
         // Find the latest created_at value
-        $latestCreatedAt = $bloodBags->max('created_at');
+        $update = LastUpdate::first();
+
+        if ($update) {
+            $latestCreatedAt = $update->date_update;
+            // Now you can use $latestCreatedAt
+        } else {
+            // Handle the case where $update is null, e.g., set a default value
+            $latestCreatedAt = null; // or set it to some default date or value
+        }
+
         
         // Format the latestCreatedAt
         $formattedLatestCreatedAt = $latestCreatedAt ? date('Y-m-d h:i A', strtotime($latestCreatedAt)) : null;
@@ -43,6 +53,7 @@ class DashboardController extends Controller
             // Set the formattedLatestCreatedAt to the current date and time
             $formattedLatestCreatedAt = date('Y-m-d h:i A');
         }
+        
         foreach ($bloodTypes as $bloodType) {
             $bloodBagsCount = $bloodBags->where('blood_type', $bloodType)->count();
 
@@ -133,11 +144,10 @@ class DashboardController extends Controller
                     ->select('user_details.blood_type', 'blood_bags.serial_no', 'blood_bags.date_donated', 'bled_by')
                     ->whereIn('user_details.blood_type', ['A+', 'A-', 'B+', 'B-', 'O+', 'O-', 'AB+', 'AB-'])
                     ->where('blood_bags.isStored', '=', 1)
-                    ->where('blood_bags.isExpired', '=', '0')
                     ->where('blood_bags.status', '=', '0')
                     ->where('user_details.remarks', '=', '0')
                     ->whereYear('date_donated', $currentYear)
-                    ->whereBetween('date_donated', [$startDate, $endDate])
+                    ->whereBetween('date_stored', [$startDate, $endDate])
                     ->count();
         
                 $monthCounts[$monthName] = $bloodBags;
@@ -153,11 +163,10 @@ class DashboardController extends Controller
                     ->select('user_details.blood_type', 'blood_bags.serial_no', 'blood_bags.date_donated', 'bled_by')
                     ->where('user_details.blood_type', $bloodType)
                     ->where('blood_bags.isStored', '=', 1)
-                    ->where('blood_bags.isExpired', '=', '0')
                     ->where('blood_bags.status', '=', '0')
                     ->where('user_details.remarks', '=', '0')
                     ->whereYear('date_donated', $currentYear)
-                    ->whereBetween('date_donated', [$startDate, $endDate])
+                    ->whereBetween('date_stored', [$startDate, $endDate])
                     ->count();
         
                 $monthCounts[$monthName] = $bloodBags;
@@ -165,20 +174,31 @@ class DashboardController extends Controller
         }
        
       // Retrieve the latest updated_at value
-      $latestUpdatedAt = DB::table('user_details')
-          ->leftJoin('blood_bags', 'user_details.user_id', '=', 'blood_bags.user_id')
-          ->whereIn('user_details.blood_type', ['A+', 'A-', 'B+', 'B-', 'O+', 'O-', 'AB+', 'AB-'])
-          ->where('blood_bags.isStored', '=', 1)
-          ->where('blood_bags.isExpired', '=', '0')
-          ->where('blood_bags.status', '=', '0')
-          ->where('user_details.remarks', '=', '0')
-          ->orderBy('blood_bags.created_at', 'desc')
-          ->value('blood_bags.created_at');
+          $latestUpdatedAt = null; // Initialize a variable to store the latest created_at value
+
+          // Find the latest created_at value
+          $update = LastUpdate::first();
+  
+          if ($update) {
+              $latestCreatedAt = $update->date_update;
+              // Now you can use $latestCreatedAt
+          } else {
+              // Handle the case where $update is null, e.g., set a default value
+              $latestCreatedAt = null; // or set it to some default date or value
+          }
+  
+          
+          // Format the latestCreatedAt
+          $formattedLatestCreatedAt = $latestCreatedAt ? date('Y-m-d h:i A', strtotime($latestCreatedAt)) : null;
+          if (!$formattedLatestCreatedAt) {
+              // Set the formattedLatestCreatedAt to the current date and time
+              $formattedLatestCreatedAt = date('Y-m-d h:i A');
+          }
       
       return response()->json([
           'status' => 'success',
           'month_counts' => array($monthCounts),
-          'latest_date' => $latestUpdatedAt
+          'latest_date' => $formattedLatestCreatedAt
       ]);
    }
 

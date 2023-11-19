@@ -21,6 +21,7 @@ class BloodBag extends Model
         'bled_by',
         'isCollected',
         'isStored',
+        'date_stored',
         'expiration_date',
         'isExpired',
         'isDisposed',
