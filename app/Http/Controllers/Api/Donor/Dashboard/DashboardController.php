@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api\Donor\Dashboard;
 use App\Http\Controllers\Controller;
 use App\Models\BloodBag;
 use App\Models\Galloner;
+use App\Models\LastUpdate;
 use App\Models\PatientReceiver;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -72,7 +73,16 @@ class DashboardController extends Controller
         $latestCreatedAt = null; // Initialize a variable to store the latest created_at value
 
         // Find the latest created_at value
-        $latestCreatedAt = $bloodBags->max('created_at');
+        $update = LastUpdate::first();
+
+        if ($update) {
+            $latestCreatedAt = $update->date_update;
+            // Now you can use $latestCreatedAt
+        } else {
+            // Handle the case where $update is null, e.g., set a default value
+            $latestCreatedAt = null; // or set it to some default date or value
+        }
+
         
         // Format the latestCreatedAt
         $formattedLatestCreatedAt = $latestCreatedAt ? date('Y-m-d h:i A', strtotime($latestCreatedAt)) : null;

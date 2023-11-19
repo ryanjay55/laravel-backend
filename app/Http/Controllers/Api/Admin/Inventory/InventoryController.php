@@ -10,7 +10,7 @@ use App\Models\Hospital;
 use App\Models\PatientReceiver;
 use App\Models\UserDetail;
 use Illuminate\Http\Request;
-
+use Dompdf\Dompdf;
 use App\Models\BloodBag;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
@@ -253,29 +253,67 @@ class InventoryController extends Controller
                 ->where('blood_bags.isExpired', 0)
                 ->where('user_details.remarks', 0)
                 ->where('blood_bags.isDisposed', 0)
+                ->where('blood_bags.isUsed', 0)
+                ->select('blood_bags.blood_bags_id', 'blood_bags.serial_no', 'user_details.first_name', 'user_details.last_name', 'user_details.blood_type', 'user_details.donor_no', 'blood_bags.date_donated', 'blood_bags.expiration_date')
+                ->orderBy('blood_bags.expiration_date')
                 ->where(function ($query) use ($searchInput) {
                     $query->where('blood_bags.serial_no', 'LIKE', '%' . $searchInput . '%')
-                        ->orWhere('user_details.first_name', 'LIKE', '%' . $searchInput . '%')
-                        ->orWhere('user_details.last_name', 'LIKE', '%' . $searchInput . '%')
+                        // ->orWhere('user_details.first_name', 'LIKE', '%' . $searchInput . '%')
+                        // ->orWhere('user_details.last_name', 'LIKE', '%' . $searchInput . '%')
                         ->orWhere('user_details.blood_type', 'LIKE', '%' . $searchInput . '%')
                         ->orWhere('user_details.donor_no', 'LIKE', '%' . $searchInput . '%')
                         ->orWhere('blood_bags.date_donated', 'LIKE', '%' . $searchInput . '%')
                         ->orWhere('blood_bags.expiration_date', 'LIKE', '%' . $searchInput . '%');
                 })
-                ->select('blood_bags.blood_bags_id', 'blood_bags.serial_no', 'user_details.first_name', 'user_details.last_name', 'user_details.blood_type', 'user_details.donor_no', 'blood_bags.date_donated', 'blood_bags.expiration_date')
                 ->paginate(8);
-            dd($stocks);
+            // dd($stocks);
 
             if ($stocks->isEmpty()) {
                 return response()->json([
-                    'status' => 'success',
-                    'message' => 'No stocks found.'
-                ], 200);
+                    'status' => 'error',
+                    'message' => 'No blood bag in inventory',
+                    'total_count' => 0
+                ]);
             } else {
+                $stocks->each(function ($bloodBag) {
+                    $today = Carbon::today();
+                    $dateDonated = Carbon::parse($bloodBag->date_donated);
+                    $expirationDate = Carbon::parse($bloodBag->expiration_date);
+                    $remainingDays = $expirationDate->diffInDays($today);
+                    $bloodBag->remaining_days = $remainingDays;
+                    $bloodBag->save();
+    
+                    if ($remainingDays <= 7) {
+                        $bloodBag->priority = 'High Priority';
+                    } elseif ($remainingDays <= 14) {
+                        $bloodBag->priority = 'Medium Priority';
+                    } else {
+                        $bloodBag->priority = 'Low Priority';
+                    }
+    
+                    if ($expirationDate->lte($today) || $remainingDays == 0) {
+                        $bloodBag->isExpired = 1;
+                    } else {
+                        $bloodBag->isExpired = 0;
+                    }
+    
+                    $bloodBag->save();
+                    return $bloodBag;
+                });
+    
+                $totalCount = BloodBag::join('user_details', 'blood_bags.user_id', '=', 'user_details.user_id')
+                    ->where('blood_bags.isStored', 1)
+                    ->where('blood_bags.isExpired', 0)
+                    ->where('user_details.remarks', 0)
+                    ->where('blood_bags.isDisposed', 0)
+                    ->where('blood_bags.isUsed', 0)
+                    ->count();
+    
                 return response()->json([
                     'status' => 'success',
-                    'data' => $stocks
-                ], 200);
+                    'data' => $stocks,
+                    'total_count' => $totalCount
+                ]);
             }
         } catch (ValidationException $e) {
             return response()->json([
@@ -286,6 +324,78 @@ class InventoryController extends Controller
         }
     }
    
+    public function exportStocksAsPdf(Request $request){
+        $bloodType = $request->input('blood_type');
+        $startDate = $request->input('startDate');
+        $endDate = $request->input('endDate');
+
+        $user = getAuthenticatedUserId();
+        $userId = $user->user_id;
+
+        $inventory = BloodBag::join('user_details', 'blood_bags.user_id', '=', 'user_details.user_id')
+            ->where('blood_bags.isStored', 1)
+            ->where('blood_bags.isExpired', 0)
+            ->where('user_details.remarks', 0)
+            ->where('blood_bags.isDisposed', 0)
+            ->where('blood_bags.isUsed', 0);
+
+        // Apply additional filters based on request parameters
+        if ($bloodType !== 'All') {
+            $inventory->where('user_details.blood_type', $bloodType);
+        }
+
+        if (!empty($startDate)) {
+            $inventory->where('blood_bags.expiration_date', '>=', $startDate);
+        }
+
+        if (!empty($endDate)) {
+            $inventory->where('blood_bags.expiration_date', '<=', $endDate);
+        }
+
+        $inventory = $inventory->select('blood_bags.blood_bags_id', 'blood_bags.serial_no', 'user_details.first_name', 'user_details.last_name', 'user_details.blood_type', 'user_details.donor_no', 'blood_bags.date_donated', 'blood_bags.expiration_date')
+        ->orderBy('blood_bags.expiration_date')
+        ->get();
+        //dd($inventory);
+       
+        $totalCount = $inventory->count();
+
+        $ip = file_get_contents('https://api.ipify.org');
+        $ch = curl_init('http://ipwho.is/'.$ip);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_HEADER, false);
+    
+        $ipwhois = json_decode(curl_exec($ch), true);
+    
+        curl_close($ch);
+
+        AuditTrail::create([
+            'user_id'    => $userId,
+            'module'     => 'Inventory',
+            'action'     => 'Export Blood Stocks as PDF',
+            'status'     => 'success',
+            'ip_address' => $ipwhois['ip'],
+            'region'     => $ipwhois['region'],
+            'city'       => $ipwhois['city'],
+            'postal'     => $ipwhois['postal'],
+            'latitude'   => $ipwhois['latitude'],
+            'longitude'  => $ipwhois['longitude'],
+        ]);
+
+        $totalBloodBags = $totalCount;
+        $dateNow = new \DateTime();
+        $formattedDate = $dateNow->format('F j, Y g:i A');
+
+        $pdf = new Dompdf();
+        $pdf->setPaper('A4', 'landscape');
+        $html = view('stocks-details', ['inventory' => $inventory, 'totalBloodBags' => $totalBloodBags, 'dateNow' => $formattedDate])->render();
+        $pdf->loadHtml($html);
+        $pdf->render();
+
+        // Return the PDF as a response
+        return response($pdf->output(), 200)
+            ->header('Content-Type', 'application/pdf')
+            ->header('Content-Disposition', 'attachment; filename="donor-list.pdf"');
+    }
 
     public function filterBloodTypeStocks(Request $request)
     {
@@ -435,8 +545,54 @@ class InventoryController extends Controller
             ->where('blood_bags.isDisposed', 0)
             ->where('user_details.remarks', 0)
             ->select('blood_bags.blood_bags_id','blood_bags.serial_no','user_details.donor_no','user_details.blood_type','user_details.first_name', 'user_details.last_name','blood_bags.date_donated', 'blood_bags.expiration_date')
+            ->orderBy('blood_bags.expiration_date', 'desc')
             ->paginate(8);
 
+        if($expiredBlood->isEmpty()){
+            return response()->json([
+                'status' => 'success',
+                'message' => 'No expired blood bag',
+            ]);
+        }else{
+
+            $totalCount = BloodBag::join('user_details', 'blood_bags.user_id', '=', 'user_details.user_id')
+            ->where('blood_bags.isDisposed', 0)
+            ->where('blood_bags.isExpired', 1)
+            ->where('user_details.remarks', 0)
+            ->count();
+
+            return response()->json([
+                'status' => 'success',
+                'data' => $expiredBlood,
+                'total_count' => $totalCount
+            ]);
+        }
+    }
+
+    public function searchExpiredBlood(Request $request){
+        try {
+            $request->validate([
+                'searchInput' => 'required',
+            ]);
+
+            $searchInput = str_replace(' ', '', $request->input('searchInput'));
+
+            $expiredBlood = BloodBag::join('user_details', 'blood_bags.user_id', '=', 'user_details.user_id')
+            ->where('blood_bags.isExpired', 1)
+            ->where('blood_bags.isDisposed', 0)
+            ->where('user_details.remarks', 0)
+            ->select('blood_bags.blood_bags_id','blood_bags.serial_no','user_details.donor_no','user_details.blood_type','user_details.first_name', 'user_details.last_name','blood_bags.date_donated', 'blood_bags.expiration_date')
+            ->where(function ($query) use ($searchInput) {
+                    $query->where('blood_bags.serial_no', 'LIKE', '%' . $searchInput . '%')
+                        // ->orWhere('user_details.first_name', 'LIKE', '%' . $searchInput . '%')
+                        // ->orWhere('user_details.last_name', 'LIKE', '%' . $searchInput . '%')
+                        ->orWhere('user_details.blood_type', 'LIKE', '%' . $searchInput . '%')
+                        ->orWhere('user_details.donor_no', 'LIKE', '%' . $searchInput . '%')
+                        ->orWhere('blood_bags.date_donated', 'LIKE', '%' . $searchInput . '%')
+                        ->orWhere('blood_bags.expiration_date', 'LIKE', '%' . $searchInput . '%');
+                })
+            ->paginate(8);
+            
             if($expiredBlood->isEmpty()){
                 return response()->json([
                     'status' => 'success',
@@ -444,66 +600,116 @@ class InventoryController extends Controller
                 ]);
             }else{
 
-                $totalCount = BloodBag::join('user_details', 'blood_bags.user_id', '=', 'user_details.user_id')
-                ->where('blood_bags.isDisposed', 0)
-                ->where('blood_bags.isExpired', 1)
-                ->where('user_details.remarks', 0)
-                ->count();
-
                 return response()->json([
                     'status' => 'success',
                     'data' => $expiredBlood,
-                    'total_count' => $totalCount
                 ]);
             }
-            
+               
+        } catch (ValidationException $e) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Validation failed',
+                'errors' => $e->validator->errors(),
+            ], 400);
+        }
+    }
+
+    public function exportExpiredAsPdf(Request $request){
+        $bloodType = $request->input('blood_type');
+        $startDate = $request->input('startDate');
+        $endDate = $request->input('endDate');
+
+        $user = getAuthenticatedUserId();
+        $userId = $user->user_id;
+
+        $expiredBlood = BloodBag::join('user_details', 'blood_bags.user_id', '=', 'user_details.user_id')
+            ->where('blood_bags.isExpired', 1)
+            ->where('blood_bags.isDisposed', 0)
+            ->where('user_details.remarks', 0);
+
+        // Apply additional filters based on request parameters
+        if ($bloodType !== 'All') {
+            $expiredBlood->where('user_details.blood_type', $bloodType);
+        }
+
+        if (!empty($startDate)) {
+            $expiredBlood->where('blood_bags.expiration_date', '>=', $startDate);
+        }
+
+        if (!empty($endDate)) {
+            $expiredBlood->where('blood_bags.expiration_date', '<=', $endDate);
+        }
+
+        $inventory = $expiredBlood->select('blood_bags.blood_bags_id','blood_bags.serial_no','user_details.donor_no','user_details.blood_type','user_details.first_name', 'user_details.last_name','blood_bags.date_donated', 'blood_bags.expiration_date')
+        ->orderBy('blood_bags.expiration_date', 'desc')
+        ->get();
+        //dd($inventory);
+       
+        $totalCount = $inventory->count();
+
+        $ip = file_get_contents('https://api.ipify.org');
+        $ch = curl_init('http://ipwho.is/'.$ip);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_HEADER, false);
+    
+        $ipwhois = json_decode(curl_exec($ch), true);
+    
+        curl_close($ch);
+
+        AuditTrail::create([
+            'user_id'    => $userId,
+            'module'     => 'Inventory',
+            'action'     => 'Export Blood Stocks as PDF',
+            'status'     => 'success',
+            'ip_address' => $ipwhois['ip'],
+            'region'     => $ipwhois['region'],
+            'city'       => $ipwhois['city'],
+            'postal'     => $ipwhois['postal'],
+            'latitude'   => $ipwhois['latitude'],
+            'longitude'  => $ipwhois['longitude'],
+        ]);
+
+        $totalBloodBags = $totalCount;
+        $dateNow = new \DateTime();
+        $formattedDate = $dateNow->format('F j, Y g:i A');
+
+        $pdf = new Dompdf();
+        $pdf->setPaper('A4', 'landscape');
+        $html = view('expired-bag-details', ['inventory' => $inventory, 'totalBloodBags' => $totalBloodBags, 'dateNow' => $formattedDate])->render();
+        $pdf->loadHtml($html);
+        $pdf->render();
+
+        // Return the PDF as a response
+        return response($pdf->output(), 200)
+            ->header('Content-Type', 'application/pdf')
+            ->header('Content-Disposition', 'attachment; filename="donor-list.pdf"');
     }
 
     public function getTempDeferralBloodBag(){
         
-        $tempExpiredBlood = BloodBag::join('user_details', 'blood_bags.user_id', '=', 'user_details.user_id')
-            ->join('deferrals', 'deferrals.user_id', '=', 'user_details.user_id')
-            ->where('deferrals.remarks_id', 1)
-            ->where('blood_bags.separate', 1)
-            // ->where('deferrals.status', 1)
-            ->where('blood_bags.isCollected', 1)
-            ->where('blood_bags.isExpired', 0)
-            ->where('blood_bags.isDisposed', 0)
-            ->select(
-                'blood_bags.blood_bags_id',
-                'blood_bags.serial_no',
-                'user_details.donor_no',
-                'user_details.blood_type',
-                'user_details.first_name',
-                'user_details.last_name',
-                'blood_bags.date_donated',
-                'blood_bags.expiration_date'
-            )
-            ->distinct()
-            ->paginate(8);
+        $inventory = BloodBag::join('reactive_blood_bags', 'reactive_blood_bags.blood_bags_id', '=', 'blood_bags.blood_bags_id')
+        ->join('user_details', 'blood_bags.user_id', '=', 'user_details.user_id')
+        ->join('reactive_remarks', 'reactive_remarks.reactive_remarks_id', '=', 'reactive_blood_bags.reactive_remarks_id')
+        ->where('blood_bags.isExpired', 0)
+        ->where('blood_bags.isDisposed', 0)
+        ->where('blood_bags.separate', 1)
+        ->paginate(8);
     
     
-            if($tempExpiredBlood->isEmpty()){
+            if($inventory->isEmpty()){
                 return response()->json([
                     'status' => 'success',
                     'message' => 'deferral blood bag',
                 ]);
             }else{
     
-                $totalCount = DB::table('blood_bags')
-                ->join('user_details', 'blood_bags.user_id', '=', 'user_details.user_id')
-                ->join('deferrals', 'deferrals.user_id', '=', 'user_details.user_id')
-                ->where('deferrals.remarks_id', '=', 1)
-                ->where('deferrals.status', '=', 1)
-                ->where('blood_bags.isExpired', '=', 0)
-                ->where('blood_bags.isDisposed', '=', 0)
-                ->selectRaw('COUNT(DISTINCT blood_bags.blood_bags_id) as total_count')
-                ->first();
+                $totalCount = $inventory->count();
     
                 return response()->json([
                     'status' => 'success',
-                    'data' => $tempExpiredBlood,
-                    'total_count' => $totalCount->total_count
+                    'data' => $inventory,
+                    'total_count' => $totalCount
                 ]);
             }
             
@@ -527,7 +733,7 @@ class InventoryController extends Controller
 
             if ($bloodType == 'All') {
                 if ($startDate && $endDate) {
-                    $inventory->whereBetween('reactive_blood_bags.created_at', [$startDate, $endDate]);
+                    $inventory->whereBetween('blood_bags.date_donated', [$startDate, $endDate]);
                 }
                 if ($remarks && $remarks != 'All') {
                     $inventory->where('reactive_remarks.reactive_remarks_desc', $remarks);
@@ -537,7 +743,7 @@ class InventoryController extends Controller
             } else {
                 $inventory->where('user_details.blood_type', $bloodType);
                 if ($startDate && $endDate) {
-                    $inventory->whereBetween('reactive_blood_bags.created_at', [$startDate, $endDate]);
+                    $inventory->whereBetween('blood_bags.date_donated', [$startDate, $endDate]);
                 }
                 if ($remarks && $remarks != 'All') {
                     $inventory->where('reactive_remarks.reactive_remarks_desc', $remarks);
@@ -561,11 +767,138 @@ class InventoryController extends Controller
         }
     }
 
+    public function searchRbb(Request $request){
+        try {
+            $request->validate([
+                'searchInput' => 'required',
+            ]);
+
+            $searchInput = str_replace(' ', '', $request->input('searchInput'));
+
+            $inventory = BloodBag::join('reactive_blood_bags', 'reactive_blood_bags.blood_bags_id', '=', 'blood_bags.blood_bags_id')
+                ->join('user_details', 'blood_bags.user_id', '=', 'user_details.user_id')
+                ->join('reactive_remarks', 'reactive_remarks.reactive_remarks_id', '=', 'reactive_blood_bags.reactive_remarks_id')
+                ->where('blood_bags.isExpired', 0)
+                ->where('blood_bags.isDisposed', 0)
+                ->where('blood_bags.separate', 1)
+                ->select('blood_bags.blood_bags_id','blood_bags.serial_no','user_details.donor_no','user_details.blood_type','user_details.first_name', 'user_details.last_name','blood_bags.date_donated', 'blood_bags.expiration_date')
+                ->where(function ($query) use ($searchInput) {
+                        $query->where('blood_bags.serial_no', 'LIKE', '%' . $searchInput . '%')
+                            ->orWhere('user_details.first_name', 'LIKE', '%' . $searchInput . '%')
+                            ->orWhere('user_details.last_name', 'LIKE', '%' . $searchInput . '%')
+                            ->orWhere('user_details.blood_type', 'LIKE', '%' . $searchInput . '%')
+                            ->orWhere('reactive_remarks.reactive_remarks_desc', 'LIKE', '%' . $searchInput . '%')
+                            ->orWhere('user_details.donor_no', 'LIKE', '%' . $searchInput . '%')
+                            ->orWhere('blood_bags.date_donated', 'LIKE', '%' . $searchInput . '%')
+                            ->orWhere('blood_bags.expiration_date', 'LIKE', '%' . $searchInput . '%');
+                    })
+                ->paginate(8);
+            
+            if($inventory->isEmpty()){
+                return response()->json([
+                    'status' => 'success',
+                    'message' => 'No expired blood bag',
+                ]);
+            }else{
+
+                return response()->json([
+                    'status' => 'success',
+                    'data' => $inventory,
+                ]);
+            }
+               
+        } catch (ValidationException $e) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Validation failed',
+                'errors' => $e->validator->errors(),
+            ], 400);
+        }
+    }
+
+    public function exportRbb(Request $request){
+        $bloodType = $request->input('blood_type');
+        $remarks = $request->input('remarks');
+        $startDate = $request->input('startDate');
+        $endDate = $request->input('endDate');
+
+        $user = getAuthenticatedUserId();
+        $userId = $user->user_id;
+
+        $inventory = BloodBag::join('reactive_blood_bags', 'reactive_blood_bags.blood_bags_id', '=', 'blood_bags.blood_bags_id')
+        ->join('user_details', 'blood_bags.user_id', '=', 'user_details.user_id')
+        ->join('reactive_remarks', 'reactive_remarks.reactive_remarks_id', '=', 'reactive_blood_bags.reactive_remarks_id')
+        ->where('blood_bags.isExpired', 0)
+        ->where('blood_bags.isDisposed', 0)
+        ->where('blood_bags.separate', 1);
+
+        // Apply additional filters based on request parameters
+        if ($bloodType !== 'All') {
+            $inventory->where('user_details.blood_type', $bloodType);
+        }
+
+        if ($remarks !== 'All') {
+            $inventory->where('reactive_remarks.reactive_remarks_desc', $remarks);
+        }
+
+        if (!empty($startDate)) {
+            $inventory->where('blood_bags.date_donated', '>=', $startDate);
+        }
+
+        if (!empty($endDate)) {
+            $inventory->where('blood_bags.date_donated', '<=', $endDate);
+        }
+
+        $inventory = $inventory->select('blood_bags.blood_bags_id','blood_bags.serial_no','user_details.donor_no','user_details.blood_type','user_details.first_name', 'user_details.last_name','blood_bags.date_donated', 'blood_bags.expiration_date', 'reactive_remarks.reactive_remarks_desc')
+        ->orderBy('blood_bags.date_donated', 'desc')
+        ->get();
+        //dd($inventory);
+       
+        $totalCount = $inventory->count();
+
+        $ip = file_get_contents('https://api.ipify.org');
+        $ch = curl_init('http://ipwho.is/'.$ip);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_HEADER, false);
+    
+        $ipwhois = json_decode(curl_exec($ch), true);
+    
+        curl_close($ch);
+
+        AuditTrail::create([
+            'user_id'    => $userId,
+            'module'     => 'Inventory',
+            'action'     => 'Export Reactive Blood Bag as PDF',
+            'status'     => 'success',
+            'ip_address' => $ipwhois['ip'],
+            'region'     => $ipwhois['region'],
+            'city'       => $ipwhois['city'],
+            'postal'     => $ipwhois['postal'],
+            'latitude'   => $ipwhois['latitude'],
+            'longitude'  => $ipwhois['longitude'],
+        ]);
+
+        $totalBloodBags = $totalCount;
+        $dateNow = new \DateTime();
+        $formattedDate = $dateNow->format('F j, Y g:i A');
+
+        $pdf = new Dompdf();
+        $pdf->setPaper('A4', 'landscape');
+        $html = view('rbb-details', ['inventory' => $inventory, 'totalBloodBags' => $totalBloodBags, 'dateNow' => $formattedDate])->render();
+        $pdf->loadHtml($html);
+        $pdf->render();
+
+        // Return the PDF as a response
+        return response($pdf->output(), 200)
+            ->header('Content-Type', 'application/pdf')
+            ->header('Content-Disposition', 'attachment; filename="donor-list.pdf"');
+    }
+
     public function getPermaDeferralBloodBag(){
         $tempExpiredBlood = BloodBag::join('user_details', 'blood_bags.user_id', '=', 'user_details.user_id')
             ->where('blood_bags.isExpired', 0)
             ->where('blood_bags.isDisposed', 0)
-            ->where('user_details.remarks', 2)
+            ->where('blood_bags.separate', 1)
             ->select('blood_bags.blood_bags_id','blood_bags.serial_no','user_details.donor_no','user_details.blood_type','user_details.first_name', 'user_details.last_name','blood_bags.date_donated', 'blood_bags.expiration_date')
             ->paginate(8);
 
@@ -600,7 +933,7 @@ class InventoryController extends Controller
     
             if ($bloodType == 'All') {
                 if ($startDate && $endDate) {
-                    $inventory->whereBetween('spoiled_blood_bags.created_at', [$startDate, $endDate]);
+                    $inventory->whereBetween('blood_bags.date_donated', [$startDate, $endDate]);
                 }
                 if ($remarks && $remarks != 'All') {
                     $inventory->where('spoiled_remarks.spoiled_remarks_desc', $remarks);
@@ -610,7 +943,7 @@ class InventoryController extends Controller
             } else {
                 $inventory->where('user_details.blood_type', $bloodType);
                 if ($startDate && $endDate) {
-                    $inventory->whereBetween('spoiled_blood_bags.created_at', [$startDate, $endDate]);
+                    $inventory->whereBetween('blood_bags.date_donated', [$startDate, $endDate]);
                 }
                 if ($remarks && $remarks != 'All') {
                     $inventory->where('spoiled_remarks.spoiled_remarks_desc', $remarks);
@@ -632,6 +965,132 @@ class InventoryController extends Controller
                 'errors' => $e->validator->errors(),
             ], 400);
         }
+    }
+
+    public function searchSbb(Request $request){
+        try {
+            $request->validate([
+                'searchInput' => 'required',
+            ]);
+
+            $searchInput = str_replace(' ', '', $request->input('searchInput'));
+
+            $inventory = BloodBag::join('spoiled_blood_bags', 'spoiled_blood_bags.blood_bags_id', '=', 'blood_bags.blood_bags_id')
+            ->join('user_details', 'blood_bags.user_id', '=', 'user_details.user_id')
+            ->join('spoiled_remarks', 'spoiled_remarks.spoiled_remarks_id', '=', 'spoiled_blood_bags.spoiled_remarks_id')
+            ->where('blood_bags.isExpired', 0)
+            ->where('blood_bags.isDisposed', 0)
+            ->where('blood_bags.separate', 1)
+            ->where(function ($query) use ($searchInput) {
+                $query->where('blood_bags.serial_no', 'LIKE', '%' . $searchInput . '%')
+                    ->orWhere('user_details.first_name', 'LIKE', '%' . $searchInput . '%')
+                    ->orWhere('user_details.last_name', 'LIKE', '%' . $searchInput . '%')
+                    ->orWhere('user_details.blood_type', 'LIKE', '%' . $searchInput . '%')
+                    ->orWhere('user_details.donor_no', 'LIKE', '%' . $searchInput . '%')
+                    ->orWhere('spoiled_remarks.spoiled_remarks_desc', 'LIKE', '%' . $searchInput . '%')
+                    ->orWhere('blood_bags.date_donated', 'LIKE', '%' . $searchInput . '%')
+                    ->orWhere('blood_bags.expiration_date', 'LIKE', '%' . $searchInput . '%');
+                })
+            ->paginate(8);
+            
+            if($inventory->isEmpty()){
+                return response()->json([
+                    'status' => 'success',
+                    'message' => 'No expired blood bag',
+                ]);
+            }else{
+
+                return response()->json([
+                    'status' => 'success',
+                    'data' => $inventory,
+                ]);
+            }
+               
+        } catch (ValidationException $e) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Validation failed',
+                'errors' => $e->validator->errors(),
+            ], 400);
+        }
+    }
+
+    public function exportSbb(Request $request){
+        $bloodType = $request->input('blood_type');
+        $remarks = $request->input('remarks');
+        $startDate = $request->input('startDate');
+        $endDate = $request->input('endDate');
+
+        $user = getAuthenticatedUserId();
+        $userId = $user->user_id;
+
+        $inventory = BloodBag::join('spoiled_blood_bags', 'spoiled_blood_bags.blood_bags_id', '=', 'blood_bags.blood_bags_id')
+            ->join('user_details', 'blood_bags.user_id', '=', 'user_details.user_id')
+            ->join('spoiled_remarks', 'spoiled_remarks.spoiled_remarks_id', '=', 'spoiled_blood_bags.spoiled_remarks_id')
+            ->where('blood_bags.isExpired', 0)
+            ->where('blood_bags.isDisposed', 0)
+            ->where('blood_bags.separate', 1);
+
+        // Apply additional filters based on request parameters
+        if ($bloodType !== 'All') {
+            $inventory->where('user_details.blood_type', $bloodType);
+        }
+
+        if ($remarks !== 'All') {
+            $inventory->where('spoiled_remarks.spoiled_remarks_desc', $remarks);
+        }
+
+        if (!empty($startDate)) {
+            $inventory->where('blood_bags.date_donated', '>=', $startDate);
+        }
+
+        if (!empty($endDate)) {
+            $inventory->where('blood_bags.date_donated', '<=', $endDate);
+        }
+
+        $inventory = $inventory->select('blood_bags.blood_bags_id','blood_bags.serial_no','user_details.donor_no','user_details.blood_type','user_details.first_name', 'user_details.last_name','blood_bags.date_donated', 'blood_bags.expiration_date', 'spoiled_remarks.spoiled_remarks_desc')
+        ->orderBy('blood_bags.date_donated', 'desc')
+        ->get();
+        //dd($inventory);
+       
+        $totalCount = $inventory->count();
+
+        $ip = file_get_contents('https://api.ipify.org');
+        $ch = curl_init('http://ipwho.is/'.$ip);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_HEADER, false);
+    
+        $ipwhois = json_decode(curl_exec($ch), true);
+    
+        curl_close($ch);
+
+        AuditTrail::create([
+            'user_id'    => $userId,
+            'module'     => 'Inventory',
+            'action'     => 'Export Spoiled Blood Bag as PDF',
+            'status'     => 'success',
+            'ip_address' => $ipwhois['ip'],
+            'region'     => $ipwhois['region'],
+            'city'       => $ipwhois['city'],
+            'postal'     => $ipwhois['postal'],
+            'latitude'   => $ipwhois['latitude'],
+            'longitude'  => $ipwhois['longitude'],
+        ]);
+
+        $totalBloodBags = $totalCount;
+        $dateNow = new \DateTime();
+        $formattedDate = $dateNow->format('F j, Y g:i A');
+
+        $pdf = new Dompdf();
+        $pdf->setPaper('A4', 'landscape');
+        $html = view('sbb-details', ['inventory' => $inventory, 'totalBloodBags' => $totalBloodBags, 'dateNow' => $formattedDate])->render();
+        $pdf->loadHtml($html);
+        $pdf->render();
+
+        // Return the PDF as a response
+        return response($pdf->output(), 200)
+            ->header('Content-Type', 'application/pdf')
+            ->header('Content-Disposition', 'attachment; filename="donor-list.pdf"');
     }
 
    public function disposeBlood(Request $request)

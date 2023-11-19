@@ -113,12 +113,23 @@ Route::group(['middleware' => ['auth:sanctum','admin']], function () {
     Route::get('/get-stocks', [InventoryController::class, 'getStocks']);
     Route::post('/filter-stocks', [InventoryController::class, 'filterBloodTypeStocks']);
     Route::post('/search-stocks', [InventoryController::class, 'searchStocks']);
+    Route::get('/export-stocks', [InventoryController::class, 'exportStocksAsPdf']);
     Route::get('/get-deferral-bloodbags', [InventoryController::class, 'getTempDeferralBloodBag']);
     Route::post('/filter-deferral-bloodbags', [InventoryController::class, 'filterBloodTypeTempDeferral']);
+    Route::post('/search-rbb', [InventoryController::class, 'searchRbb']);
+    Route::get('/export-rbb', [InventoryController::class, 'exportRbb']);
+
+    
     Route::get('/get-permanent-bloodbags', [InventoryController::class, 'getPermaDeferralBloodBag']);
     Route::post('/filter-permanent-bloodbags', [InventoryController::class, 'filterBloodTypePermaDeferral']);
+    Route::post('/search-sbb', [InventoryController::class, 'searchSbb']);
+    Route::get('/export-sbb', [InventoryController::class, 'exportSbb']);
+
     Route::post('/move-back-to-collected', [InventoryController::class, 'moveToCollected']);
     Route::get('/get-expired-blood', [InventoryController::class, 'expiredBlood']);
+    Route::post('/search-expired-blood', [InventoryController::class, 'searchExpiredBlood']);
+    Route::get('/export-expired-blood', [InventoryController::class, 'exportExpiredAsPdf']);
+
     Route::post('/filter-expired', [InventoryController::class, 'filterBloodTypeExp']);
     Route::post('/dispose-blood', [InventoryController::class, 'disposeBlood']);
     Route::get('/export-pdf-user-details', [UserListController::class, 'exportUserDetailsAsPdf']);
