@@ -1191,7 +1191,7 @@ class InventoryController extends Controller
 
            $patientReceiverId = '';
            if ($user_id == null) {
-               $patientReceiver = PatientReceiver::create([
+                PatientReceiver::create([
                    'first_name' => $first_name,
                    'middle_name' => $middle_name,
                    'last_name' => $last_name,
@@ -1204,7 +1204,7 @@ class InventoryController extends Controller
                ]);
                $patientReceiverId = PatientReceiver::latest()->value('patient_receivers_id');
            } else {
-               $patientReceiver = PatientReceiver::create([
+                PatientReceiver::create([
                    'user_id' => $user_id,
                    'first_name' => $first_name,
                    'middle_name' => $middle_name,

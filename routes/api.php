@@ -154,8 +154,11 @@ Route::group(['middleware' => ['auth:sanctum','admin']], function () {
 
 
     Route::post('/dispensed-list', [DispensedBloodController::class, 'dispensedBloodList']);
+    Route::post('/dispList', [DispensedBloodController::class, 'dispList']);
     Route::get('/get-all-serial-no', [DispensedBloodController::class, 'getAllSerialNumber']);
-    Route::post('/filter-dispensed-list', [DispensedBloodController::class, 'filterDispensedList']);
+    Route::get('/get-dispensed-list', [DispensedBloodController::class, 'filterDispensedList']);
+    Route::post('/search-patient', [DispensedBloodController::class, 'searchPatient']);
+    Route::get('/export-patient-list', [DispensedBloodController::class, 'exportPatientList']);
 
     Route::post('/mark-as-accomodated', [NetworkAdminController::class, 'markAsAccomodated']);
     Route::post('/mark-as-declined', [NetworkAdminController::class, 'markAsDeclined']);
