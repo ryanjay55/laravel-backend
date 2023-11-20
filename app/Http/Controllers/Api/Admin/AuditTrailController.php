@@ -24,6 +24,7 @@ class AuditTrailController extends Controller
           ->when($startDate && $endDate, function ($query) use ($startDate, $endDate) {
               return $query->whereBetween(DB::raw('DATE(audit_trails.created_at)'), [$startDate, $endDate]);
           })
+          ->orderBy('audit_trails.audit_trails_id', 'desc')
           ->paginate(8);
 
   
@@ -33,34 +34,5 @@ class AuditTrailController extends Controller
       ], 200);
   }
 
-    // public function getAuditTrail(Request $request)
-    // {
-    //     try {
-    //         $module = $request->input('module');
-    //         $startDate = $request->input('startDate');
-    //         $endDate = $request->input('endDate');
-    
-    //         $auditTrails = AuditTrail::join('user_details', 'user_details.user_id', '=', 'audit_trails.user_id')
-    //             ->select('audit_trails.*', 'user_details.*')
-    //             ->when($module !== 'All', function ($query) use ($module) {
-    //                 return $query->where('audit_trails.module', $module);
-    //             })
-    //             ->when($startDate && $endDate, function ($query) use ($startDate, $endDate) {
-    //                 return $query->whereBetween('audit_trails.created_at', [$startDate, $endDate]);
-    //             })
-    //             ->paginate(8);
-    
-    //         return response()->json([
-    //             'status' => 'success',
-    //             'auditTrails' => $auditTrails,
-    //         ]);
-    
-    //     } catch (ValidationException $e) {
-    
-    //         return response()->json([
-    //             'status' => 'error',
-    //             'errors' => $e->validator->errors(),
-    //         ], 422);
-    //     }
-    // }
+
 }

@@ -25,6 +25,7 @@ class BloodBag extends Model
         'expiration_date',
         'isExpired',
         'isDisposed',
+        'disposed_date',
         'dispensed_date',
         'remaining_days',
         'donation_type_id',
@@ -600,7 +601,6 @@ class BloodBag extends Model
     
         return $result[0]->total;
     }
-    
     
 }
 

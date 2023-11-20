@@ -1121,7 +1121,7 @@ class InventoryController extends Controller
                    ], 400);
                } else {
                    $bloodBag->update(['isDisposed' => 1]);
-   
+                    $bloodBag->update(['disposed_date' => Carbon::now()]);
                    AuditTrail::create([
                        'user_id'    => $userId,
                        'module'     => 'Inventory',

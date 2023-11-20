@@ -20,6 +20,8 @@ use App\Http\Controllers\Api\Admin\Inventory\InventoryController;
 use App\Http\Controllers\Api\Admin\Mbd\MbdController;
 use App\Http\Controllers\Api\Donor\Profile\ProfileController;
 use App\Http\Controllers\Api\Admin\Settings\SettingsController;
+use App\Http\Controllers\Api\Admin\DisposedBloodBags\DisposedBloodBagsController;
+
 
 /*
 |--------------------------------------------------------------------------
@@ -162,6 +164,11 @@ Route::group(['middleware' => ['auth:sanctum','admin']], function () {
 
     Route::post('/mark-as-accomodated', [NetworkAdminController::class, 'markAsAccomodated']);
     Route::post('/mark-as-referred', [NetworkAdminController::class, 'markAsReferred']);
+
+    Route::post('/filter-disposed-bloodbag', [DisposedBloodBagsController::class, 'filterDisposedBloodBags']);
+    Route::get('/get-disposed-bloodbag', [DisposedBloodBagsController::class, 'getDisposedBloodBag']);
+    Route::post('/search-disposed-bloodbag', [DisposedBloodBagsController::class, 'searchDisposedBloodBag']);
+    Route::get('/export-disposed-bloodbag', [DisposedBloodBagsController::class, 'exportDisposedAsPdf']);
 
 });
 
