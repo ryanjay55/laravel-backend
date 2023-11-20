@@ -22,6 +22,7 @@ class BloodRequest extends Model
         'diagnosis',
         'schedule',
         'isAccommodated',
+        'remarks',
         'status',
     ];
 

@@ -161,7 +161,7 @@ Route::group(['middleware' => ['auth:sanctum','admin']], function () {
     Route::get('/export-patient-list', [DispensedBloodController::class, 'exportPatientList']);
 
     Route::post('/mark-as-accomodated', [NetworkAdminController::class, 'markAsAccomodated']);
-    Route::post('/mark-as-declined', [NetworkAdminController::class, 'markAsDeclined']);
+    Route::post('/mark-as-referred', [NetworkAdminController::class, 'markAsReferred']);
 
 });
 

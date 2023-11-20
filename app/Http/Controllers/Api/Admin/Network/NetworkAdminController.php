@@ -9,6 +9,8 @@ use App\Models\AdminPost;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
+use Carbon\Carbon;
+
 class NetworkAdminController extends Controller
 {
     public function markAsAccomodated(Request $request){
@@ -69,7 +71,7 @@ class NetworkAdminController extends Controller
         }
     }
 
-    public function markAsDeclined(Request $request){
+    public function markAsReferred(Request $request){
         $user = getAuthenticatedUserId();
         $userId = $user->user_id;
 
@@ -77,6 +79,7 @@ class NetworkAdminController extends Controller
 
             $validatedData = $request->validate([
                 'blood_request_id' => 'required',
+                'remarks'   => 'required',
             ]);
    
             $ip = file_get_contents('https://api.ipify.org');
@@ -96,8 +99,10 @@ class NetworkAdminController extends Controller
                        'message' => 'Blood request not found',
                    ], 400);
                } else {
-                   $bloodRequest->update(['isAccommodated' => 2]);
-   
+                    $bloodRequest->update(['isAccommodated' => 2]);
+                    $bloodRequest->remarks = $validatedData['remarks'];
+                    $bloodRequest->save();
+            
                    AuditTrail::create([
                        'user_id'    => $userId,
                        'module'     => 'Inventory',
@@ -134,7 +139,7 @@ class NetworkAdminController extends Controller
             ->join('users', 'user_details.user_id', '=', 'users.user_id')
             ->where('blood_request.status', 0)
             ->select('blood_request.*', 'user_details.first_name', 'user_details.middle_name' ,'user_details.last_name', 'user_details.blood_type', 'blood_components.blood_component_desc', 'users.email', 'users.mobile')
-            ->orderBy('blood_request.schedule')
+            ->orderBy('blood_request.isAccommodated', 'asc')
             ->get();
 
         return response()->json([
@@ -172,38 +177,49 @@ class NetworkAdminController extends Controller
             $body = $request->input('body');
             $blood_needs = $request->input('blood_needs');
 
-            AdminPost::create([
-                'blood_request_id' => $requestIdNumber,
-                'donation_date'=> $donationDate,
-                'venue'=> $venue,
-                'body'=> $body,
-                'blood_needs'=> $blood_needs
-            ]); 
+            $bloodRequest = BloodRequest::where('blood_request_id', $requestIdNumber)->first();
 
-            $ip = file_get_contents('https://api.ipify.org');
-            $ch = curl_init('http://ipwho.is/'.$ip);
-            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-            curl_setopt($ch, CURLOPT_HEADER, false);
-            $ipwhois = json_decode(curl_exec($ch), true);
-            curl_close($ch);
+            if ($donationDate > $bloodRequest->schedule) {
+                return response()->json([
+                    'status' => 'error',
+                    'message' => 'Invalid Donation Date. The blood transfusion for this request is on ' . Carbon::parse($bloodRequest->schedule)->format('F j, Y'),
+                ], 400);
+            }else{
+                AdminPost::create([
+                    'blood_request_id' => $requestIdNumber,
+                    'donation_date'=> $donationDate,
+                    'venue'=> $venue,
+                    'body'=> $body,
+                    'blood_needs'=> $blood_needs
+                ]); 
+    
+                $ip = file_get_contents('https://api.ipify.org');
+                $ch = curl_init('http://ipwho.is/'.$ip);
+                curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+                curl_setopt($ch, CURLOPT_HEADER, false);
+                $ipwhois = json_decode(curl_exec($ch), true);
+                curl_close($ch);
+    
+    
+                AuditTrail::create([
+                    'user_id'    => $userId,
+                    'module'     => 'Donor Post',
+                    'action'     => 'Create Post for' . $request->input('request_id_number'),
+                    'status'     => 'Success',
+                    'ip_address' => $ipwhois['ip'],
+                    'region'     => $ipwhois['region'],
+                    'city'       => $ipwhois['city'],
+                    'postal'     => $ipwhois['postal'],
+                    'latitude'   => $ipwhois['latitude'],
+                    'longitude'  => $ipwhois['longitude'],
+                ]);
+    
+                return response()->json([
+                    'status' => 'success',
+                ]);
+            }
 
-
-            AuditTrail::create([
-                'user_id'    => $userId,
-                'module'     => 'Donor Post',
-                'action'     => 'Create Post for' . $request->input('request_id_number'),
-                'status'     => 'Success',
-                'ip_address' => $ipwhois['ip'],
-                'region'     => $ipwhois['region'],
-                'city'       => $ipwhois['city'],
-                'postal'     => $ipwhois['postal'],
-                'latitude'   => $ipwhois['latitude'],
-                'longitude'  => $ipwhois['longitude'],
-            ]);
-
-            return response()->json([
-                'status' => 'success',
-            ]);
+            
            
         } catch (ValidationException $e) {
             return response()->json([
