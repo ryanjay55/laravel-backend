@@ -150,7 +150,8 @@ class RegistrationController extends Controller
             ]);
             
             // Send email notification
-            Mail::to($user->email)->send(new RegistrationMail($user));
+            $user->sendEmailVerificationNotification();
+            
 
             return response()->json([
                 'status'            => 'success',

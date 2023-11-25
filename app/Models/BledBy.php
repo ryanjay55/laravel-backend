@@ -13,7 +13,9 @@ class BledBy extends Model
 
     protected $fillable = [
         'user_details_id',
-        'status',
+        'first_name',
+        'middle_name',
+        'last_name',
     ];
 
     public function userDetail()

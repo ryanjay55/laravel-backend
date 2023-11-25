@@ -21,8 +21,8 @@ use App\Http\Controllers\Api\Admin\Mbd\MbdController;
 use App\Http\Controllers\Api\Donor\Profile\ProfileController;
 use App\Http\Controllers\Api\Admin\Settings\SettingsController;
 use App\Http\Controllers\Api\Admin\DisposedBloodBags\DisposedBloodBagsController;
-
-
+use App\Http\Controllers\Api\EmailVerificationController;
+use App\Http\Controllers\Api\CustomEmailVerificationController;
 /*
 |--------------------------------------------------------------------------
 | Address
@@ -71,6 +71,19 @@ Route::group(
         Route::post('/register-step2',[RegistrationController::class, 'saveStep2']);
 
 });
+
+/*
+|--------------------------------------------------------------------------
+| email verification
+|--------------------------------------------------------------------------
+*/
+Route::get('/email/verify/{id}/{hash}', [CustomEmailVerificationController::class, 'verify'])->middleware(['signed', 'throttle:6,1','guest'])->name('verification.verify');
+Route::post('/email/verification-notification', [CustomEmailVerificationController::class, 'resend'])
+    ->middleware(['throttle:6,1'])->name('verification.send');
+Route::post('/check-verify', [CustomEmailVerificationController::class, 'checkIfVerify']);
+Route::post('/check-verify-reg', [CustomEmailVerificationController::class, 'chechVerifyReg']);
+Route::post('/check-user-details', [CustomEmailVerificationController::class, 'checkUserDetail']);
+
 
 
 /*
@@ -139,8 +152,6 @@ Route::group(['middleware' => ['auth:sanctum','admin']], function () {
     // Route::post('/filter-donor-list', [DonorController::class, 'filterDonorList']);
     Route::post('/search-donor', [DonorController::class, 'searchDonor']);
     Route::get('/export-pdf-donor-list', [DonorController::class, 'exportDonorListAsPdf']);
-    Route::post('/create-security-pin', [SettingsController::class, 'createSecurityPin']);
-    Route::post('/check-security-pin', [SettingsController::class, 'checkSecurityPin']);
 
     Route::get('/dashboard-get-stocks',[DashboardDashboardController::class, 'getDashboardStock']);
     Route::get('/dashboard-get-quota',[DashboardDashboardController::class, 'getQuota']);
@@ -170,6 +181,56 @@ Route::group(['middleware' => ['auth:sanctum','admin']], function () {
     Route::post('/search-disposed-bloodbag', [DisposedBloodBagsController::class, 'searchDisposedBloodBag']);
     Route::get('/export-disposed-bloodbag', [DisposedBloodBagsController::class, 'exportDisposedAsPdf']);
 
+    Route::get('/export-disposed-bloodbag', [DisposedBloodBagsController::class, 'exportDisposedAsPdf']);
+
+    //Settings venue
+    Route::post('/add-venue', [SettingsController::class, 'addVenue']);
+    Route::get('/get-venue', [SettingsController::class, 'getVenues']);
+    Route::post('/edit-venue', [SettingsController::class, 'editVenue']);
+    Route::delete('/delete-venue', [SettingsController::class, 'deleteVenue']);
+
+    //Settings hospitals
+    Route::post('/add-hospital', [SettingsController::class, 'addHospital']);
+    Route::get('/get-hospital', [SettingsController::class, 'getHospitals']);
+    Route::post('/edit-hospital', [SettingsController::class, 'editHospital']);
+    Route::delete('/delete-hospital', [SettingsController::class, 'deleteHospital']);
+
+    //Settings Bled By
+    Route::post('/add-bled-by', [SettingsController::class, 'addBledBy']);
+    Route::get('/get-bled-by', [SettingsController::class, 'getBledBy']);
+    Route::post('/edit-bled-by', [SettingsController::class, 'editBledBy']);
+    Route::delete('/delete-bled-by', [SettingsController::class, 'deleteBledBy']);
+
+    //Settings Permanent Deferral Category
+    Route::post('/add-permanent-deferral-category', [SettingsController::class, 'addPermanentDeferralCategory']);
+    Route::get('/get-permanent-deferral-category', [SettingsController::class, 'getPermanentDeferralCategory']);
+    Route::post('/edit-permanent-deferral-category', [SettingsController::class, 'editPermanentDeferralCategory']);
+    Route::delete('/delete-permanent-deferral-category', [SettingsController::class, 'deletePermanentDeferralCategory']);
+
+    //Settings Temporary Deferral Category
+    Route::post('/add-temporary-deferral-category', [SettingsController::class, 'addTemporaryDeferralCategory']);
+    Route::get('/get-temporary-deferral-category', [SettingsController::class, 'getTemporaryDeferralCategory']);
+    Route::post('/edit-temporary-deferral-category', [SettingsController::class, 'editTemporaryDeferralCategory']);
+    Route::delete('/delete-temporary-deferral-category', [SettingsController::class, 'deleteTemporaryDeferralCategory']);
+
+    //Settings Temporary  Remarks
+    Route::post('/add-reactive-remarks', [SettingsController::class, 'addReactiveRemarks']);
+    Route::get('/get-reactive-remarks', [SettingsController::class, 'getReactiveRemarks']);
+    Route::post('/edit-reactive-remarks', [SettingsController::class, 'editReactiveRemarks']);
+    Route::delete('/delete-reactive-remarks', [SettingsController::class, 'deleteReactiveRemarks']);
+
+    //Settings Spoiled Remarks
+    Route::post('/add-spoiled-remarks', [SettingsController::class, 'addSpoiledRemarks']);
+    Route::get('/get-spoiled-remarks', [SettingsController::class, 'getSpoiledRemarks']);
+    Route::post('/edit-spoiled-remarks', [SettingsController::class, 'editSpoiledRemarks']);
+    Route::delete('/delete-spoiled-remarks', [SettingsController::class, 'deleteSpoiledRemarks']);
+
+    //Settings Security Pin
+    Route::post('/create-security-pin', [SettingsController::class, 'createSecurityPin']);
+    Route::post('/check-security-pin', [SettingsController::class, 'checkSecurityPin']);
+    Route::post('/change-security-pin', [SettingsController::class, 'changeSecurityPin']);
+    
+
 });
 
 
@@ -191,7 +252,7 @@ Route::group(['middleware' => ['auth:sanctum']], function () {
     // Route::get('/get-donor-post', [DonorPostController::class, 'getDonorPost']);
     // Route::put('/edit-post', [DonorPostController::class, 'editPost']);
     // Route::delete('/delete-post', [DonorPostController::class, 'deletePost']);
-    Route::post('/request-blood', [NetworkController::class, 'createBloodRequest']);
+    Route::post('/request-bloossd', [NetworkController::class, 'createBloodRequest']);
     Route::get('/cancel-request-blood', [NetworkController::class, 'cancelRequest']);
 
     Route::get('/get-requested-blood', [NetworkController::class, 'getBloodRequest']);

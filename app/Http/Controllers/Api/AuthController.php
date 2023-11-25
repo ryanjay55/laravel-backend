@@ -20,6 +20,7 @@ class AuthController extends Controller
                 'password' => 'required',
             ]);
             
+          
             $isEmail = filter_var($credentials['email_or_phone'], FILTER_VALIDATE_EMAIL);
             $field = $isEmail ? 'email' : 'mobile';
         
@@ -27,7 +28,16 @@ class AuthController extends Controller
         
                 /** @var \App\Models\User $user **/
                 $user = Auth::user();
-        
+                // Check if the user's email is verified
+                if (!$user->hasVerifiedEmail()) {
+                    $user->sendEmailVerificationNotification();
+                    return response()->json([
+                        'res' => 'error',
+                        'error' => 3,
+                        'msg' => 'Please verify your email, we already sent email to verify.',
+                    ], 400);
+                }
+
                 $token = $user->createToken('api-token')->plainTextToken;
         
                 if ($user->isAdmin == 1) {

@@ -12,6 +12,11 @@ class SpoiledRemarks extends Model
     protected $primaryKey = 'spoiled_remarks_id';
     protected $table = 'spoiled_remarks';
 
+    protected $fillable = [
+        'spoiled_remarks_desc',
+        'status',
+    ];
+
     public function getSpoiledRemarks(){
         $sql = "SELECT spoiled_remarks_id,spoiled_remarks_desc from spoiled_remarks";
 

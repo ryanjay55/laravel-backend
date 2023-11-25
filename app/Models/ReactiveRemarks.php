@@ -12,6 +12,11 @@ class ReactiveRemarks extends Model
     protected $primaryKey = 'reactive_remarks_id';
     protected $table = 'reactive_remarks';
 
+    protected $fillable = [
+        'reactive_remarks_desc',
+        'status'
+    ];
+
     public function getReactiveRemarks(){
         $sql = "SELECT reactive_remarks_id,reactive_remarks_desc from reactive_remarks";
 

@@ -10,12 +10,14 @@ class Hospital extends Model
 {
     use HasFactory;
 
-    protected $primaryKey = 'hospitals';
-    protected $table = 'hospitals_id';
+    protected $primaryKey = 'hospitals_id';
+    protected $table = 'hospitals';
 
     protected $fillable = [
         'user_id',
         'hospital_desc',
+        'hospital_address',
+        'status',
     ];
 
 
