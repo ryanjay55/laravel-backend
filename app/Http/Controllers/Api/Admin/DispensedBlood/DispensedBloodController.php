@@ -83,8 +83,9 @@ class DispensedBloodController extends Controller
                 ->where('blood_bags.isUsed', 1)
                 ->whereRaw('blood_bags.blood_bags_id = (SELECT MAX(blood_bags_id) FROM blood_bags WHERE patient_receivers_id = patient_receivers.patient_receivers_id)');
         })
-        ->groupBy('patient_receivers.patient_receivers_id', 'patient_receivers.user_id', 'patient_receivers.first_name', 'patient_receivers.middle_name', 'patient_receivers.last_name', 'patient_receivers.sex', 'patient_receivers.dob', 'patient_receivers.blood_type', 'patient_receivers.diagnosis', 'patient_receivers.hospital', 'patient_receivers.payment', 'patient_receivers.status', 'patient_receivers.created_at', 'patient_receivers.updated_at')
-        ->select('patient_receivers.*');
+        ->leftJoin('hospitals', 'patient_receivers.hospital', '=', 'hospitals.hospitals_id')
+        ->groupBy('hospitals.hospital_desc','patient_receivers.patient_receivers_id', 'patient_receivers.user_id', 'patient_receivers.first_name', 'patient_receivers.middle_name', 'patient_receivers.last_name', 'patient_receivers.sex', 'patient_receivers.dob', 'patient_receivers.blood_type', 'patient_receivers.diagnosis', 'patient_receivers.hospital', 'patient_receivers.payment', 'patient_receivers.status', 'patient_receivers.created_at', 'patient_receivers.updated_at')
+        ->select('patient_receivers.*','hospitals.hospital_desc');
     
         if ($bloodType !== 'All') {
             $patientReceiver->where('patient_receivers.blood_type', $bloodType);
@@ -95,7 +96,7 @@ class DispensedBloodController extends Controller
         }
         
         if ($hospital !== 'All') {
-            $patientReceiver->where('patient_receivers.hospital', $hospital);
+            $patientReceiver->where('hospitals.hospitals_id', $hospital);
         }
     
         if (!empty($startDate) && !empty($endDate)) {

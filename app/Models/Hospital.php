@@ -22,7 +22,7 @@ class Hospital extends Model
 
 
     public function getAllHospital(){
-        $sql = "SELECT hospital_desc FROM hospitals";
+        $sql = "SELECT hospitals_id,hospital_desc FROM hospitals";
 
         $result = DB::select($sql);
 

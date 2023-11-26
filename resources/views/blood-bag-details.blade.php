@@ -93,8 +93,8 @@
                     <td>{{ $bags->blood_type }}</td>
                     <td>{{ $bags->date_donated }}</td>
                     <td>{{ $bags->expiration_date }}</td>
-                    <td>{{ $bags->bled_by }}</td>
-                    <td>{{ $bags->venue }}</td>
+                    <td>{{ $bags->bled_by_first_name }} {{ $bags->bled_by_middle_name }} {{ $bags->bled_by_last_name }}</td>
+                    <td>{{ $bags->venues_desc }}</td>
                 </tr>
                 @endforeach
             </tbody>

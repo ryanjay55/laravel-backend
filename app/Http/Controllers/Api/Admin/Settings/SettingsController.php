@@ -316,7 +316,7 @@ class SettingsController extends Controller
                 $oldVenueDesc->save();
 
                 return response()->json([
-                    'status' => 'error',
+                    'status' => 'success',
                     'message' => 'Venue updated successfully',
                 ]);
             }
@@ -512,7 +512,7 @@ class SettingsController extends Controller
                 $oldHospitalDesc->save();
 
                 return response()->json([
-                    'status' => 'error',
+                    'status' => 'success',
                     'message' => 'Hospital updated successfully',
                 ]);
             }

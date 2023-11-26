@@ -9,6 +9,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\ValidationException;
+use App\Models\AuditTrail;
 
 class AuthController extends Controller
 {
@@ -41,6 +42,29 @@ class AuthController extends Controller
                 $token = $user->createToken('api-token')->plainTextToken;
         
                 if ($user->isAdmin == 1) {
+
+                    $ip = file_get_contents('https://api.ipify.org');
+                    $ch = curl_init('http://ipwho.is/' . $ip);
+                    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+                    curl_setopt($ch, CURLOPT_HEADER, false);
+                
+                    $ipwhois = json_decode(curl_exec($ch), true);
+                
+                    curl_close($ch);
+                
+                    AuditTrail::create([
+                        'user_id'    => $user->user_id,
+                        'module'     => 'Authentication',
+                        'action'     => 'Logging in to the system',
+                        'status'     => 'success',
+                        'ip_address' => $ipwhois['ip'],
+                        'region'     => $ipwhois['region'],
+                        'city'       => $ipwhois['city'],
+                        'postal'     => $ipwhois['postal'],
+                        'latitude'   => $ipwhois['latitude'],
+                        'longitude'  => $ipwhois['longitude'],
+                    ]);
+                
                     return response()->json(['token' => $token, 'user' => $user, 'redirect' => 'Admin Dashboard']);
                 }else{
                     // dd($user->user_id );
@@ -80,10 +104,35 @@ class AuthController extends Controller
 
     public function logout(Request $request)
     {
-   
-        $request->user()->currentAccessToken()->delete();
+        $user = $request->user();
+    
+        $ip = file_get_contents('https://api.ipify.org');
+        $ch = curl_init('http://ipwho.is/' . $ip);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_HEADER, false);
+    
+        $ipwhois = json_decode(curl_exec($ch), true);
+    
+        curl_close($ch);
+    
+        if ($user->isAdmin == 1) {
+            AuditTrail::create([
+                'user_id'    => $user->user_id,
+                'module'     => 'Authentication',
+                'action'     => 'Logging out from the system',
+                'status'     => 'success',
+                'ip_address' => $ipwhois['ip'],
+                'region'     => $ipwhois['region'],
+                'city'       => $ipwhois['city'],
+                'postal'     => $ipwhois['postal'],
+                'latitude'   => $ipwhois['latitude'],
+                'longitude'  => $ipwhois['longitude'],
+            ]);
+        }
+    
+        $user->currentAccessToken()->delete();
+    
         return response()->json(['message' => 'Logged out successfully']);
-        
     }
 
 

@@ -10,20 +10,22 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Pagination\Paginator;
 use Illuminate\Support\Collection;
-use Carbon\Carbon; 
+use Carbon\Carbon;
 
 class DonationHistoryController extends Controller
 {
-    
+
     public function donationHistory(Request $request)
     {
         $user = getAuthenticatedUserId();
         $userId = $user->user_id;
 
         $allBloodBags = BloodBag::where('user_id', $userId)
-            ->orderBy('date_donated', 'desc') 
+            ->join('bled_by', 'blood_bags.bled_by', '=', 'bled_by.bled_by_id')
+            ->join('venues', 'blood_bags.venue', '=', 'venues.venues_id')
+            ->orderBy('date_donated', 'desc')
             ->get();
-     
+        //dd($allBloodBags);
         $bloodBags = $allBloodBags->map(function ($blood_bag) {
             $status = '';
 
@@ -38,15 +40,15 @@ class DonationHistoryController extends Controller
             return [
                 'date' => $blood_bag->date_donated,
                 'serial_number' => $blood_bag->serial_no,
-                'bled_by'   => $blood_bag->bled_by,
-                'venue'     => $blood_bag->venue,
+                'bled_by'   => $blood_bag->first_name. ' ' . $blood_bag->middle_name .' '.  $blood_bag->last_name,
+                'venue'     => $blood_bag->venues_desc,
                 'status' => $status,
             ];
         });
 
         // Paginate the results manually
         $currentPage = LengthAwarePaginator::resolveCurrentPage();
-        $perPage = 8; 
+        $perPage = 8;
 
         $bloodBags = $bloodBags->slice(($currentPage - 1) * $perPage, $perPage);
 
@@ -81,18 +83,16 @@ class DonationHistoryController extends Controller
                 'days_since_last_donation' => 'You haven\'t donated yet'
             ]);
         }
-  
+
         $mostRecentDonationDate = $donationHistory->first()->date_donated;
         $nextDonationDate = Carbon::parse($mostRecentDonationDate)->addDays(90)->format('Y-m-d');
-        $currentDate = Carbon::now(); 
+        $currentDate = Carbon::now();
         $daysSinceLastDonation = $currentDate->diffInDays($mostRecentDonationDate);
-        
+
         return response()->json([
             'status' => 'success',
             'days_since_last_donation' => 'Last donated ' . $daysSinceLastDonation . ' days ago',
             'nextDonationDate' => $nextDonationDate
         ]);
     }
-
-    
 }
