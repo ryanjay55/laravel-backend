@@ -47,7 +47,7 @@ class DispensedBloodController extends Controller
             ->groupBy('patient_receivers.patient_receivers_id')
             ->select('patient_receivers.*')
             ->orderBy('patient_receivers.created_at', 'desc')
-            ->paginate(8);
+            ->get();
 
         // Transform the results to include a list of blood bags for each user
         $dispensedList->transform(function ($donor) {
@@ -103,7 +103,7 @@ class DispensedBloodController extends Controller
             $patientReceiver->whereBetween('patient_receivers.created_at', [$startDate, $endDate]);
         } 
         
-        $patient = $patientReceiver->orderBy('patient_receivers.patient_receivers_id', 'desc')->paginate(8);
+        $patient = $patientReceiver->orderBy('patient_receivers.patient_receivers_id', 'desc')->get();
         
         // Transform the results to include a list of blood bags for each user
         $patient->transform(function ($donor) {
@@ -117,12 +117,12 @@ class DispensedBloodController extends Controller
             return $donor;
         });
     
-        $totalCount = $patient->total();
+        // $totalCount = $patient->total();
         
         return response()->json([
             'status' => 'success',
             'data' => $patient,
-            'total_count' => $totalCount
+           
         ]);
     }
 

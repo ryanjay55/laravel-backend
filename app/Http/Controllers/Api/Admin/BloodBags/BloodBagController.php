@@ -469,13 +469,11 @@ class BloodBagController extends Controller
                 ->where('blood_bags.separate', '=', 0)
                 ->where('blood_bags.unsafe', '=', 0)
                 ->orderBy('blood_bags.date_donated', 'desc')
-                ->paginate(8);
+                ->get();
 
             $EXPIRATION = 37;
             $today = Carbon::today();
 
-            // Calculate the countdown for each blood bag
-            $currentTime = now(); // Current timestamp
             // Calculate the countdown for each blood bag
             $currentTime = now(); // Current timestamp
             foreach ($bloodBags as $bloodBag) {
@@ -545,6 +543,7 @@ class BloodBagController extends Controller
                     'bled_by',
                     'venue'
                 )->where('user_details.remarks', '=', 0)
+                ->where('blood_bags.isCollected', '=', 1)
                 ->where('blood_bags.status', '=', 0)
                 ->where('blood_bags.isStored', '=', 0)
                 ->where('blood_bags.isExpired', '=', 0)
@@ -565,14 +564,14 @@ class BloodBagController extends Controller
             }
 
             $totalCount = $bloodBags->count();
-            $bloodBags = $bloodBags->orderBy('blood_bags.date_donated', 'asc')->paginate(8);
+            $bloodBags = $bloodBags->orderBy('blood_bags.date_donated', 'asc')->get();
 
             $EXPIRATION = 37;
             $today = Carbon::today();
-
+            $currentTime = now(); // Current timestamp
             foreach ($bloodBags as $bloodBag) {
                 $expirationDate = Carbon::parse($bloodBag->date_donated)->addDays($EXPIRATION);
-                $remainingDays = $expirationDate->diffInDays($today);
+                $remainingDays = $expirationDate->diffInDays($bloodBag->date_donated);
 
                 if ($expirationDate->lte($today)) {
                     BloodBag::where('blood_bags_id', $bloodBag->blood_bags_id)
@@ -580,13 +579,16 @@ class BloodBagController extends Controller
                 }
 
                 $createdAt = $bloodBag->created_at;
-                $timeDifference = $createdAt->diffInDays(now());
-                $bloodBag->countdown = max(3, 0 - $timeDifference);
+                $timeDifference = $createdAt->diffInDays($currentTime); // Calculate the difference in days
+                $bloodBag->countdown = max(3, 0 - $timeDifference); // Calculate the countdown (minimum 0)
 
+                // Check if the countdown is 0 and add a message
                 if ($bloodBag->countdown === 0) {
                     $bloodBag->countdown_message = 'The removal period has ended';
+                    $bloodBag->countdown_end_date = "This blood bag cannot be removed at this time";
                 } else {
                     $bloodBag->countdown_message = 'Blood bag can be removed within ' . $bloodBag->countdown . ' day/s';
+                    $bloodBag->countdown_end_date = Carbon::parse($bloodBag->created_at)->addDays($bloodBag->countdown)->format('Y-m-d');
                 }
             }
 

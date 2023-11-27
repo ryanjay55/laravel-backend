@@ -34,7 +34,7 @@ class DonorController extends Controller
             $donorList->where('donor_types.donor_type_desc', $donorType);
         }
 
-        $donorList = $donorList->orderBy('galloners.updated_at', 'desc')->paginate(8);
+        $donorList = $donorList->orderBy('galloners.updated_at', 'desc')->get();
        
        // Transform the results to include a list of blood bags for each user
        $donorList->transform(function ($donor) {

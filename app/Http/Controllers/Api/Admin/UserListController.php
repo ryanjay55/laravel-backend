@@ -80,7 +80,7 @@ class UserListController extends Controller
             ->where('user_details.status', 0)
             ->where('users.isAdmin', 0)
             ->orderBy('user_details.user_id', 'desc')
-            ->paginate(8);
+            ->get();
 
         if ($userDetails->isEmpty()) {
             return response()->json([
@@ -460,22 +460,22 @@ class UserListController extends Controller
 
                if ($category == 'All' && $remarks == 'All') {
                    $totalCount = $userDetails->count();
-                   $userDetails = $userDetails->orderBy('deferrals.date_deferred')->paginate(8);
+                   $userDetails = $userDetails->orderBy('deferrals.date_deferred')->get();
                } elseif ($category == 'All') {
                    if ($remarks) {
                        $userDetails->where('categories.remarks', $remarks);
                    }
                    $totalCount = $userDetails->count();
-                   $userDetails = $userDetails->orderBy('deferrals.date_deferred')->paginate(8);
+                   $userDetails = $userDetails->orderBy('deferrals.date_deferred')->get();
                } elseif ($remarks == 'All') {
                    $userDetails->where('categories.category_desc', $category);
                    $totalCount = $userDetails->count();
-                   $userDetails = $userDetails->orderBy('deferrals.date_deferred')->paginate(8);
+                   $userDetails = $userDetails->orderBy('deferrals.date_deferred')->get();
                } else {
                    $userDetails->where('categories.category_desc', $category);
                    $userDetails->where('categories.remarks', $remarks);
                    $totalCount = $userDetails->count();
-                   $userDetails = $userDetails->orderBy('deferrals.date_deferred')->paginate(8);
+                   $userDetails = $userDetails->orderBy('deferrals.date_deferred')->get();
                }
                 
                 return response()->json([
@@ -511,7 +511,7 @@ class UserListController extends Controller
                 $userDetails->where('categories.category_desc', $category);
             }
     
-            $userDetails = $userDetails->paginate(8);
+            $userDetails = $userDetails->get();
     
             // if ($userDetails->isEmpty()) {
             //     return response()->json([

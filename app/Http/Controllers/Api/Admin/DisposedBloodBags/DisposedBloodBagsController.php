@@ -39,7 +39,7 @@ class DisposedBloodBagsController extends Controller
             $bloodBags->whereDate('blood_bags.disposed_date', '<=', $endDate);
         }
 
-        $result = $bloodBags->paginate(8);
+        $result = $bloodBags->get();
         $totalCount = $bloodBags->count();
         return response()->json([
             'status' => 'success',
@@ -52,7 +52,7 @@ class DisposedBloodBagsController extends Controller
         
         $bloodBags = BloodBag::join('user_details', 'blood_bags.user_id', '=', 'user_details.user_id')
             ->where('isDisposed', '1')
-            ->paginate(8);
+            ->get();
     
     
             if($bloodBags->isEmpty()){

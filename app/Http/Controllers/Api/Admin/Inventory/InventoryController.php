@@ -188,7 +188,7 @@ class InventoryController extends Controller
             ->where('blood_bags.isUsed', 0)
             ->select('blood_bags.blood_bags_id', 'blood_bags.serial_no', 'user_details.first_name', 'user_details.last_name', 'user_details.blood_type', 'user_details.donor_no', 'blood_bags.date_donated', 'blood_bags.expiration_date')
             ->orderBy('blood_bags.expiration_date')
-            ->paginate(8);
+            ->get();
 
         if ($inventory->isEmpty()) {
             return response()->json([
