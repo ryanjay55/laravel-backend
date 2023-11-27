@@ -23,6 +23,8 @@ class BloodRequest extends Model
         'schedule',
         'isAccommodated',
         'remarks',
+        'isCancelled',
+        'cancel_reason',
         'status',
     ];
 

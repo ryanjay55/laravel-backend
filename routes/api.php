@@ -253,7 +253,7 @@ Route::group(['middleware' => ['auth:sanctum']], function () {
     // Route::put('/edit-post', [DonorPostController::class, 'editPost']);
     // Route::delete('/delete-post', [DonorPostController::class, 'deletePost']);
     Route::post('/request-blood', [NetworkController::class, 'createBloodRequest']);
-    Route::get('/cancel-request-blood', [NetworkController::class, 'cancelRequest']);
+    Route::post('/cancel-request-blood', [NetworkController::class, 'cancelRequest']);
 
     Route::get('/get-requested-blood', [NetworkController::class, 'getBloodRequest']);
     Route::get('/get-blood-components', [NetworkController::class, 'getBloodComponent']);

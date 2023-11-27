@@ -33,7 +33,7 @@ class NetworkAdminController extends Controller
    
             $bloodRequestId = $validatedData['blood_request_id'];
             $bloodRequest = BloodRequest::where('blood_request_id', $bloodRequestId)->first();
-   
+            $adminPost = AdminPost::where('blood_request_id', $bloodRequestId)->first();
                if (empty($bloodRequest)) {
                    return response()->json([
                        'status'  => 'error',
@@ -41,7 +41,8 @@ class NetworkAdminController extends Controller
                    ], 400);
                } else {
                    $bloodRequest->update(['isAccommodated' => 1]);
-   
+                    $adminPost->update(['status' => 1]);
+                   
                    AuditTrail::create([
                        'user_id'    => $userId,
                        'module'     => 'Inventory',
