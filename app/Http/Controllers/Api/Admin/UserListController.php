@@ -688,7 +688,7 @@ class UserListController extends Controller
             ]);
             
             // Send email notification
-            Mail::to($user->email)->send(new RegistrationMail($user));
+            // Mail::to($user->email)->send(new RegistrationMail($user));
 
             return response()->json([
                 'status'            => 'success',
