@@ -25,6 +25,7 @@ class DashboardController extends Controller
             ->select('user_details.blood_type', 'blood_bags.serial_no', 'blood_bags.date_donated', 'bled_by', 'blood_bags.created_at') // Include 'created_at' in the select
             ->whereIn('user_details.blood_type', ['A+', 'A-', 'B+', 'B-', 'O+', 'O-', 'AB+', 'AB-'])
             ->where('blood_bags.isStored', '=', 1)
+            ->where('user_details.remarks', 0)
             ->where('blood_bags.isExpired', '=', '0')
             ->where('blood_bags.status', '=', '0')
             ->where('blood_bags.isUsed', '=', '0')

@@ -13,45 +13,38 @@ use App\Models\AuditTrail;
 
 class AuthController extends Controller
 {
- 
-    public function login(Request $request){
-        try {    
+
+    public function login(Request $request)
+    {
+        try {
             $credentials = $request->validate([
                 'email_or_phone' => 'required',
                 'password' => 'required',
             ]);
-            
-          
+
+
             $isEmail = filter_var($credentials['email_or_phone'], FILTER_VALIDATE_EMAIL);
             $field = $isEmail ? 'email' : 'mobile';
-        
+
             if (Auth::attempt([$field => $credentials['email_or_phone'], 'password' => $credentials['password']])) {
-        
+
                 /** @var \App\Models\User $user **/
                 $user = Auth::user();
-                // Check if the user's email is verified
-                if (!$user->hasVerifiedEmail()) {
-                    $user->sendEmailVerificationNotification();
-                    return response()->json([
-                        'res' => 'error',
-                        'error' => 3,
-                        'msg' => 'Please verify your email, we already sent email to verify.',
-                    ], 400);
-                }
+
 
                 $token = $user->createToken('api-token')->plainTextToken;
-        
+
                 if ($user->isAdmin == 1) {
 
                     $ip = file_get_contents('https://api.ipify.org');
                     $ch = curl_init('http://ipwho.is/' . $ip);
                     curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
                     curl_setopt($ch, CURLOPT_HEADER, false);
-                
+
                     $ipwhois = json_decode(curl_exec($ch), true);
-                
+
                     curl_close($ch);
-                
+
                     AuditTrail::create([
                         'user_id'    => $user->user_id,
                         'module'     => 'Authentication',
@@ -64,57 +57,61 @@ class AuthController extends Controller
                         'latitude'   => $ipwhois['latitude'],
                         'longitude'  => $ipwhois['longitude'],
                     ]);
-                
+
                     return response()->json(['token' => $token, 'user' => $user, 'redirect' => 'Admin Dashboard']);
-                }else{
+                } else {
                     // dd($user->user_id );
-                    $userId = $user->user_id;   
+                    $userId = $user->user_id;
                     $userDetail = UserDetail::where('user_id', $userId)->first();
 
-                    if(!$userDetail){
+                    if (!$userDetail) {
                         return response()->json([
                             'res'   => 'error',
                             'user_id' => $userId,
                             'next_step' => 2,
                             'msg'   => 'Plese complete registration process ',
-                        ],400);
-                    }else{
+                        ], 400);
+                    } else if (!$user->hasVerifiedEmail()) {
+                        $user->sendEmailVerificationNotification();
+                        return response()->json([
+                            'res' => 'error',
+                            'error' => 3,
+                            'msg' => 'Please verify your email, we already sent email to verify.',
+                        ], 400);
+                    } else {
                         return response()->json(['token' => $token, 'user' => $user, 'redirect' => 'Donor Dashboard']);
                     }
                 }
-        
             } else {
                 return response()->json([
                     'res'   => 'error',
                     'msg'   => 'Invalid account please check username or password',
-                ],400);
+                ], 400);
             }
-
         } catch (ValidationException $e) {
             return response()->json([
                 'status' => 'error',
                 'message' => 'Validation failed',
                 'errors' => $e->validator->errors(),
             ], 400);
-        }        
-    
+        }
     }
-    
- 
+
+
 
     public function logout(Request $request)
     {
         $user = $request->user();
-    
+
         $ip = file_get_contents('https://api.ipify.org');
         $ch = curl_init('http://ipwho.is/' . $ip);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
         curl_setopt($ch, CURLOPT_HEADER, false);
-    
+
         $ipwhois = json_decode(curl_exec($ch), true);
-    
+
         curl_close($ch);
-    
+
         if ($user->isAdmin == 1) {
             AuditTrail::create([
                 'user_id'    => $user->user_id,
@@ -129,16 +126,16 @@ class AuthController extends Controller
                 'longitude'  => $ipwhois['longitude'],
             ]);
         }
-    
+
         $user->currentAccessToken()->delete();
-    
+
         return response()->json(['message' => 'Logged out successfully']);
     }
 
 
     public function isLoggedIn()
     {
-    
+
         if (Auth::check()) {
 
             $user = Auth::user();
@@ -149,11 +146,11 @@ class AuthController extends Controller
                 'user_id'   => $user_id,
                 'msg'   => 'User is logged in',
             ], 200);
-
-        }        
+        }
     }
 
-    public function checkIfAdmin(){
+    public function checkIfAdmin()
+    {
         if (Auth::check()) {
             $user = Auth::user();
             $user_id = $user->user_id;
@@ -166,19 +163,19 @@ class AuthController extends Controller
         }
     }
 
-    public function me(){
+    public function me()
+    {
         $user = getAuthenticatedUserId();
         $userId = $user->user_id;
 
         $userDetail = UserDetail::join('users', 'user_details.user_id', '=', 'users.user_id')
-        ->where('user_details.user_id', $userId)
-        ->select('user_details.*', 'users.*')
-        ->first();
+            ->where('user_details.user_id', $userId)
+            ->select('user_details.*', 'users.*')
+            ->first();
 
         return response()->json([
             'status' => 'success',
             'data' => $userDetail
         ], 200);
-        
     }
 }
