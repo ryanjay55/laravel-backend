@@ -23,6 +23,9 @@ use App\Http\Controllers\Api\Admin\Settings\SettingsController;
 use App\Http\Controllers\Api\Admin\DisposedBloodBags\DisposedBloodBagsController;
 use App\Http\Controllers\Api\EmailVerificationController;
 use App\Http\Controllers\Api\CustomEmailVerificationController;
+use App\Http\Controllers\Api\PasswordResetLinkController;
+use App\Http\Controllers\Api\NewPasswordController;
+
 /*
 |--------------------------------------------------------------------------
 | Address
@@ -35,7 +38,6 @@ Route::controller(AddressController::class)->group(function () {
     Route::post('/address/get-provinces/{regCode?}', 'getProvinces')->name('get-provinces');
     Route::post('/address/get-municipalities/{provCode?}', 'getMunicipalities')->name('get-municipalities');
     Route::post('/address/get-barangays/{citymunCode?}', 'getBarangays')->name('get-barangays');
-
 });
 
 
@@ -49,10 +51,9 @@ Route::group([
     'middleware' => 'api',
     'prefix' => 'auth:sanctum'
 
-], function ($router) { 
+], function ($router) {
     // Route::match('/login', [AuthController::class, 'login']);    
-    Route::match(['get', 'post'], '/login', [AuthController::class,'login'])->name('login');
-
+    Route::match(['get', 'post'], '/login', [AuthController::class, 'login'])->name('login');
 });
 
 
@@ -67,17 +68,17 @@ Route::group(
         'as' => config('app.apiversion'),
     ],
     function () {
-        Route::post('/register-step1',[RegistrationController::class, 'saveStep1']);
-        Route::post('/register-step2',[RegistrationController::class, 'saveStep2']);
-
-});
+        Route::post('/register-step1', [RegistrationController::class, 'saveStep1']);
+        Route::post('/register-step2', [RegistrationController::class, 'saveStep2']);
+    }
+);
 
 /*
 |--------------------------------------------------------------------------
 | email verification
 |--------------------------------------------------------------------------
 */
-Route::get('/email/verify/{id}/{hash}', [CustomEmailVerificationController::class, 'verify'])->middleware(['signed', 'throttle:6,1','guest'])->name('verification.verify');
+Route::get('/email/verify/{id}/{hash}', [CustomEmailVerificationController::class, 'verify'])->middleware(['signed', 'throttle:6,1', 'guest'])->name('verification.verify');
 Route::post('/email/verification-notification', [CustomEmailVerificationController::class, 'resend'])
     ->middleware(['throttle:6,1'])->name('verification.send');
 Route::post('/check-verify', [CustomEmailVerificationController::class, 'checkIfVerify']);
@@ -85,13 +86,24 @@ Route::post('/check-verify-reg', [CustomEmailVerificationController::class, 'che
 Route::post('/check-user-details', [CustomEmailVerificationController::class, 'checkUserDetail']);
 
 
+/*
+|--------------------------------------------------------------------------
+| forgot password
+|--------------------------------------------------------------------------
+*/
+Route::post('/forgot-password', [PasswordResetLinkController::class, 'store']);
+Route::post('/verify-otp', [PasswordResetLinkController::class, 'verifyOtp']);
+Route::post('/reset-password', [NewPasswordController::class, 'store']);
+Route::post('/resend-otp', [PasswordResetLinkController::class, 'resendOtpEmail']);
+Route::post('/next-resend-otp', [PasswordResetLinkController::class, 'getNextResendOtp']);
+
 
 /*
 |--------------------------------------------------------------------------
 | Admin API Routes
 |--------------------------------------------------------------------------
 */
-Route::group(['middleware' => ['auth:sanctum','admin']], function () {
+Route::group(['middleware' => ['auth:sanctum', 'admin']], function () {
 
     Route::post('/add-bloodbag', [BloodBagController::class, 'store']);
     Route::post('/add-bledby', [BloodBagController::class, 'addBledBy']);
@@ -134,7 +146,7 @@ Route::group(['middleware' => ['auth:sanctum','admin']], function () {
     Route::post('/search-rbb', [InventoryController::class, 'searchRbb']);
     Route::get('/export-rbb', [InventoryController::class, 'exportRbb']);
 
-    
+
     Route::get('/get-permanent-bloodbags', [InventoryController::class, 'getPermaDeferralBloodBag']);
     Route::post('/filter-permanent-bloodbags', [InventoryController::class, 'filterBloodTypePermaDeferral']);
     Route::post('/search-sbb', [InventoryController::class, 'searchSbb']);
@@ -153,14 +165,14 @@ Route::group(['middleware' => ['auth:sanctum','admin']], function () {
     Route::post('/search-donor', [DonorController::class, 'searchDonor']);
     Route::get('/export-pdf-donor-list', [DonorController::class, 'exportDonorListAsPdf']);
 
-    Route::get('/dashboard-get-stocks',[DashboardDashboardController::class, 'getDashboardStock']);
-    Route::get('/dashboard-get-quota',[DashboardDashboardController::class, 'getQuota']);
-    Route::post('/dashboard-count-bloodbag-per-month',[DashboardDashboardController::class, 'countBloodBagPerMonth']);
-    Route::post('/dashboard-count-donor-per-barangay',[DashboardDashboardController::class, 'countDonorPerBarangay']);
-    Route::get('/dashboard-mbd-quick-view',[DashboardDashboardController::class, 'mbdQuickView']);
+    Route::get('/dashboard-get-stocks', [DashboardDashboardController::class, 'getDashboardStock']);
+    Route::get('/dashboard-get-quota', [DashboardDashboardController::class, 'getQuota']);
+    Route::post('/dashboard-count-bloodbag-per-month', [DashboardDashboardController::class, 'countBloodBagPerMonth']);
+    Route::post('/dashboard-count-donor-per-barangay', [DashboardDashboardController::class, 'countDonorPerBarangay']);
+    Route::get('/dashboard-mbd-quick-view', [DashboardDashboardController::class, 'mbdQuickView']);
     // Route::get('/dashboard-get-number-of-donors',[DashboardDashboardController::class, 'countAllDonors']);
 
-    Route::post('/mbd',[MbdController::class, 'getMbdSummary']);
+    Route::post('/mbd', [MbdController::class, 'getMbdSummary']);
 
     Route::post('/dispensed-blood', [InventoryController::class, 'dispensedBlood']);
     Route::get('/registered-users', [InventoryController::class, 'getRegisteredUsers']);
@@ -229,8 +241,6 @@ Route::group(['middleware' => ['auth:sanctum','admin']], function () {
     Route::post('/create-security-pin', [SettingsController::class, 'createSecurityPin']);
     Route::post('/check-security-pin', [SettingsController::class, 'checkSecurityPin']);
     Route::post('/change-security-pin', [SettingsController::class, 'changeSecurityPin']);
-    
-
 });
 
 
@@ -270,7 +280,7 @@ Route::group(['middleware' => ['auth:sanctum']], function () {
     Route::put('/edit-profile', [ProfileController::class, 'updateProfile']);
     Route::get('/get-achievements', [ProfileController::class, 'getAchievements']);
 
-    Route::post('/logout', [AuthController::class, 'logout']);    
-    Route::get('/check-role',[AuthController::class, 'checkIfAdmin']);
-    Route::get('/me',[AuthController::class, 'me']);
+    Route::post('/logout', [AuthController::class, 'logout']);
+    Route::get('/check-role', [AuthController::class, 'checkIfAdmin']);
+    Route::get('/me', [AuthController::class, 'me']);
 });
