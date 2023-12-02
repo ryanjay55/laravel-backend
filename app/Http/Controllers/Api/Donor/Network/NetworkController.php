@@ -557,15 +557,15 @@ class NetworkController extends Controller
             ->first();
 
 
-        if ($myInterest) {
+        if ($myInterest && strtotime($myInterest->donation_date) <= time()) {
             return response()->json([
-                'status'    => 'success',
-                'data'      => $myInterest
+                'status' => 'success',
+                'data' => $myInterest
             ]);
         } else {
             return response()->json([
-                'status'    => 'success',
-                'data'      => null
+                'status' => 'success',
+                'data' => null
             ]);
         }
     }

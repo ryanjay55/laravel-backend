@@ -136,6 +136,9 @@ Route::group(['middleware' => ['auth:sanctum', 'admin']], function () {
     Route::get('/get-request-id', [NetworkAdminController::class, 'getRequestIdNumber']);
     Route::post('/create-network-post', [NetworkAdminController::class, 'createPost']);
     Route::get('/get-interested-donor', [NetworkAdminController::class, 'getInterestedDonor']);
+    Route::get('/get-created-posts', [NetworkAdminController::class, 'getCreatedPosts']);
+    Route::post('/edit-created-posts', [NetworkAdminController::class, 'editCreatedPost']);
+    Route::post('/delete-created-posts', [NetworkAdminController::class, 'deleteCreatedPost']);
 
     Route::get('/get-stocks', [InventoryController::class, 'getStocks']);
     Route::post('/filter-stocks', [InventoryController::class, 'filterBloodTypeStocks']);
@@ -170,6 +173,8 @@ Route::group(['middleware' => ['auth:sanctum', 'admin']], function () {
     Route::post('/dashboard-count-bloodbag-per-month', [DashboardDashboardController::class, 'countBloodBagPerMonth']);
     Route::post('/dashboard-count-donor-per-barangay', [DashboardDashboardController::class, 'countDonorPerBarangay']);
     Route::get('/dashboard-mbd-quick-view', [DashboardDashboardController::class, 'mbdQuickView']);
+    Route::get('/get-valenzuela-barangay', [DashboardDashboardController::class, 'getValenzuelaBarangay']);
+
     // Route::get('/dashboard-get-number-of-donors',[DashboardDashboardController::class, 'countAllDonors']);
 
     Route::post('/mbd', [MbdController::class, 'getMbdSummary']);

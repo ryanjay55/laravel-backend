@@ -169,8 +169,12 @@ class AuthController extends Controller
         $userId = $user->user_id;
 
         $userDetail = UserDetail::join('users', 'user_details.user_id', '=', 'users.user_id')
+            ->join('region', 'user_details.region', '=', 'region.regCode')
+            ->join('province', 'user_details.province', '=', 'province.provCode')
+            ->join('barangay', 'user_details.barangay', '=', 'barangay.brgyCode')
+            ->join('municipality', 'user_details.municipality', '=', 'municipality.citymunCode')
             ->where('user_details.user_id', $userId)
-            ->select('user_details.*', 'users.*')
+            ->select('user_details.*', 'users.*', 'barangay.brgyDesc','region.regDesc', 'province.provDesc', 'municipality.citymunDesc')
             ->first();
 
         return response()->json([

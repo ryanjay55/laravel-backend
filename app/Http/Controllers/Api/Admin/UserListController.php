@@ -31,6 +31,10 @@ class UserListController extends Controller
         $userDetails = DB::table('user_details')
             ->join('users', 'user_details.user_id', '=', 'users.user_id')
             ->join('galloners', 'user_details.user_id', '=', 'galloners.user_id')
+            ->join('region', 'user_details.region', '=', 'region.regCode')
+            ->join('province', 'user_details.province', '=', 'province.provCode')
+            ->join('municipality', 'user_details.municipality', '=', 'municipality.citymunCode')
+            ->join('barangay', 'user_details.barangay', '=', 'barangay.brgyCode')
             ->leftJoin('blood_bags', 'user_details.user_id', '=', 'blood_bags.user_id')
             ->leftJoin(DB::raw('(SELECT user_id, MAX(created_at) AS latest_timestamp FROM blood_bags GROUP BY user_id) AS latest_blood_bags'), function ($join) {
                 $join->on('blood_bags.user_id', '=', 'latest_blood_bags.user_id')
@@ -55,6 +59,10 @@ class UserListController extends Controller
                 'user_details.remarks',
                 'galloners.badge',
                 'galloners.donate_qty',
+                'region.regDesc',
+                'province.provDesc',
+                'municipality.citymunDesc',
+                'barangay.brgyDesc',
                 DB::raw('IFNULL(MAX(blood_bags.date_donated), NULL) AS latest_date_donated')
             )
             ->groupBy(
@@ -75,7 +83,11 @@ class UserListController extends Controller
                 'user_details.dob',
                 'user_details.remarks',
                 'galloners.badge',
-                'galloners.donate_qty'
+                'galloners.donate_qty',
+                'region.regDesc',
+                'province.provDesc',
+                'municipality.citymunDesc',
+                'barangay.brgyDesc',
             )
             ->where('user_details.status', 0)
             ->where('users.isAdmin', 0)

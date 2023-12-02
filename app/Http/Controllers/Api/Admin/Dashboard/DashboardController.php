@@ -247,7 +247,7 @@ class DashboardController extends Controller
                 DB::raw('MAX(blood_bags.created_at) as latest_date_donated')
             )
             ->where('blood_bags.isCollected', '=', 1)
-            ->where('user_details.municipality', '=', 'CITY OF VALENZUELA')
+            ->where('user_details.municipality', '=', 137504)
             ->whereBetween('blood_bags.created_at', [$startDate, $endDate])
             ->groupBy('user_details.barangay')
             ->get();
@@ -270,6 +270,20 @@ class DashboardController extends Controller
             'status' => 'success',
             'donors_per_barangay' => $donorsPerBarangay,
             'latest_date' => $latestDate,
+        ]);
+    }
+
+    public function getValenzuelaBarangay(){
+        
+        $barangays = DB::table('municipality as m')
+            ->join('barangay as b', 'm.citymunCode', '=', 'b.citymunCode')
+            ->where('m.citymunCode', 137504)
+            ->select('b.brgyDesc', 'b.brgyCode')
+            ->get();
+
+        return response()->json([
+            'status' => 'success',
+            'barangays' => $barangays
         ]);
     }
     
