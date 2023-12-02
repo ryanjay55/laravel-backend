@@ -248,8 +248,13 @@ Route::group(['middleware' => ['auth:sanctum', 'admin']], function () {
     Route::post('/create-security-pin', [SettingsController::class, 'createSecurityPin']);
     Route::post('/check-security-pin', [SettingsController::class, 'checkSecurityPin']);
     Route::post('/change-security-pin', [SettingsController::class, 'changeSecurityPin']);
+
+    //Settings maintenance
+    Route::post('/maintenance-mode', [SettingsController::class, 'maintenance']);
+
 });
 
+Route::get('/maintenance-status', [SettingsController::class, 'getMaintenanceStatus']);
 
 
 

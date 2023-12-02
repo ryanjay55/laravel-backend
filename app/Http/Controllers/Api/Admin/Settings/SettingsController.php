@@ -15,7 +15,8 @@ use App\Models\UserDetail;
 use App\Models\ReactiveRemarks;
 use App\Models\SpoiledRemarks;
 use App\Models\Category;
-
+use App\Models\PersonalAccessToken;
+use Illuminate\Support\Facades\DB;
 
 class SettingsController extends Controller
 {
@@ -1588,5 +1589,107 @@ class SettingsController extends Controller
                 'errors' => $e->validator->errors(),
             ], 400);
         }
+    }
+
+    public function maintenance(Request $request)
+    {
+        $user = getAuthenticatedUserId();
+        $userId = $user->user_id;
+
+        try {
+
+            $request->validate([
+                'toggle' => ['required']
+            ]);
+
+            $switch = $request->input('toggle');
+            $maintenance = Setting::where('setting_desc', 'maintenance')->first();
+            if ($switch == 1) {
+                $ip = file_get_contents('https://api.ipify.org');
+                $ch = curl_init('http://ipwho.is/' . $ip);
+                curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+                curl_setopt($ch, CURLOPT_HEADER, false);
+
+                $ipwhois = json_decode(curl_exec($ch), true);
+
+                curl_close($ch);
+                AuditTrail::create([
+                    'user_id'    => $userId,
+                    'module'     => 'Settings',
+                    'action'     => 'Switch On Maintenance',
+                    'status'     => 'success',
+                    'ip_address' => $ipwhois['ip'],
+                    'region'     => $ipwhois['region'],
+                    'city'       => $ipwhois['city'],
+                    'postal'     => $ipwhois['postal'],
+                    'latitude'   => $ipwhois['latitude'],
+                    'longitude'  => $ipwhois['longitude'],
+                ]);
+
+                /// Assuming you are using Laravel Sanctum for token management
+                $currentTokenId = $request->user()->currentAccessToken()->id; // Get the current token ID
+                DB::table('personal_access_tokens') // Use your actual tokens table name
+                    ->where('tokenable_id', '!=', $userId) // All other user tokens
+                    ->orWhere(function ($query) use ($userId, $currentTokenId) {
+                        $query->where('tokenable_id', $userId)
+                            ->where('id', '!=', $currentTokenId); // Other tokens of the current user
+                    })
+                    ->delete(); // Delete the tokens
+
+
+                $maintenance->setting_value = 1;
+                $maintenance->save();
+
+                return response()->json([
+                    'status'  => 'success',
+                    'message' => 'Maintenance mode is on',
+                ]);
+            } else {
+                $ip = file_get_contents('https://api.ipify.org');
+                $ch = curl_init('http://ipwho.is/' . $ip);
+                curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+                curl_setopt($ch, CURLOPT_HEADER, false);
+
+                $ipwhois = json_decode(curl_exec($ch), true);
+
+                curl_close($ch);
+                AuditTrail::create([
+                    'user_id'    => $userId,
+                    'module'     => 'Settings',
+                    'action'     => 'Switch Off Maintenance',
+                    'status'     => 'success',
+                    'ip_address' => $ipwhois['ip'],
+                    'region'     => $ipwhois['region'],
+                    'city'       => $ipwhois['city'],
+                    'postal'     => $ipwhois['postal'],
+                    'latitude'   => $ipwhois['latitude'],
+                    'longitude'  => $ipwhois['longitude'],
+                ]);
+
+                $maintenance->setting_value = 0;
+                $maintenance->save();
+                return response()->json([
+                    'status'  => 'success',
+                    'message' => 'Maintenance mode is off',
+                ]);
+            }
+        } catch (ValidationException $e) {
+            return response()->json([
+                'status'  => 'error',
+                'message' => 'Validation failed',
+                'errors'  => $e->validator->errors(),
+            ], 400);
+        }
+    }
+
+    public function getMaintenanceStatus()
+    {
+        $maintenance = Setting::where('setting_desc', 'maintenance')->first();
+        $status = $maintenance->setting_value;
+
+        return response()->json([
+            'status' => 'success',
+            'maintenance' => $status,
+        ]);
     }
 }

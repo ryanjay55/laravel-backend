@@ -10,6 +10,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\ValidationException;
 use App\Models\AuditTrail;
+use App\Models\Setting;
 
 class AuthController extends Controller
 {
@@ -174,7 +175,7 @@ class AuthController extends Controller
             ->join('barangay', 'user_details.barangay', '=', 'barangay.brgyCode')
             ->join('municipality', 'user_details.municipality', '=', 'municipality.citymunCode')
             ->where('user_details.user_id', $userId)
-            ->select('user_details.*', 'users.*', 'barangay.brgyDesc','region.regDesc', 'province.provDesc', 'municipality.citymunDesc')
+            ->select('user_details.*', 'users.*', 'barangay.brgyDesc', 'region.regDesc', 'province.provDesc', 'municipality.citymunDesc')
             ->first();
 
         return response()->json([
@@ -182,4 +183,6 @@ class AuthController extends Controller
             'data' => $userDetail
         ], 200);
     }
+
+    
 }
