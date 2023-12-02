@@ -122,7 +122,9 @@ Route::group(['middleware' => ['auth:sanctum', 'admin']], function () {
     Route::get('/get-defferal-categories', [UserListController::class, 'getDeferralCategories']);
     Route::post('/move-to-defferal', [UserListController::class, 'moveToDeferral']);
     Route::get('/get-temporary-defferal', [UserListController::class, 'getTemporaryDeferral']);
+    Route::get('/export-temporary-defferal', [UserListController::class, 'exportTemporaryDeferral']);
     Route::get('/get-permanent-defferal', [UserListController::class, 'getPermanentDeferral']);
+    Route::get('/export-permanent-defferal', [UserListController::class, 'exportPermanentDeferral']);
 
     Route::put('/edit-user-details', [UserListController::class, 'editUserDetails']);
     Route::post('/add-user', [UserListController::class, 'addUsers']);

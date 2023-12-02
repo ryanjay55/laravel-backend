@@ -637,6 +637,113 @@ class UserListController extends Controller
         }
     }
 
+    public function exportTemporaryDeferral(Request $request)
+    {
+        $user = getAuthenticatedUserId();
+        $userId = $user->user_id;
+        try {
+            $category = $request->input('category');
+            $remarks = $request->input('remarks');
+
+            $now = Carbon::now();
+
+            $deferralsToUpdate = Deferral::where('end_date', '<=', $now)
+                ->where('status', '!=', 1)
+                ->get();
+
+            foreach ($deferralsToUpdate as $deferral) {
+                $deferral->status = 1;
+                $deferral->save();
+
+                $user_detail = UserDetail::where('user_id', $deferral->user_id)->first();
+                if ($user_detail) {
+                    $user_detail->remarks = 0;
+                    $user_detail->save();
+                }
+            }
+
+            $userDetails = UserDetail::join('users', 'user_details.user_id', '=', 'users.user_id')
+                ->join('deferrals', 'user_details.user_id', '=', 'deferrals.user_id')
+                ->join('categories', 'categories.categories_id', '=', 'deferrals.categories_id')
+                ->where('deferrals.status', 0)
+                ->where('user_details.remarks', 1)
+                ->where('user_details.status', 0)
+                ->select('users.mobile', 'users.email', 'user_details.*', 'deferrals.*', 'categories.*');
+
+
+            if ($userDetails->count() === 0) {
+                return response()->json([
+                    'status' => 'success',
+                    'message' => 'No donor has been temporarily deferred.'
+                ], 200);
+            } else {
+
+                if ($category == 'All' && $remarks == 'All') {
+                    $totalCount = $userDetails->count();
+                    $userDetails = $userDetails->orderBy('deferrals.date_deferred')->get();
+                } elseif ($category == 'All') {
+                    if ($remarks) {
+                        $userDetails->where('categories.remarks', $remarks);
+                    }
+                    $totalCount = $userDetails->count();
+                    $userDetails = $userDetails->orderBy('deferrals.date_deferred')->get();
+                } elseif ($remarks == 'All') {
+                    $userDetails->where('categories.category_desc', $category);
+                    $totalCount = $userDetails->count();
+                    $userDetails = $userDetails->orderBy('deferrals.date_deferred')->get();
+                } else {
+                    $userDetails->where('categories.category_desc', $category);
+                    $userDetails->where('categories.remarks', $remarks);
+                    $totalCount = $userDetails->count();
+                    $userDetails = $userDetails->orderBy('deferrals.date_deferred')->get();
+                }
+
+                $ip = file_get_contents('https://api.ipify.org');
+                $ch = curl_init('http://ipwho.is/' . $ip);
+                curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+                curl_setopt($ch, CURLOPT_HEADER, false);
+
+                $ipwhois = json_decode(curl_exec($ch), true);
+
+                curl_close($ch);
+                AuditTrail::create([
+                    'user_id'    => $userId,
+                    'module'     => 'Deferral List',
+                    'action'     => 'Export Temporary Deferral as PDF',
+                    'status'     => 'success',
+                    'ip_address' => $ipwhois['ip'],
+                    'region'     => $ipwhois['region'],
+                    'city'       => $ipwhois['city'],
+                    'postal'     => $ipwhois['postal'],
+                    'latitude'   => $ipwhois['latitude'],
+                    'longitude'  => $ipwhois['longitude'],
+                ]);
+
+                $totalUserDetails = $userDetails->count();
+                $dateNow = new \DateTime();
+                $formattedDate = $dateNow->format('F j, Y g:i A');
+
+                $pdf = new Dompdf();
+                $pdf->setPaper('A4', 'landscape');
+                $html = view('temporary-deferral', ['userDetails' => $userDetails, 'totalUsers' => $totalUserDetails, 'dateNow' => $formattedDate])->render();
+                $pdf->loadHtml($html);
+                $pdf->render();
+
+                // Return the PDF as a response
+                return response($pdf->output(), 200)
+                    ->header('Content-Type', 'application/pdf')
+                    ->header('Content-Disposition', 'attachment; filename="temporary-deferral.pdf"');
+            }
+        } catch (ValidationException $e) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Validation failed',
+                'errors' => $e->validator->errors(),
+            ], 400);
+        }
+    }
+
+
     public function getPermanentDeferral(Request $request)
     {
         try {
@@ -674,6 +781,74 @@ class UserListController extends Controller
             ], 400);
         }
     }
+
+    public function exportPermanentDeferral(Request $request)
+    {
+        $user = getAuthenticatedUserId();
+        $userId = $user->user_id;
+
+        try {
+            $category = $request->input('category');
+
+            $userDetails = UserDetail::join('users', 'user_details.user_id', '=', 'users.user_id')
+                ->join('deferrals', 'user_details.user_id', '=', 'deferrals.user_id')
+                ->join('categories', 'categories.categories_id', '=', 'deferrals.categories_id')
+                ->where('user_details.remarks', 2)
+                ->where('user_details.status', 0)
+                ->select('users.mobile', 'users.email', 'user_details.*', 'deferrals.*', 'categories.*');
+
+            if ($category != 'All') {
+                $userDetails->where('categories.category_desc', $category);
+            }
+
+            $userDetails = $userDetails->get();
+
+
+            $ip = file_get_contents('https://api.ipify.org');
+            $ch = curl_init('http://ipwho.is/' . $ip);
+            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+            curl_setopt($ch, CURLOPT_HEADER, false);
+
+            $ipwhois = json_decode(curl_exec($ch), true);
+
+            curl_close($ch);
+            AuditTrail::create([
+                'user_id'    => $userId,
+                'module'     => 'Deferral List',
+                'action'     => 'Export Permanent Deferral as PDF',
+                'status'     => 'success',
+                'ip_address' => $ipwhois['ip'],
+                'region'     => $ipwhois['region'],
+                'city'       => $ipwhois['city'],
+                'postal'     => $ipwhois['postal'],
+                'latitude'   => $ipwhois['latitude'],
+                'longitude'  => $ipwhois['longitude'],
+            ]);
+
+            $totalUserDetails = $userDetails->count();
+            $dateNow = new \DateTime();
+            $formattedDate = $dateNow->format('F j, Y g:i A');
+
+            $pdf = new Dompdf();
+            $pdf->setPaper('A4', 'landscape');
+            $html = view('permanent-deferral', ['userDetails' => $userDetails, 'totalUsers' => $totalUserDetails, 'dateNow' => $formattedDate])->render();
+            $pdf->loadHtml($html);
+            $pdf->render();
+
+            return response($pdf->output(), 200)
+                ->header('Content-Type', 'application/pdf')
+                ->header('Content-Disposition', 'attachment; filename="temporary-deferral.pdf"');
+
+        } catch (ValidationException $e) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Validation failed',
+                'errors' => $e->validator->errors(),
+            ], 400);
+        }
+    }
+
+
 
     public function editUserDetails(Request $request)
     {
