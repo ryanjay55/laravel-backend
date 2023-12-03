@@ -1233,7 +1233,7 @@ class InventoryController extends Controller
                 $user = User::where('user_id', $user_id)->first();
                 $email = $user->email;
     
-                Mail::to($user->email)->send(new DispensedEmail($user));
+                Mail::to($email)->send(new DispensedEmail($user));
 
 
                 if (empty($bloodBag)) {

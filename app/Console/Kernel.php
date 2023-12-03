@@ -12,9 +12,13 @@ class Kernel extends ConsoleKernel
      */
     protected function schedule(Schedule $schedule): void
     {
-        // Schedule the UpdateDeferralStatus command to run daily at a specific time
+        // Schedule the UpdateDeferralStatus command to run daily at midnight
         $schedule->command('app:update-deferral-status')
-                 ->dailyAt('12:00');
+            ->dailyAt('00:00');
+
+        // Schedule the SendDonationReminders command to run daily at midnight
+        $schedule->command('send:donation-reminders')
+            ->dailyAt('12:05');
     }
 
     /**
@@ -22,7 +26,7 @@ class Kernel extends ConsoleKernel
      */
     protected function commands(): void
     {
-        $this->load(__DIR__.'/Commands');
+        $this->load(__DIR__ . '/Commands');
 
         require base_path('routes/console.php');
     }

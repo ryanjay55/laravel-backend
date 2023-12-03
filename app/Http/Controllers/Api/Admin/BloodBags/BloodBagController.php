@@ -157,6 +157,7 @@ class BloodBagController extends Controller
                             'expiration_date' => $expirationDate,
                             'remaining_days'  => $remainingDays,
                             'isCollected'   => 1,
+                            'date_collected' => Carbon::now(),
                             'donation_type_id' => $validatedData['donation_type']
                         ]);
 
@@ -241,6 +242,7 @@ class BloodBagController extends Controller
                         'expiration_date' => $expirationDate,
                         'remaining_days'  => $remainingDays,
                         'isCollected'   => 1,
+                        'date_collected' => Carbon::now(),
                         'donation_type_id' => $validatedData['donation_type']
                     ]);
 
@@ -460,6 +462,7 @@ class BloodBagController extends Controller
                     'blood_bags.date_donated',
                     'blood_bags.expiration_date',
                     'blood_bags.created_at',
+                    'blood_bags.isTested',
                     'bled_by',
                     'venue'
                 )->where('user_details.remarks', '=', 0)
@@ -540,6 +543,7 @@ class BloodBagController extends Controller
                     'blood_bags.date_donated',
                     'blood_bags.expiration_date',
                     'blood_bags.created_at',
+                    'blood_bags.isTested',
                     'bled_by',
                     'venue'
                 )->where('user_details.remarks', '=', 0)
@@ -935,6 +939,55 @@ class BloodBagController extends Controller
                 'user_id'    => $userId,
                 'module'     => 'Collected Blood Bags',
                 'action'     => 'Edit Blood Bag | blood_bags_id: ' . $request->input('blood_bags_id'),
+                'status'     => 'Success',
+                'ip_address' => $ipwhois['ip'],
+                'region'     => $ipwhois['region'],
+                'city'       => $ipwhois['city'],
+                'postal'     => $ipwhois['postal'],
+                'latitude'   => $ipwhois['latitude'],
+                'longitude'  => $ipwhois['longitude'],
+            ]);
+
+            return response()->json([
+                'status' => 'success',
+            ]);
+        } catch (ValidationException $e) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Validation failed',
+                'errors' => $e->validator->errors(),
+            ], 400);
+        }
+    }
+
+    public function referToLaboratory(Request $request)
+    {
+
+        $user = getAuthenticatedUserId();
+        $userId = $user->user_id;
+
+        try {
+            $request->validate([
+                'blood_bags_id' => 'required',
+            ]);
+
+            $bloodBag = BloodBag::where('blood_bags_id', $request->input('blood_bags_id'))->first();
+            $bloodBag->isTested    = 1;
+            $bloodBag->date_tested    = Carbon::now();
+            $bloodBag->save();
+
+
+            $ip = file_get_contents('https://api.ipify.org');
+            $ch = curl_init('http://ipwho.is/' . $ip);
+            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+            curl_setopt($ch, CURLOPT_HEADER, false);
+            $ipwhois = json_decode(curl_exec($ch), true);
+            curl_close($ch);
+
+            AuditTrail::create([
+                'user_id'    => $userId,
+                'module'     => 'Collected Blood Bags',
+                'action'     => 'Refer to Laboratory | blood_bags_id: ' . $request->input('blood_bags_id'),
                 'status'     => 'Success',
                 'ip_address' => $ipwhois['ip'],
                 'region'     => $ipwhois['region'],

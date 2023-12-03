@@ -141,7 +141,7 @@
                                             <tr>
                                                 <td align="left" style="font-size: 0px; padding: 10px 25px; word-break: break-word;">
                                                     <div style="font-family: Montserrat, Helvetica, Arial, sans-serif; font-size: 18px; font-weight: 400; line-height: 24px; text-align: left; color: black;">
-                                                        <p style="margin: 0;"> Donate Blood and Save Lives.</p>
+                                                        <p style="margin: 0;"> Donate Blood and Save Lives.</p> 
                                                     </div>
                                                 </td>
                                             </tr>

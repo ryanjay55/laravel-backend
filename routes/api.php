@@ -115,6 +115,8 @@ Route::group(['middleware' => ['auth:sanctum', 'admin']], function () {
     Route::post('/search-collected-bloodbag', [BloodBagController::class, 'searchCollectedBloodBag']);
     Route::get('/export-pdf-collected-bloodbags', [BloodBagController::class, 'exportBloodBagAsPdf']);
     Route::put('/edit-bloodbag', [BloodBagController::class, 'editBloodBag']);
+    Route::post('/refer-to-laboratory', [BloodBagController::class, 'referToLaboratory']);
+
     Route::delete('/remove-bloodbag', [BloodBagController::class, 'removeBlood']);
     Route::get('/get-unsafe-remarks', [BloodBagController::class, 'getRemarks']);
     Route::post('/mark-unsafe', [BloodBagController::class, 'markUnsafe']);
