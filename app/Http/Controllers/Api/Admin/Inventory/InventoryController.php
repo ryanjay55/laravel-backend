@@ -18,7 +18,8 @@ use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 use App\Mail\DispensedEmail;
-use Illuminate\Support\Facades\Mail; 
+use Illuminate\Support\Facades\Mail;
+
 class InventoryController extends Controller
 {
 
@@ -184,7 +185,7 @@ class InventoryController extends Controller
             ->where('user_details.remarks', 0)
             ->where('blood_bags.isDisposed', 0)
             ->where('blood_bags.isUsed', 0)
-            ->select('blood_bags.blood_bags_id', 'blood_bags.serial_no', 'user_details.first_name', 'user_details.last_name', 'user_details.blood_type', 'user_details.donor_no', 'blood_bags.date_donated', 'blood_bags.expiration_date')
+            ->select('blood_bags.created_at','blood_bags.blood_bags_id', 'blood_bags.serial_no', 'user_details.first_name', 'user_details.last_name', 'user_details.blood_type', 'user_details.donor_no', 'blood_bags.date_donated', 'blood_bags.expiration_date')
             ->orderBy('blood_bags.expiration_date')
             ->get();
 
@@ -228,6 +229,34 @@ class InventoryController extends Controller
                 ->where('blood_bags.isDisposed', 0)
                 ->where('blood_bags.isUsed', 0)
                 ->count();
+
+
+            $EXPIRATION = 37;
+            $today = Carbon::today();
+            $currentTime = now(); // Current timestamp
+
+            foreach ($inventory as $bloodBag) {
+                $expirationDate = Carbon::parse($bloodBag->date_donated)->addDays($EXPIRATION);
+                $remainingDays = $expirationDate->diffInDays($bloodBag->date_donated);
+
+                if ($expirationDate->lte($today)) {
+                    BloodBag::where('blood_bags_id', $bloodBag->blood_bags_id)
+                        ->update(['isExpired' => 1]);
+                }
+
+                $createdAt = $bloodBag->created_at;
+                $timeDifference = $createdAt->diffInDays($currentTime); // Calculate the difference in days
+                $bloodBag->countdown = max(3, 0 - $timeDifference); // Calculate the countdown (minimum 0)
+
+                // Check if the countdown is 0 and add a message
+                if ($bloodBag->countdown === 0) {
+                    $bloodBag->countdown_message = 'The removal period has ended';
+                    $bloodBag->countdown_end_date = "This blood bag cannot be removed at this time";
+                } else {
+                    $bloodBag->countdown_message = 'Blood bag can be removed within ' . $bloodBag->countdown . ' day/s';
+                    $bloodBag->countdown_end_date = Carbon::parse($bloodBag->created_at)->addDays($bloodBag->countdown)->format('Y-m-d');
+                }
+            }
 
             return response()->json([
                 'status' => 'success',
@@ -409,7 +438,7 @@ class InventoryController extends Controller
                 ->where('user_details.remarks', 0)
                 ->where('blood_bags.isDisposed', 0)
                 ->where('blood_bags.isUsed', 0)
-                ->select('blood_bags.blood_bags_id', 'blood_bags.serial_no', 'blood_bags.priority', 'blood_bags.remaining_days', 'user_details.first_name', 'user_details.last_name', 'user_details.blood_type', 'user_details.donor_no', 'blood_bags.date_donated', 'blood_bags.expiration_date');
+                ->select('blood_bags.created_at', 'blood_bags.blood_bags_id', 'blood_bags.serial_no', 'blood_bags.priority', 'blood_bags.remaining_days', 'user_details.first_name', 'user_details.last_name', 'user_details.blood_type', 'user_details.donor_no', 'blood_bags.date_donated', 'blood_bags.expiration_date');
 
             if ($bloodType == 'All') {
                 if ($startDate && $endDate) {
@@ -424,6 +453,33 @@ class InventoryController extends Controller
                 }
                 $totalCount = $inventory->count();
                 $inventory = $inventory->orderBy('blood_bags.expiration_date')->paginate(8);
+            }
+
+            $EXPIRATION = 37;
+            $today = Carbon::today();
+            $currentTime = now(); // Current timestamp
+
+            foreach ($inventory as $bloodBag) {
+                $expirationDate = Carbon::parse($bloodBag->date_donated)->addDays($EXPIRATION);
+                $remainingDays = $expirationDate->diffInDays($bloodBag->date_donated);
+
+                if ($expirationDate->lte($today)) {
+                    BloodBag::where('blood_bags_id', $bloodBag->blood_bags_id)
+                        ->update(['isExpired' => 1]);
+                }
+
+                $createdAt = $bloodBag->created_at;
+                $timeDifference = $createdAt->diffInDays($currentTime); // Calculate the difference in days
+                $bloodBag->countdown = max(3, 0 - $timeDifference); // Calculate the countdown (minimum 0)
+
+                // Check if the countdown is 0 and add a message
+                if ($bloodBag->countdown === 0) {
+                    $bloodBag->countdown_message = 'The removal period has ended';
+                    $bloodBag->countdown_end_date = "This blood bag cannot be removed at this time";
+                } else {
+                    $bloodBag->countdown_message = 'Blood bag can be removed within ' . $bloodBag->countdown . ' day/s';
+                    $bloodBag->countdown_end_date = Carbon::parse($bloodBag->created_at)->addDays($bloodBag->countdown)->format('Y-m-d');
+                }
             }
 
             return response()->json([
@@ -1232,7 +1288,7 @@ class InventoryController extends Controller
                 $user_id = $bloodBag->user_id;
                 $user = User::where('user_id', $user_id)->first();
                 $email = $user->email;
-    
+
                 Mail::to($email)->send(new DispensedEmail($user));
 
 
