@@ -26,8 +26,11 @@ class BloodJourneyController extends Controller
                 'date' => $blood_bag->date_donated,
                 'serial_number' => $blood_bag->serial_no,
                 'collected' => $blood_bag->isCollected,
+                'dateCollected' => $blood_bag->date_collected,
                 'tested' => $blood_bag->isTested,
+                'dateTested' => $blood_bag->date_tested,
                 'stored' => $blood_bag->isStored,
+                'dateStored' => $blood_bag->date_stored
             ];
         }
 
