@@ -6,6 +6,8 @@ use App\Http\Controllers\Controller;
 use App\Models\AuditTrail;
 use App\Models\BloodRequest;
 use App\Models\AdminPost;
+use App\Models\UserDetail;
+
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
@@ -172,16 +174,17 @@ class NetworkAdminController extends Controller
                 'donation_date' => 'required',
                 'venue' => 'required',
                 'body' => 'required',
-                'blood_needs' => 'required',
             ]);
 
             $requestIdNumber = $request->input('blood_request_id');
             $donationDate = $request->input('donation_date');
             $venue = $request->input('venue');
             $body = $request->input('body');
-            $blood_needs = $request->input('blood_needs');
+            // $blood_needs = $request->input('blood_needs');
 
             $bloodRequest = BloodRequest::where('blood_request_id', $requestIdNumber)->first();
+            $user_id = $bloodRequest->user_id;
+            $bloodType = UserDetail::where('user_id', $user_id)->first();
 
             if ($donationDate > $bloodRequest->schedule) {
                 return response()->json([
@@ -194,7 +197,7 @@ class NetworkAdminController extends Controller
                     'donation_date' => $donationDate,
                     'venue' => $venue,
                     'body' => $body,
-                    'blood_needs' => $blood_needs
+                    'blood_needs' => $bloodType->blood_type
                 ]);
 
                 $ip = file_get_contents('https://api.ipify.org');
@@ -237,7 +240,7 @@ class NetworkAdminController extends Controller
         $interestedDonors = DB::table('interested_donors as i')
             ->join('user_details as ud', 'i.user_id', '=', 'ud.user_id')
             ->join('users as u', 'ud.user_id', '=', 'u.user_id')
-            ->select('i.blood_request_id', 'ud.first_name', 'ud.middle_name', 'ud.last_name', 'ud.blood_type', 'u.email', 'u.mobile')
+            ->select('i.blood_request_id', 'ud.remarks','ud.first_name', 'ud.middle_name', 'ud.last_name', 'ud.blood_type', 'u.email', 'u.mobile')
             ->get();
 
         return response()->json([
@@ -263,6 +266,7 @@ class NetworkAdminController extends Controller
                 'ud.middle_name',
                 'ud.last_name',
                 'ud.blood_type',
+                'ud.remarks',
                 'u.email',
                 'u.mobile'
             )
@@ -287,7 +291,8 @@ class NetworkAdminController extends Controller
                     'last_name'    => $item->last_name,
                     'blood_type'   => $item->blood_type,
                     'email'        => $item->email,
-                    'mobile'       => $item->mobile
+                    'mobile'       => $item->mobile,
+                    'remarks'      => $item->remarks
                 ];
 
                 $carry[$item->blood_request_id]['interested_donors'][] = $donorDetails;
