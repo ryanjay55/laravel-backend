@@ -99,7 +99,7 @@
                     <tbody>
                         @foreach($donorsPerBarangay as $barangay)
                         <tr>
-                            <td>{{ $barangay->barangay }}</td>
+                            <td>{{ $barangay->brgyDesc }}</td>
                             <td>{{ $barangay->donor_count }}</td>
                             <td>{{ $barangay->male_count }}</td>
                             <td>{{ $barangay->female_count }}</td>
@@ -121,8 +121,8 @@
                 <strong>Occupation:</strong> {{ $donor->occupation }}<br>
                 <strong>Email:</strong> {{ $donor->email }}<br>
                 <strong>Mobile:</strong> {{ $donor->mobile }}<br>
-                <strong>Address:</strong> {{ $donor->street }}, {{ $donor->barangay }}, {{ $donor->municipality }},
-                {{ $donor->province }}, {{ $donor->region }}<br>
+                <strong>Address:</strong> {{ $donor->street }}, {{ $donor->brgyDesc }}, {{ $donor->citymunDesc }},
+                {{ $donor->provDesc }}, {{ $donor->regDesc }}<br>
                 <strong>Donate Quantity:</strong> {{ $donor->donate_qty }}<br>
                 <strong>Badge:</strong> {{ $donor->badge }}<br>
             </li>
