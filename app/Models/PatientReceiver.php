@@ -72,7 +72,8 @@ class PatientReceiver extends Model
             blb.middle_name AS blb_middle_name, 
             blb.last_name AS blb_last_name, 
             v.venues_desc,
-            bb.serial_no 
+            bb.serial_no ,
+            bb.date_donated
         FROM 
             user_details ud 
         JOIN 
