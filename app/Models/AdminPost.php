@@ -29,9 +29,11 @@ class AdminPost extends Model
     //Accommodated = 3  -> Cancelled
 
     public function getPendingPost(){
-        //check if the donation_date is less than or equal to the current date and time (NOW()). If it is, we set the isAccommodated field to 2; otherwise, we keep the original value from the blood_request table.
-        $sql = 'SELECT br.blood_request_id, IF(ap.donation_date <= NOW(), 2, br.isAccommodated) as isAccommodated, ap.venue, ap.donation_date, ap.blood_needs, ap.body, ap.created_at FROM admin_posts ap
-        JOIN blood_request as br on br.blood_request_id = ap.blood_request_id WHERE br.isAccommodated = 0 OR br.isAccommodated = 3';
+        $sql = 'SELECT br.blood_request_id, IF(ap.donation_date <= NOW(), 2, br.isAccommodated) as isAccommodated, ap.venue, ap.donation_date, ap.blood_needs, ap.body, ap.created_at 
+        FROM admin_posts ap
+        JOIN blood_request as br on br.blood_request_id = ap.blood_request_id 
+        WHERE br.isAccommodated = 0 OR br.isAccommodated = 3 
+        ORDER BY ap.donation_date ASC';
     
         $result = DB::connection('mysql')->select($sql);
     

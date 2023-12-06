@@ -48,7 +48,7 @@ class NetworkAdminController extends Controller
 
                 AuditTrail::create([
                     'user_id'    => $userId,
-                    'module'     => 'Inventory',
+                    'module'     => 'Network',
                     'action'     => 'Mark as Accomodated | Blood Request ID: ' . $bloodRequestId,
                     'status'     => 'success',
                     'ip_address' => $ipwhois['ip'],
@@ -109,8 +109,8 @@ class NetworkAdminController extends Controller
 
                 AuditTrail::create([
                     'user_id'    => $userId,
-                    'module'     => 'Inventory',
-                    'action'     => 'Mark as Declined | Blood Request ID: ' . $bloodRequestId,
+                    'module'     => 'Network',
+                    'action'     => 'Mark as Referred | Blood Request ID: ' . $bloodRequestId,
                     'status'     => 'success',
                     'ip_address' => $ipwhois['ip'],
                     'region'     => $ipwhois['region'],
@@ -124,7 +124,7 @@ class NetworkAdminController extends Controller
 
             return response()->json([
                 'status'    => 'success',
-                'message'   => 'Blood request mark as declined successfully',
+                'message'   => 'Blood request mark as referred successfully',
             ]);
         } catch (ValidationException $e) {
             return response()->json([
@@ -210,7 +210,7 @@ class NetworkAdminController extends Controller
 
                 AuditTrail::create([
                     'user_id'    => $userId,
-                    'module'     => 'Donor Post',
+                    'module'     => 'Network',
                     'action'     => 'Create Post for' . $request->input('request_id_number'),
                     'status'     => 'Success',
                     'ip_address' => $ipwhois['ip'],
@@ -358,7 +358,7 @@ class NetworkAdminController extends Controller
 
                 AuditTrail::create([
                     'user_id'    => $userId,
-                    'module'     => 'Donor Post',
+                    'module'     => 'Network',
                     'action'     => 'Edit Post for' . $requestIdNumber,
                     'status'     => 'Success',
                     'ip_address' => $ipwhois['ip'],
@@ -402,7 +402,7 @@ class NetworkAdminController extends Controller
 
         AuditTrail::create([
             'user_id'    => $userId,
-            'module'     => 'Donor Post',
+            'module'     => 'Network',
             'action'     => 'Delete Post for' . $bloodRequestId,
             'status'     => 'Success',
             'ip_address' => $ipwhois['ip'],

@@ -1627,14 +1627,14 @@ class SettingsController extends Controller
                 ]);
 
                 /// Assuming you are using Laravel Sanctum for token management
-                $currentTokenId = $request->user()->currentAccessToken()->id; // Get the current token ID
-                DB::table('personal_access_tokens') // Use your actual tokens table name
-                    ->where('tokenable_id', '!=', $userId) // All other user tokens
-                    ->orWhere(function ($query) use ($userId, $currentTokenId) {
-                        $query->where('tokenable_id', $userId)
-                            ->where('id', '!=', $currentTokenId); // Other tokens of the current user
-                    })
-                    ->delete(); // Delete the tokens
+                // $currentTokenId = $request->user()->currentAccessToken()->id; // Get the current token ID
+                // DB::table('personal_access_tokens') // Use your actual tokens table name
+                //     ->where('tokenable_id', '!=', $userId) // All other user tokens
+                //     ->orWhere(function ($query) use ($userId, $currentTokenId) {
+                //         $query->where('tokenable_id', $userId)
+                //             ->where('id', '!=', $currentTokenId); // Other tokens of the current user
+                //     })
+                //     ->delete(); // Delete the tokens
 
 
                 $maintenance->setting_value = 1;
