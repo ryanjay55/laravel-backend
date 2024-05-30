@@ -13,11 +13,12 @@ use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 use DateTime;
+use Illuminate\Support\Facades\Auth;
 
 class DashboardController extends Controller
 {
 
- 
+
     public function getDashboardStock()
     {
         $bloodBags = DB::table('user_details')
@@ -30,9 +31,9 @@ class DashboardController extends Controller
             ->where('blood_bags.status', '=', '0')
             ->where('blood_bags.isUsed', '=', '0')
             ->get();
-        
+
         $bloodTypes = ['A+', 'B+', 'O+', 'AB+', 'A-', 'B-', 'O-', 'AB-'];
-        
+
         $result = [];
         $latestCreatedAt = null; // Initialize a variable to store the latest created_at value
 
@@ -47,14 +48,14 @@ class DashboardController extends Controller
             $latestCreatedAt = null; // or set it to some default date or value
         }
 
-        
+
         // Format the latestCreatedAt
         $formattedLatestCreatedAt = $latestCreatedAt ? date('Y-m-d h:i A', strtotime($latestCreatedAt)) : null;
         if (!$formattedLatestCreatedAt || count($bloodBags) === 0) {
             // Set the formattedLatestCreatedAt to the current date and time
             $formattedLatestCreatedAt = date('Y-m-d h:i A');
         }
-        
+
         foreach ($bloodTypes as $bloodType) {
             $bloodBagsCount = $bloodBags->where('blood_type', $bloodType)->count();
 
@@ -92,7 +93,7 @@ class DashboardController extends Controller
 
     public function getQuota()
     {
-        
+
         $settingsPerQuarter = Setting::where('setting_desc', 'quarter_quota')->first();
         $settingsPerMonth = Setting::where('setting_desc', 'monthly_quota')->first();
         $settingsPerWeek = Setting::where('setting_desc', 'weekly_quota')->first();
@@ -139,7 +140,7 @@ class DashboardController extends Controller
                 $monthName = date('F', mktime(0, 0, 0, $i, 1));
                 $startDate = date('Y-m-d', strtotime($currentYear.'-'.$i.'-01'));
                 $endDate = date('Y-m-t', strtotime($currentYear.'-'.$i.'-01'));
-                
+
                 $bloodBags = DB::table('user_details')
                     ->leftJoin('blood_bags', 'user_details.user_id', '=', 'blood_bags.user_id')
                     ->select('user_details.blood_type', 'blood_bags.serial_no', 'blood_bags.date_donated', 'bled_by')
@@ -150,7 +151,7 @@ class DashboardController extends Controller
                     ->whereYear('date_donated', $currentYear)
                     ->whereBetween('date_stored', [$startDate, $endDate])
                     ->count();
-        
+
                 $monthCounts[$monthName] = $bloodBags;
             }
         }else{
@@ -158,7 +159,7 @@ class DashboardController extends Controller
                 $monthName = date('F', mktime(0, 0, 0, $i, 1));
                 $startDate = date('Y-m-d', strtotime($currentYear.'-'.$i.'-01'));
                 $endDate = date('Y-m-t', strtotime($currentYear.'-'.$i.'-01'));
-                
+
                 $bloodBags = DB::table('user_details')
                     ->leftJoin('blood_bags', 'user_details.user_id', '=', 'blood_bags.user_id')
                     ->select('user_details.blood_type', 'blood_bags.serial_no', 'blood_bags.date_donated', 'bled_by')
@@ -169,17 +170,17 @@ class DashboardController extends Controller
                     ->whereYear('date_donated', $currentYear)
                     ->whereBetween('date_stored', [$startDate, $endDate])
                     ->count();
-        
+
                 $monthCounts[$monthName] = $bloodBags;
             }
         }
-       
+
       // Retrieve the latest updated_at value
           $latestUpdatedAt = null; // Initialize a variable to store the latest created_at value
 
           // Find the latest created_at value
           $update = LastUpdate::first();
-  
+
           if ($update) {
               $latestCreatedAt = $update->date_update;
               // Now you can use $latestCreatedAt
@@ -187,15 +188,15 @@ class DashboardController extends Controller
               // Handle the case where $update is null, e.g., set a default value
               $latestCreatedAt = null; // or set it to some default date or value
           }
-  
-          
+
+
           // Format the latestCreatedAt
           $formattedLatestCreatedAt = $latestCreatedAt ? date('Y-m-d h:i A', strtotime($latestCreatedAt)) : null;
           if (!$formattedLatestCreatedAt) {
               // Set the formattedLatestCreatedAt to the current date and time
               $formattedLatestCreatedAt = date('Y-m-d h:i A');
           }
-      
+
       return response()->json([
           'status' => 'success',
           'month_counts' => array($monthCounts),
@@ -203,24 +204,24 @@ class DashboardController extends Controller
       ]);
    }
 
-    
+
     public function countDonorPerBarangay(Request $request) {
         $quarter = $request->input('quarter');
-    
+
         $year = date('Y');
 
         $firstQuarterStart = $year . '-01-01';
         $firstQuarterEnd = $year . '-03-31';
-    
+
         $secondQuarterStart = $year . '-04-01';
         $secondQuarterEnd = $year . '-06-30';
-    
+
         $thirdQuarterStart = $year . '-07-01';
         $thirdQuarterEnd = $year . '-09-30';
-    
+
         $fourthQuarterStart = $year . '-10-01';
         $fourthQuarterEnd = $year . '-12-31';
-    
+
         if ($quarter === 'Q1') {
             $startDate = $firstQuarterStart;
             $endDate = $firstQuarterEnd;
@@ -234,11 +235,11 @@ class DashboardController extends Controller
             $startDate = $fourthQuarterStart;
             $endDate = $fourthQuarterEnd;
         } elseif ($quarter === 'All') {
-            $startDate = '1970-01-01'; 
-            $endDate = date('2099-12-31'); 
-        
+            $startDate = '1970-01-01';
+            $endDate = date('2099-12-31');
+
         }
-    
+
         $donorsPerBarangay = DB::table('user_details')
             ->leftJoin('blood_bags', 'user_details.user_id', '=', 'blood_bags.user_id')
             ->select(
@@ -251,21 +252,21 @@ class DashboardController extends Controller
             ->whereBetween('blood_bags.created_at', [$startDate, $endDate])
             ->groupBy('user_details.barangay')
             ->get();
-    
+
         // Find the maximum date considering AM/PM
         $latestDate = $donorsPerBarangay->max(function ($donor) {
             return strtotime($donor->latest_date_donated);
         });
-    
+
         // Format the maximum date to the desired 12-hour format
         $latestDate = date('Y-m-d h:i A', $latestDate);
-    
+
         // Convert the latest_date_donated field in each result to 12-hour format
         $donorsPerBarangay->transform(function ($donor) {
             $donor->latest_date_donated = date('Y-m-d h:i A', strtotime($donor->latest_date_donated));
             return $donor;
         });
-    
+
         return response()->json([
             'status' => 'success',
             'donors_per_barangay' => $donorsPerBarangay,
@@ -274,7 +275,7 @@ class DashboardController extends Controller
     }
 
     public function getValenzuelaBarangay(){
-        
+
         $barangays = DB::table('municipality as m')
             ->join('barangay as b', 'm.citymunCode', '=', 'b.citymunCode')
             ->where('m.citymunCode', 137504)
@@ -286,13 +287,13 @@ class DashboardController extends Controller
             'barangays' => $barangays
         ]);
     }
-    
+
     public function mbdQuickView(Request $request)
     {
         try {
             $month = $request->input('month');
             $year = $request->input('year');
-            
+
             $data = [];
 
             $query = UserDetail::join('users', 'user_details.user_id', '=', 'users.user_id')
@@ -374,5 +375,5 @@ class DashboardController extends Controller
             ]);
         }
     }
-    
+
 }

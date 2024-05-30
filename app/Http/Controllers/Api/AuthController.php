@@ -166,7 +166,7 @@ class AuthController extends Controller
 
     public function me()
     {
-        $user = getAuthenticatedUserId();
+        $user = Auth::user();
         $userId = $user->user_id;
 
         $userDetail = UserDetail::join('users', 'user_details.user_id', '=', 'users.user_id')
@@ -184,5 +184,5 @@ class AuthController extends Controller
         ], 200);
     }
 
-    
+
 }

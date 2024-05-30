@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api\Admin\Mbd;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
+use Illuminate\Support\Facades\Auth;
 
 
 use App\Models\BloodBag;
@@ -12,12 +13,12 @@ use App\Models\BloodBag;
 class MbdController extends Controller
 {
     public function getMbdSummary(Request $request){
-        $user = getAuthenticatedUserId();
+        $user = Auth::user();
         $userId = $user->user_id;
 
         try {
             $validatedData = $request->validate([
-                'venue'     => ['required'], 
+                'venue'     => ['required'],
                 'startDate' => ['required'],
                 'endDate'   => ['required'],
             ]);
@@ -73,9 +74,9 @@ class MbdController extends Controller
                 'bloodCollectionPD' => $bloodCollectionPD,
                 'totalUnit' => $totalUnit,
                 'expiredDate' => $expiredDate,
-           
+
             ]);
-        
+
         } catch (ValidationException $e) {
 
             return response()->json([

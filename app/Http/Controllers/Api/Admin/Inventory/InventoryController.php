@@ -19,6 +19,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 use App\Mail\DispensedEmail;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Auth;
 
 class InventoryController extends Controller
 {
@@ -27,7 +28,7 @@ class InventoryController extends Controller
     public function storedInInventory(Request $request)
     {
 
-        $user = getAuthenticatedUserId();
+        $user = Auth::user();
         $userId = $user->user_id;
 
         try {
@@ -97,7 +98,7 @@ class InventoryController extends Controller
 
     public function multipleMoveToInventory(Request $request)
     {
-        $user = getAuthenticatedUserId();
+        $user = Auth::user();
         $userId = $user->user_id;
 
         try {
@@ -357,7 +358,7 @@ class InventoryController extends Controller
         $startDate = $request->input('startDate');
         $endDate = $request->input('endDate');
 
-        $user = getAuthenticatedUserId();
+        $user = Auth::user();
         $userId = $user->user_id;
 
         $inventory = BloodBag::join('user_details', 'blood_bags.user_id', '=', 'user_details.user_id')
@@ -540,7 +541,7 @@ class InventoryController extends Controller
 
     public function moveToCollected(Request $request)
     {
-        $user = getAuthenticatedUserId();
+        $user = Auth::user();
         $userId = $user->user_id;
 
         try {
@@ -675,7 +676,7 @@ class InventoryController extends Controller
         $startDate = $request->input('startDate');
         $endDate = $request->input('endDate');
 
-        $user = getAuthenticatedUserId();
+        $user = Auth::user();
         $userId = $user->user_id;
 
         $expiredBlood = BloodBag::join('user_details', 'blood_bags.user_id', '=', 'user_details.user_id')
@@ -877,7 +878,7 @@ class InventoryController extends Controller
         $startDate = $request->input('startDate');
         $endDate = $request->input('endDate');
 
-        $user = getAuthenticatedUserId();
+        $user = Auth::user();
         $userId = $user->user_id;
 
         $inventory = BloodBag::join('reactive_blood_bags', 'reactive_blood_bags.blood_bags_id', '=', 'blood_bags.blood_bags_id')
@@ -1076,7 +1077,7 @@ class InventoryController extends Controller
         $startDate = $request->input('startDate');
         $endDate = $request->input('endDate');
 
-        $user = getAuthenticatedUserId();
+        $user = Auth::user();
         $userId = $user->user_id;
 
         $inventory = BloodBag::join('spoiled_blood_bags', 'spoiled_blood_bags.blood_bags_id', '=', 'blood_bags.blood_bags_id')
@@ -1150,7 +1151,7 @@ class InventoryController extends Controller
 
     public function disposeBlood(Request $request)
     {
-        $user = getAuthenticatedUserId();
+        $user = Auth::user();
         $userId = $user->user_id;
 
         try {
@@ -1208,7 +1209,7 @@ class InventoryController extends Controller
 
     public function dispensedBlood(Request $request)
     {
-        $user = getAuthenticatedUserId();
+        $user = Auth::user();
         $userId = $user->user_id;
 
         try {

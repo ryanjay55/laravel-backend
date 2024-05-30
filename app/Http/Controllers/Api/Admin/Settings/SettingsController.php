@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\AuditTrail;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
+use Illuminate\Support\Facades\Auth;
 
 use App\Models\Setting;
 use App\Models\Venue;
@@ -54,7 +55,7 @@ class SettingsController extends Controller
 
     public function changeSecurityPin(Request $request)
     {
-        $user = getAuthenticatedUserId();
+        $user = Auth::user();
         $userId = $user->user_id;
 
         try {
@@ -132,7 +133,7 @@ class SettingsController extends Controller
 
     public function checkSecurityPin(Request $request)
     {
-        $user = getAuthenticatedUserId();
+        $user = Auth::user();
         $userId = $user->user_id;
 
         try {
@@ -199,7 +200,7 @@ class SettingsController extends Controller
 
     public function addVenue(Request $request)
     {
-        $user = getAuthenticatedUserId();
+        $user = Auth::user();
         $userId = $user->user_id;
 
         try {
@@ -267,7 +268,7 @@ class SettingsController extends Controller
     public function editVenue(Request $request)
     {
 
-        $user = getAuthenticatedUserId();
+        $user = Auth::user();
         $userId = $user->user_id;
 
         try {
@@ -333,7 +334,7 @@ class SettingsController extends Controller
     public function deleteVenue(Request $request)
     {
 
-        $user = getAuthenticatedUserId();
+        $user = Auth::user();
         $userId = $user->user_id;
 
         try {
@@ -395,7 +396,7 @@ class SettingsController extends Controller
     public function addHospital(Request $request)
     {
 
-        $user = getAuthenticatedUserId();
+        $user = Auth::user();
         $userId = $user->user_id;
 
         try {
@@ -463,7 +464,7 @@ class SettingsController extends Controller
     public function editHospital(Request $request)
     {
 
-        $user = getAuthenticatedUserId();
+        $user = Auth::user();
         $userId = $user->user_id;
 
         try {
@@ -529,7 +530,7 @@ class SettingsController extends Controller
     public function deleteHospital(Request $request)
     {
 
-        $user = getAuthenticatedUserId();
+        $user = Auth::user();
         $userId = $user->user_id;
 
         try {
@@ -591,7 +592,7 @@ class SettingsController extends Controller
     public function addBledBy(Request $request)
     {
 
-        $user = getAuthenticatedUserId();
+        $user = Auth::user();
         $userId = $user->user_id;
 
         try {
@@ -677,7 +678,7 @@ class SettingsController extends Controller
     public function editBledBy(Request $request)
     {
 
-        $user = getAuthenticatedUserId();
+        $user = Auth::user();
         $userId = $user->user_id;
 
         try {
@@ -754,7 +755,7 @@ class SettingsController extends Controller
     public function deleteBledBy(Request $request)
     {
 
-        $user = getAuthenticatedUserId();
+        $user = Auth::user();
         $userId = $user->user_id;
 
         try {
@@ -817,7 +818,7 @@ class SettingsController extends Controller
     public function addReactiveRemarks(Request $request)
     {
 
-        $user = getAuthenticatedUserId();
+        $user = Auth::user();
         $userId = $user->user_id;
 
         try {
@@ -882,7 +883,7 @@ class SettingsController extends Controller
     public function editReactiveRemarks(Request $request)
     {
 
-        $user = getAuthenticatedUserId();
+        $user = Auth::user();
         $userId = $user->user_id;
 
         try {
@@ -945,7 +946,7 @@ class SettingsController extends Controller
     public function deleteReactiveRemarks(Request $request)
     {
 
-        $user = getAuthenticatedUserId();
+        $user = Auth::user();
         $userId = $user->user_id;
 
         try {
@@ -1007,7 +1008,7 @@ class SettingsController extends Controller
     public function addSpoiledRemarks(Request $request)
     {
 
-        $user = getAuthenticatedUserId();
+        $user = Auth::user();
         $userId = $user->user_id;
 
         try {
@@ -1072,7 +1073,7 @@ class SettingsController extends Controller
     public function editSpoiledRemarks(Request $request)
     {
 
-        $user = getAuthenticatedUserId();
+        $user = Auth::user();
         $userId = $user->user_id;
 
         try {
@@ -1136,7 +1137,7 @@ class SettingsController extends Controller
     public function deleteSpoiledRemarks(Request $request)
     {
 
-        $user = getAuthenticatedUserId();
+        $user = Auth::user();
         $userId = $user->user_id;
 
         try {
@@ -1198,7 +1199,7 @@ class SettingsController extends Controller
     public function addPermanentDeferralCategory(Request $request)
     {
 
-        $user = getAuthenticatedUserId();
+        $user = Auth::user();
         $userId = $user->user_id;
 
         try {
@@ -1267,7 +1268,7 @@ class SettingsController extends Controller
     public function editPermanentDeferralCategory(Request $request)
     {
 
-        $user = getAuthenticatedUserId();
+        $user = Auth::user();
         $userId = $user->user_id;
 
         try {
@@ -1331,7 +1332,7 @@ class SettingsController extends Controller
     public function deletePermanentDeferralCategory(Request $request)
     {
 
-        $user = getAuthenticatedUserId();
+        $user = Auth::user();
         $userId = $user->user_id;
 
         try {
@@ -1393,7 +1394,7 @@ class SettingsController extends Controller
     public function addTemporaryDeferralCategory(Request $request)
     {
 
-        $user = getAuthenticatedUserId();
+        $user = Auth::user();
         $userId = $user->user_id;
 
         try {
@@ -1465,7 +1466,7 @@ class SettingsController extends Controller
     public function editTemporaryDeferralCategory(Request $request)
     {
 
-        $user = getAuthenticatedUserId();
+        $user = Auth::user();
         $userId = $user->user_id;
 
         try {
@@ -1532,7 +1533,7 @@ class SettingsController extends Controller
     public function deleteTemporaryDeferralCategory(Request $request)
     {
 
-        $user = getAuthenticatedUserId();
+        $user = Auth::user();
         $userId = $user->user_id;
 
         try {
@@ -1593,7 +1594,7 @@ class SettingsController extends Controller
 
     public function maintenance(Request $request)
     {
-        $user = getAuthenticatedUserId();
+        $user = Auth::user();
         $userId = $user->user_id;
 
         try {

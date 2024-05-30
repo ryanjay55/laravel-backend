@@ -9,6 +9,7 @@ use App\Models\LastUpdate;
 use App\Models\PatientReceiver;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Auth;
 
 use App\Models\Setting;
 
@@ -17,7 +18,7 @@ class DashboardController extends Controller
     public function donationSummary()
     {
 
-        $user = getAuthenticatedUserId();
+        $user = Auth::user();
         $userId = $user->user_id;
         $galloners = Galloner::where('user_id', $userId)->first();
         $badge = $galloners->badge;
@@ -62,14 +63,14 @@ class DashboardController extends Controller
             ->where('blood_bags.status', '=', '0')
             ->where('blood_bags.isUsed', '=', '0')
             ->get();
-    
+
         $bloodTypes = ['A+', 'B+', 'O+', 'AB+', 'A-', 'B-', 'O-', 'AB-'];
-    
+
         // $settings = Setting::where('setting_desc', 'quarter_quota')->first();
         // $quotaPerQuarter = $settings->setting_value;
-    
+
         $result = [];
-    
+
         $latestCreatedAt = null; // Initialize a variable to store the latest created_at value
 
         // Find the latest created_at value
@@ -83,7 +84,7 @@ class DashboardController extends Controller
             $latestCreatedAt = null; // or set it to some default date or value
         }
 
-        
+
         // Format the latestCreatedAt
         $formattedLatestCreatedAt = $latestCreatedAt ? date('Y-m-d h:i A', strtotime($latestCreatedAt)) : null;
         if (!$formattedLatestCreatedAt || count($bloodBags) === 0) {
@@ -95,9 +96,9 @@ class DashboardController extends Controller
             $bloodBagsCount = $bloodBags->where('blood_type', $bloodType)->count();
             // $quota = $quotaPerQuarter / count($bloodTypes);
             // $availabilityPercentage = ($bloodBagsCount / $quota) * 100;
-    
+
             $legend = '';
-    
+
             if ($bloodBagsCount <= 0) {
                 $legend = 'Empty';
             } elseif ($bloodBagsCount <= 11) {
@@ -109,7 +110,7 @@ class DashboardController extends Controller
             } else {
                 $legend = 'High';
             }
-    
+
             $result[] = [
                 'blood_type' => $bloodType,
                 'status' => $bloodBagsCount > 0 ? 'Available' : 'Unavailable',
@@ -117,12 +118,12 @@ class DashboardController extends Controller
                 // 'percentage' => $availabilityPercentage,
             ];
         }
-    
+
         return response()->json([
             'blood_bags' => $result,
             'latest_created_at' => $formattedLatestCreatedAt, // Return the formatted value
         ]);
     }
 
-    
+
 }

@@ -11,13 +11,14 @@ use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Pagination\Paginator;
 use Illuminate\Support\Collection;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Auth;
 
 class DonationHistoryController extends Controller
 {
 
     public function donationHistory(Request $request)
     {
-        $user = getAuthenticatedUserId();
+        $user = Auth::user();
         $userId = $user->user_id;
 
         $allBloodBags = BloodBag::where('user_id', $userId)
@@ -69,7 +70,7 @@ class DonationHistoryController extends Controller
 
     public function computeDaySinceLastDonation()
     {
-        $user = getAuthenticatedUserId();
+        $user = Auth::user();
         $userId = $user->user_id;
 
         $donationHistory = BloodBag::where('user_id', $userId)

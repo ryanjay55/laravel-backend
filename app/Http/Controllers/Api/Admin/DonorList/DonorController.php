@@ -12,6 +12,7 @@ use Faker\Core\Blood;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
+use Illuminate\Support\Facades\Auth;
 
 class DonorController extends Controller
 {
@@ -150,7 +151,7 @@ class DonorController extends Controller
     {
         $bloodType = $request->input('bloodType');
         $donorType = $request->input('donorType');
-        $user = getAuthenticatedUserId();
+        $user = Auth::user();
         $userId = $user->user_id;
 
         $donorList = UserDetail::join('users', 'user_details.user_id', '=', 'users.user_id')

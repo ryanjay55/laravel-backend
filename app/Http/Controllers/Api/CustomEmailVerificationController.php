@@ -13,7 +13,8 @@ use Illuminate\Foundation\Auth\EmailVerificationRequest;
 use App\Models\UserDetail;
 use Illuminate\Support\Facades\Hash;
 use App\Mail\RegistrationMail;
-use Illuminate\Support\Facades\Mail; 
+use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Auth;
 
 class CustomEmailVerificationController extends Controller
 {
@@ -41,7 +42,7 @@ class CustomEmailVerificationController extends Controller
 
         $frontendRedirectUrl = 'https://life-link.vercel.app/login';
         return Redirect::to($frontendRedirectUrl);
-        
+
     }
 
 
@@ -50,7 +51,7 @@ class CustomEmailVerificationController extends Controller
         $email = $request->input('email');
 
         $user_info = User::where('email', $email)->first();
-        
+
 
         if(empty($user_info)){
 
@@ -63,7 +64,7 @@ class CustomEmailVerificationController extends Controller
 
 
             }else{
-            
+
                 $user_details_info = UserDetail::where('user_id', $user_info->user_id)->first();
 
                    if(!empty($user_details_info)){
@@ -73,13 +74,13 @@ class CustomEmailVerificationController extends Controller
                         $user_info->sendEmailVerificationNotification();
 
                         return response()->json([
-                
+
                             'status'        => 'error',
                             'next_step'     => 3,
                             'user_id'       => $user_details_info->user_id,
                             'message'       => 'Please proceed to step 3.'
                         ], 200);
-            
+
 
                     }else{
 
@@ -90,7 +91,7 @@ class CustomEmailVerificationController extends Controller
                         ], 400);
 
                     }
-                    
+
 
                 }else{
 
@@ -100,7 +101,7 @@ class CustomEmailVerificationController extends Controller
                         'user_id'       => $user_info->user_id,
                         'message'       => 'You are in step 2'
                     ], 200);
-                    
+
                 }
 
             }
@@ -130,7 +131,7 @@ class CustomEmailVerificationController extends Controller
     public function chechVerifyReg(Request $request){
         $userId = $request->input('user_id');
         $user = User::where('user_id', $userId)->first();
-        
+
         if($user->email_verified_at){
             return response()->json([
                 'status' => 'success',
@@ -150,7 +151,7 @@ class CustomEmailVerificationController extends Controller
 
         $userDetail = UserDetail::where('user_id', $userId)->first();
 
-        
+
         if($userDetail){
             return response()->json([
                 'status' => 'success',

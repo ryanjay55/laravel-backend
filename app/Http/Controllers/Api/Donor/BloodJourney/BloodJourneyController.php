@@ -5,12 +5,13 @@ namespace App\Http\Controllers\Api\Donor\BloodJourney;
 use App\Http\Controllers\Controller;
 use App\Models\BloodBag;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 
 class BloodJourneyController extends Controller
 {
     public function bloodJourney(){
 
-        $user = getAuthenticatedUserId();
+        $user = Auth::user();
         $userId = $user->user_id;
 
         $blood_bags = BloodBag::where('user_id', $userId)

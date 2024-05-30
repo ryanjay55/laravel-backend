@@ -30,7 +30,7 @@ class BloodBagController extends Controller
 
     public function store(Request $request)
     {
-        $user = getAuthenticatedUserId();
+        $user = Auth::user();
         $userId = $user->user_id;
         try {
 
@@ -177,7 +177,7 @@ class BloodBagController extends Controller
                         $donor = User::where('user_id', $validatedData['user_id'])->first();
                         $donorEmail = $donor->email;
 
-                        // Mail::to($donorEmail)->send(new ThankyouForDonationMail($donor));
+                        Mail::to($donorEmail)->send(new ThankyouForDonationMail($donor));
 
                         $galloner->donate_qty += 1;
                         $galloner->save();
@@ -298,7 +298,7 @@ class BloodBagController extends Controller
 
     public function addBledBy(Request $request)
     {
-        $user = getAuthenticatedUserId();
+        $user = Auth::user();
         $userId = $user->user_id;
 
         try {
@@ -374,7 +374,7 @@ class BloodBagController extends Controller
 
     public function addVenue(Request $request)
     {
-        $user = getAuthenticatedUserId();
+        $user = Auth::user();
         $userId = $user->user_id;
 
         try {
@@ -693,7 +693,7 @@ class BloodBagController extends Controller
         $bledBy = $request->input('bledBy');
         $venue = $request->input('venue');
 
-        $user = getAuthenticatedUserId();
+        $user = Auth::user();
         $userId = $user->user_id;
 
         $bloodBags = UserDetail::join('blood_bags', 'user_details.user_id', '=', 'blood_bags.user_id')
@@ -788,7 +788,7 @@ class BloodBagController extends Controller
     public function removeBlood(Request $request)
     {
 
-        $user = getAuthenticatedUserId();
+        $user = Auth::user();
         $userId = $user->user_id;
 
         try {
@@ -868,7 +868,7 @@ class BloodBagController extends Controller
 
 
 
-                // $user_id = $bloodBag->user_id;  
+                // $user_id = $bloodBag->user_id;
                 // $bloodBagDateSave = $bloodBag->created_at;
 
                 // $galloners = Galloner::where('user_id', $user_id)->first();
@@ -908,7 +908,7 @@ class BloodBagController extends Controller
     public function editBloodBag(Request $request)
     {
 
-        $user = getAuthenticatedUserId();
+        $user = Auth::user();
         $userId = $user->user_id;
 
         try {
@@ -963,7 +963,7 @@ class BloodBagController extends Controller
     public function referToLaboratory(Request $request)
     {
 
-        $user = getAuthenticatedUserId();
+        $user = Auth::user();
         $userId = $user->user_id;
 
         try {
@@ -1023,7 +1023,7 @@ class BloodBagController extends Controller
 
     public function markUnsafe(Request $request)
     {
-        $user = getAuthenticatedUserId();
+        $user = Auth::user();
         $userId = $user->user_id;
         try {
 

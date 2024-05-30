@@ -12,12 +12,13 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Auth;
 
 class NetworkAdminController extends Controller
 {
     public function markAsAccomodated(Request $request)
     {
-        $user = getAuthenticatedUserId();
+        $user = Auth::user();
         $userId = $user->user_id;
 
         try {
@@ -76,7 +77,7 @@ class NetworkAdminController extends Controller
 
     public function markAsReferred(Request $request)
     {
-        $user = getAuthenticatedUserId();
+        $user = Auth::user();
         $userId = $user->user_id;
 
         try {
@@ -165,7 +166,7 @@ class NetworkAdminController extends Controller
 
     public function createPost(Request $request)
     {
-        $user = getAuthenticatedUserId();
+        $user = Auth::user();
         $userId = $user->user_id;
 
         try {
@@ -314,7 +315,7 @@ class NetworkAdminController extends Controller
 
     public function editCreatedPost(Request $request)
     {
-        $user = getAuthenticatedUserId();
+        $user = Auth::user();
         $userId = $user->user_id;
 
         try {
@@ -384,7 +385,7 @@ class NetworkAdminController extends Controller
 
     public function deleteCreatedPost(Request $request)
     {
-        $user = getAuthenticatedUserId();
+        $user = Auth::user();
         $userId = $user->user_id;
 
 
@@ -413,7 +414,7 @@ class NetworkAdminController extends Controller
             'longitude'  => $ipwhois['longitude'],
         ]);
 
-      
+
         $post->status = 1;
         $post->save();
 

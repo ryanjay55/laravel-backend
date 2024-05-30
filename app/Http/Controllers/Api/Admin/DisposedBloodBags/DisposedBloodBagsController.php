@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
 use App\Models\AuditTrail;
 use Dompdf\Dompdf;
+use Illuminate\Support\Facades\Auth;
 
 use App\Models\BloodBag;
 
@@ -49,28 +50,28 @@ class DisposedBloodBagsController extends Controller
     }
 
     public function getDisposedBloodBag(){
-        
+
         $bloodBags = BloodBag::join('user_details', 'blood_bags.user_id', '=', 'user_details.user_id')
             ->where('isDisposed', '1')
             ->get();
-    
-    
+
+
             if($bloodBags->isEmpty()){
                 return response()->json([
                     'status' => 'success',
                     'message' => 'deferral blood bag',
                 ]);
             }else{
-    
+
                 $totalCount = $bloodBags->count();
-    
+
                 return response()->json([
                     'status' => 'success',
                     'data' => $bloodBags,
                     'total_count' => $totalCount
                 ]);
             }
-            
+
     }
 
     public function searchDisposedBloodBag(Request $request){
@@ -93,7 +94,7 @@ class DisposedBloodBagsController extends Controller
                 })
             ->select('blood_bags.blood_bags_id','blood_bags.serial_no','user_details.donor_no','user_details.blood_type','user_details.first_name', 'user_details.last_name','blood_bags.date_donated', 'blood_bags.unsafe','blood_bags.expiration_date', 'blood_bags.disposed_date')
             ->paginate(8);
-            
+
             if($bloodBags->isEmpty()){
                 return response()->json([
                     'status' => 'success',
@@ -106,7 +107,7 @@ class DisposedBloodBagsController extends Controller
                     'data' => $bloodBags,
                 ]);
             }
-               
+
         } catch (ValidationException $e) {
             return response()->json([
                 'status' => 'error',
@@ -122,7 +123,7 @@ class DisposedBloodBagsController extends Controller
         $startDate = $request->startDate;
         $endDate = $request->endDate;
 
-        $user = getAuthenticatedUserId();
+        $user = Auth::user();
         $userId = $user->user_id;
 
         $bloodBags = BloodBag::join('user_details', 'blood_bags.user_id', '=', 'user_details.user_id')
@@ -149,16 +150,16 @@ class DisposedBloodBagsController extends Controller
         ->orderBy('blood_bags.disposed_date', 'desc')
         ->get();
         //dd($inventory);
-       
+
         $totalCount = $inventory->count();
 
         $ip = file_get_contents('https://api.ipify.org');
         $ch = curl_init('http://ipwho.is/'.$ip);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
         curl_setopt($ch, CURLOPT_HEADER, false);
-    
+
         $ipwhois = json_decode(curl_exec($ch), true);
-    
+
         curl_close($ch);
 
         AuditTrail::create([

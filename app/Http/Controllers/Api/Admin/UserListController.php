@@ -110,7 +110,7 @@ class UserListController extends Controller
 
     public function exportUserDetailsAsPdf(Request $request)
     {
-        $user = getAuthenticatedUserId();
+        $user = Auth::user();
         $userId = $user->user_id;
 
         $userDetails = DB::table('user_details')
@@ -311,7 +311,7 @@ class UserListController extends Controller
 
     public function moveToDeferral(Request $request)
     {
-        $user = getAuthenticatedUserId();
+        $user = Auth::user();
         $userId = $user->user_id;
 
 
@@ -639,7 +639,7 @@ class UserListController extends Controller
 
     public function exportTemporaryDeferral(Request $request)
     {
-        $user = getAuthenticatedUserId();
+        $user = Auth::user();
         $userId = $user->user_id;
         try {
             $category = $request->input('category');
@@ -784,7 +784,7 @@ class UserListController extends Controller
 
     public function exportPermanentDeferral(Request $request)
     {
-        $user = getAuthenticatedUserId();
+        $user = Auth::user();
         $userId = $user->user_id;
 
         try {
@@ -852,7 +852,7 @@ class UserListController extends Controller
 
     public function editUserDetails(Request $request)
     {
-        $user = getAuthenticatedUserId();
+        $user = Auth::user();
         $userId = $user->user_id;
 
         try {
@@ -936,7 +936,7 @@ class UserListController extends Controller
 
     public function addUsers(Request $request)
     {
-        $user = getAuthenticatedUserId();
+        $user = Auth::user();
         $userId = $user->user_id;
 
         try {

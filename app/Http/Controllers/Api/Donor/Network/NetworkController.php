@@ -14,13 +14,14 @@ use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 use DateTime;
+use Illuminate\Support\Facades\Auth;
 
 class NetworkController extends Controller
 {
 
     public function createBloodRequest(Request $request)
     {
-        $user = getAuthenticatedUserId();
+        $user = Auth::user();
         $userId = $user->user_id;
         try {
 
@@ -151,7 +152,7 @@ class NetworkController extends Controller
     //history
     public function getBloodRequest()
     {
-        $user = getAuthenticatedUserId();
+        $user = Auth::user();
         $userId = $user->user_id;
 
         $bloodRequest = BloodRequest::where('blood_request.user_id', $userId)
@@ -169,7 +170,7 @@ class NetworkController extends Controller
 
     public function getLastRequest()
     {
-        $user = getAuthenticatedUserId();
+        $user = Auth::user();
         $userId = $user->user_id;
 
         $lastBloodRequest = BloodRequest::where('user_id', $userId)
@@ -198,7 +199,7 @@ class NetworkController extends Controller
 
     public function adminPost()
     {
-        $user = getAuthenticatedUserId();
+        $user = Auth::user();
         $userId = $user->user_id;
 
         $post = app(AdminPost::class)->getPendingPost();
@@ -222,7 +223,7 @@ class NetworkController extends Controller
 
     public function buttonInterested(Request $request)
     {
-        $user = getAuthenticatedUserId();
+        $user = Auth::user();
         $userId = $user->user_id;
 
         try {
@@ -533,7 +534,7 @@ class NetworkController extends Controller
 
     public function getMyInterestDonation()
     {
-        $user = getAuthenticatedUserId();
+        $user = Auth::user();
         $userId = $user->user_id;
 
         $myInterest = InterestedDonor::where('user_id', $userId)->pluck('blood_request_id');
@@ -546,7 +547,7 @@ class NetworkController extends Controller
 
     public function getMyScheduleDonation()
     {
-        $user = getAuthenticatedUserId();
+        $user = Auth::user();
         $userId = $user->user_id;
 
         $myInterest = DB::table('interested_donors')
@@ -572,7 +573,7 @@ class NetworkController extends Controller
 
     public function cancelRequest(Request $request)
     {
-        $user = getAuthenticatedUserId();
+        $user = Auth::user();
         $userId = $user->user_id;
 
         try {

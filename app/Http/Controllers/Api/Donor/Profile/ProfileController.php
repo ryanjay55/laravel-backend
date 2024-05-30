@@ -12,6 +12,7 @@ use App\Rules\MobileUpdateProfile;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
+use Illuminate\Support\Facades\Auth;
 
 class ProfileController extends Controller
 {
@@ -67,7 +68,7 @@ class ProfileController extends Controller
 
     public function getAchievements()
     {
-        $user = getAuthenticatedUserId();
+        $user = Auth::user();
         $userId = $user->user_id;
 
         $bronze = BloodBag::where('user_id', $userId)
