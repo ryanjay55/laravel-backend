@@ -19,6 +19,12 @@ class Kernel extends ConsoleKernel
         // Schedule the SendDonationReminders command to run daily at midnight
         $schedule->command('send:donation-reminders')
             ->dailyAt('00:00');
+
+        $schedule->command('app:check-expired-blood')
+            ->dailyAt('00:00');
+
+        $schedule->command('app:update-deferral-status')
+            ->dailyAt('00:00');
     }
 
     /**
