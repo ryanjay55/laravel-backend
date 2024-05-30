@@ -29,15 +29,15 @@ class AdminPost extends Model
     //Accommodated = 3  -> Cancelled
 
     public function getPendingPost(){
-        $sql = 'SELECT br.blood_request_id, IF(ap.donation_date <= NOW(), 2, br.isAccommodated) as isAccommodated, ap.venue, ap.donation_date, ap.blood_needs, ap.body, ap.created_at 
+        $sql = 'SELECT br.blood_request_id, IF(ap.donation_date >= NOW(), 2, br.isAccommodated) as isAccommodated, ap.venue, ap.donation_date, ap.blood_needs, ap.body, ap.created_at
         FROM admin_posts ap
-        JOIN blood_request as br on br.blood_request_id = ap.blood_request_id 
-        WHERE br.isAccommodated = 0 OR br.isAccommodated = 3 
+        JOIN blood_request as br on br.blood_request_id = ap.blood_request_id
+        WHERE br.isAccommodated = 0 OR br.isAccommodated = 3
         ORDER BY ap.donation_date ASC';
-    
+
         $result = DB::connection('mysql')->select($sql);
-    
-        return $result; 
+
+        return $result;
     }
 
     public function getAccomodatedPost(){
@@ -46,7 +46,7 @@ class AdminPost extends Model
 
         $result = DB::connection('mysql')->select($sql);
 
-        return $result; 
+        return $result;
     }
 
     public function getDeclinedPost(){
@@ -55,7 +55,7 @@ class AdminPost extends Model
 
         $result = DB::connection('mysql')->select($sql);
 
-        return $result; 
+        return $result;
     }
 
 

@@ -92,12 +92,7 @@
                                                     <table border="0" cellpadding="0" cellspacing="0" role="presentation" style="border-collapse: collapse; border-spacing: 0px;">
                                                         <tbody>
                                                             <tr>
-                                                                <td style="width: 150px;">
-                                                                    <img src="{{ $message->embed(public_path('logo/Lifelink-logo.png')) }}" alt="Lifelink Logo"
-                                                                    style="border: 0; display: block; outline: none; text-decoration: none; height: auto; width: 100%; font-size: 14px;"
-                                                                        width="150"
-                                                                        />
-                                                                </td>
+
                                                             </tr>
                                                         </tbody>
                                                     </table>
@@ -125,7 +120,9 @@
                                                     <table border="0" cellpadding="0" cellspacing="0" role="presentation" style="border-collapse: collapse; border-spacing: 0px;">
                                                         <tbody>
                                                             <tr>
-
+                                                                <td align="center">
+                                                                    <img src="{{ $message->embed(public_path('logo/Lifelink-logo.png')) }}" alt="Lifelink Logo" style="border: 0; display: block; outline: none; text-decoration: none; height: auto; width: 150px;" />
+                                                                </td>
                                                             </tr>
                                                         </tbody>
                                                     </table>
@@ -134,14 +131,20 @@
                                             <tr>
                                                 <td align="left" style="font-size: 0px; padding: 10px 25px; word-break: break-word;">
                                                     <div style="font-family: Montserrat, Helvetica, Arial, sans-serif; font-size: 18px; font-weight: 400; line-height: 24px; text-align: left; color: black;">
-                                                        <h1 style="margin: 0; font-size: 46px; line-height: 60px; font-weight: 600; font-family: 'Inknut Antiqua', Helvetica, Arial, sans-serif;">Thank you for Donating Blood</h1>
+                                                        <h1 style="margin: 0; font-size: 36px; line-height: 44px; font-weight: 600; font-family: 'Inknut Antiqua', Helvetica, Arial, sans-serif;">Reminder: Blood Donation Needed!</h1>
                                                     </div>
                                                 </td>
                                             </tr>
                                             <tr>
                                                 <td align="left" style="font-size: 0px; padding: 10px 25px; word-break: break-word;">
                                                     <div style="font-family: Montserrat, Helvetica, Arial, sans-serif; font-size: 18px; font-weight: 400; line-height: 24px; text-align: left; color: black;">
-                                                        <p style="margin: 0;"> Your donation has been collected and ready to test in our laboratory</p>
+                                                        <p style="margin: 0;">Your blood donation can save lives. We are in need of donors, and your contribution makes a significant difference.</p>
+                                                    </div>
+                                                </td>
+                                            </tr><tr>
+                                                <td align="left" style="font-size: 0px; padding: 10px 25px; word-break: break-word;">
+                                                    <div style="font-family: Montserrat, Helvetica, Arial, sans-serif; font-size: 18px; font-weight: 400; line-height: 24px; text-align: left; color: black;">
+                                                        <p style="margin: 0;">Your last donation date was {{ date('F j, Y', strtotime($lastDonation)) }} and you can donate again from {{ date('F j, Y', strtotime($nextDonationDate)) }} onwards. </p>
                                                     </div>
                                                 </td>
                                             </tr>
@@ -149,12 +152,13 @@
                                             <tr>
                                                 <td align="left" style="font-size: 0px; padding: 10px 25px; word-break: break-word;">
                                                     <div style="font-family: Montserrat, Helvetica, Arial, sans-serif; font-size: 16px; font-weight: 400; line-height: 24px; text-align: left; color: black;">
-                                                        <p style="margin: 0;">Have questions or need help? Email us at <a href="#" style="color: black ; text-decoration: none; font-weight: bold;"> valenzuela@redcross.org.ph </a></p>
+                                                        <p style="margin: 0;">Have questions or need help? Email us at <a href="mailto:valenzuela@redcross.org.ph" style="color: black; text-decoration: none; font-weight: bold;">valenzuela@redcross.org.ph</a></p>
                                                     </div>
                                                 </td>
                                             </tr>
                                         </tbody>
                                     </table>
+
                                 </div>
                             </td>
                         </tr>
@@ -177,8 +181,8 @@
                                                             <tr>
                                                                 <td align="center" style="font-size: 0px; padding: 10px 25px; word-break: break-word;">
                                                                     <div style="font-family: Montserrat, Helvetica, Arial, sans-serif; font-size: 16px; font-weight: 400; line-height: 24px; text-align: center; color: white;">
-                                                                        <a class="footer-link" href="#" style="text-decoration: none; color: white; font-weight: 400;">Support</a> |
-                                                                        <a class="footer-link" href="#" style="text-decoration: none; color: white; font-weight: 400;">Privacy Policy</a>
+                                                                        {{-- <a class="footer-link" href="#" style="text-decoration: none; color: white; font-weight: 400;">Support</a> |
+                                                                        <a class="footer-link" href="#" style="text-decoration: none; color: white; font-weight: 400;">Privacy Policy</a> --}}
                                                                     </div>
                                                                 </td>
                                                             </tr>

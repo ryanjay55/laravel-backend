@@ -23,6 +23,7 @@ use Illuminate\Support\Facades\Hash;
 use App\Models\Galloner;
 use Illuminate\Support\Facades\Mail;
 use App\Mail\RegistrationMail;
+use Illuminate\Support\Facades\Auth;
 
 class UserListController extends Controller
 {
@@ -1024,7 +1025,7 @@ class UserListController extends Controller
             ]);
 
             // Send email notification
-            // Mail::to($user->email)->send(new RegistrationMail($user));
+            Mail::to($user->email)->send(new RegistrationMail($user));
 
             return response()->json([
                 'status'            => 'success',

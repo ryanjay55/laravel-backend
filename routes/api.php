@@ -52,7 +52,7 @@ Route::group([
     'prefix' => 'auth:sanctum'
 
 ], function ($router) {
-    // Route::match('/login', [AuthController::class, 'login']);    
+    // Route::match('/login', [AuthController::class, 'login']);
     Route::match(['get', 'post'], '/login', [AuthController::class, 'login'])->name('login');
 });
 

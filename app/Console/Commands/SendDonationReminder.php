@@ -35,18 +35,20 @@ class SendDonationReminder extends Command
 
         foreach ($users as $user) {
             $userId = $user->user_id;
-            
+
             $lastDonation = BloodBag::where('user_id', $userId)
                 ->orderBy('date_donated', 'desc')
                 ->first();
-            
+
             if ($lastDonation) {
                 $daysSinceLastDonation = now()->diffInDays($lastDonation->date_donated);
                 // Check if it has been 80 days since the last donation
                 if ($daysSinceLastDonation >= 1) {
                     // Queue donation reminder email to the user
-                    // Mail::to($user->email)->queue(new \App\Mail\DonationReminder($user, $lastDonation->date_donated));
-        
+                    $nextDonationDate = Carbon::parse($lastDonation->date_donated)->addDays(90)->format('Y-m-d');
+
+                    Mail::to($user->email)->queue(new \App\Mail\DonationReminder($user, $lastDonation->date_donated, $nextDonationDate));
+
                     // Output to the console that an email has been queued for sending
                     $this->info("Queued donation reminder for: {$user->email}");
                 } else {

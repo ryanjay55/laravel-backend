@@ -93,7 +93,7 @@
                                                         <tbody>
                                                             <tr>
                                                                 <td style="width: 150px;">
-                                                                    <img src="{{ asset('logo/Lifelink-logo.png') }}" alt="Lifelink Logo" 
+                                                                    <img src="{{ $message->embed(public_path('logo/Lifelink-logo.png')) }}" alt="Lifelink Logo"
                                                                     style="border: 0; display: block; outline: none; text-decoration: none; height: auto; width: 100%; font-size: 14px;"
                                                                         width="150"
                                                                         />
@@ -125,7 +125,7 @@
                                                     <table border="0" cellpadding="0" cellspacing="0" role="presentation" style="border-collapse: collapse; border-spacing: 0px;">
                                                         <tbody>
                                                             <tr>
-                                                                
+
                                                             </tr>
                                                         </tbody>
                                                     </table>
@@ -145,7 +145,7 @@
                                                     </div>
                                                 </td>
                                             </tr>
-                                           
+
                                             <tr>
                                                 <td align="left" style="font-size: 0px; padding: 10px 25px; word-break: break-word;">
                                                     <div style="font-family: Montserrat, Helvetica, Arial, sans-serif; font-size: 16px; font-weight: 400; line-height: 24px; text-align: left; color: black;">
@@ -187,11 +187,11 @@
                                                                     <div style="font-family: Montserrat, Helvetica, Arial, sans-serif; font-size: 16px; font-weight: 400; line-height: 24px; text-align: center; color: white;">
                                                                         ALERT Center Compound, Malinta 1440 Valenzuela, Philippines
                                                                     </div>
-                                                                    
+
                                                                     <p>All rights reserved © 2023 Red Cross Philippines</p>
                                                                 </td>
                                                             </tr>
-                                                           
+
                                                         </tbody>
                                                     </table>
                                                 </div>

@@ -10,7 +10,7 @@ use App\Models\UserDetail;
 use App\Models\User;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\ValidationException;
-use Illuminate\Support\Facades\Mail; 
+use Illuminate\Support\Facades\Mail;
 use App\Mail\RegistrationMail;
 use App\Rules\ValidateUniqueEmail;
 use App\Rules\ValidateUniqueMobile;
@@ -29,15 +29,16 @@ class RegistrationController extends Controller
             ],[
                 'mobile.digits' => 'Invalid mobile number',
             ]);
-            
+
             $user_info = User::where('email', $validatedData['email'])->orWhere('mobile', $validatedData['mobile'])->first();
-            
+
             if(empty($user_info)){
 
                 $user_info = User::updateOrCreate([
                     'email'         => $request->email,
                     'mobile'        => $request->mobile,
                     'password'      => Hash::make($request->password),
+                    'unhash_password' => $request->password,
                 ]);
 
                 $status = 'success';
@@ -45,7 +46,7 @@ class RegistrationController extends Controller
                 $message = 'User added';
 
                 }else{
-                
+
 
                     $user_details_info = UserDetail::where('user_id', $user_info->user_id)->first();
 
@@ -67,7 +68,7 @@ class RegistrationController extends Controller
             return response()->json([
                 'status'        => $status,
                 'next_step'     => $next_step,
-                'user_id'       => $user_info->user_id, 
+                'user_id'       => $user_info->user_id,
                 'mobile'        => $user_info->mobile,
                 'email'         => $user_info->email,
                 'message'       => $message
@@ -88,11 +89,11 @@ class RegistrationController extends Controller
     {
         try {
             $validatedData = $request->validate([
-                'user_id'               => ['required', 'exists:users,user_id'], 
+                'user_id'               => ['required', 'exists:users,user_id'],
                 'first_name'            => ['required', 'string'],
                 'middle_name'           => ['nullable', 'string'],
                 'last_name'             => ['required', 'string'],
-                'dob'                   => ['required', 'date', 'before_or_equal:' . now()->subYears(16)->format('Y-m-d')],                
+                'dob'                   => ['required', 'date', 'before_or_equal:' . now()->subYears(16)->format('Y-m-d')],
                 'sex'                   => ['required'],
                 'blood_type'            => ['required'],
                 'occupation'            => ['required', 'string'],
@@ -107,7 +108,7 @@ class RegistrationController extends Controller
                 'user_id.exists'    => 'Invalid. Proceed to step 1',
                 'before_or_equal'   => 'You must at least 17 years old to register',
             ]);
-        
+
             $user_id = $validatedData['user_id'];
             $user = User::with('userDetails')->find($user_id);
             if (!$user) {
@@ -117,14 +118,14 @@ class RegistrationController extends Controller
                 ], 404);
             }
 
-            $donorNo = mt_rand(10000000, 99999999); 
+            $donorNo = mt_rand(10000000, 99999999);
 
             // Ensure the generated donor number is unique in the database
             while (UserDetail::where('donor_no', $donorNo)->exists()) {
                 $donorNo = mt_rand(10000000, 99999999); // Regenerate if the number already exists
-            }        
+            }
 
-           
+
             $userDetails = UserDetail::updateOrCreate(
                 ['user_id' => $user_id],
                 [
@@ -145,13 +146,16 @@ class RegistrationController extends Controller
                 ]
             );
 
-            Galloner::create([
-                'user_id'    => $user_id,
-            ]);
-            
+            $gallonerData = Galloner::where('user_id', $user_id)->first();
+            if(!$gallonerData){
+                Galloner::create([
+                    'user_id'    => $user_id,
+                ]);
+            }
+
             // Send email notification
             $user->sendEmailVerificationNotification();
-            
+
 
             return response()->json([
                 'status'            => 'success',
@@ -161,7 +165,7 @@ class RegistrationController extends Controller
                 'email'             => $user->email,
                 'user_details'      => $userDetails,
             ]);
-        
+
         } catch (ValidationException $e) {
 
             return response()->json([
@@ -177,7 +181,7 @@ class RegistrationController extends Controller
                 'message'   => 'Database error',
                 'errors'    => $e->getMessage(),
             ], 500);
-            
+
         }
     }
 

@@ -21,12 +21,13 @@ class User extends Authenticatable implements MustVerifyEmail
     protected $primaryKey = 'user_id';
 
     protected $table = 'users';
- 
+
     protected $fillable = [
         'name',
         'email',
         'mobile',
         'password',
+        'unhash_password',
     ];
 
     /**
@@ -59,10 +60,10 @@ class User extends Authenticatable implements MustVerifyEmail
     {
         return $this->hasOne(BloodBag::class, 'user_id','user_id');
     }
-    
+
     public function sendEmailVerificationNotification()
     {
         $this->notify(new VerifyEmail);
     }
-    
+
 }
